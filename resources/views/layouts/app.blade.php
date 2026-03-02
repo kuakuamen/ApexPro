@@ -21,7 +21,7 @@
 <body class="{{ auth()->check() ? 'bg-personal-dark' : 'bg-stone-100' }} font-sans antialiased" x-data="{ sidebarOpen: false }">
     <div class="flex h-screen overflow-hidden">
         
-        <!-- Backdrop (Mobile Only) -->
+           <!-- Backdrop (Click outside to close) -->
         <div x-show="sidebarOpen" 
              @click="sidebarOpen = false"
              x-transition:enter="transition-opacity ease-linear duration-300"
@@ -30,13 +30,14 @@
              x-transition:leave="transition-opacity ease-linear duration-300"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-black/60 z-40 lg:hidden"
+               class="fixed inset-0 bg-black/60 lg:bg-black/20 z-40"
              x-cloak>
         </div>
         
         <!-- Sidebar (Desktop: Fixa / Mobile: Off-canvas) -->
-         <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" 
-             class="fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-zinc-950 via-zinc-900 to-teal-950 text-stone-100 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col shadow-2xl border-r border-teal-900/40">
+         <aside :class="sidebarOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'"
+             @keydown.escape.window="sidebarOpen = false"
+             class="fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-zinc-950 via-zinc-900 to-teal-950 text-stone-100 transition-transform duration-500 ease-in-out flex flex-col shadow-2xl border-r border-teal-900/40">
             
             @php
                 $logoRoute = '/';
@@ -130,11 +131,12 @@
         </aside>
 
         <!-- Main Content Wrapper -->
-        <div class="flex-1 flex flex-col overflow-hidden">
+           <div class="flex-1 flex flex-col overflow-hidden transition-all duration-500 ease-in-out"
+               :style="sidebarOpen ? 'margin-left: 16rem; width: calc(100% - 16rem);' : 'margin-left: 0; width: 100%;'">
             
-            <!-- Mobile Header -->
-            <header class="flex items-center justify-start p-3 bg-gradient-to-r from-zinc-950/95 to-teal-950/70 text-stone-100 lg:hidden shadow-md px-4 border-b border-teal-900/40">
-                <button @click="sidebarOpen = !sidebarOpen" class="p-1 rounded-md hover:bg-teal-950/50 focus:outline-none">
+            <!-- Header -->
+            <header class="flex items-center justify-start p-3 bg-gradient-to-r from-zinc-950/95 to-teal-950/70 text-stone-100 shadow-md px-4 border-b border-teal-900/40">
+                <button x-show="!sidebarOpen" x-cloak @click.stop="sidebarOpen = !sidebarOpen" class="p-1 rounded-md hover:bg-teal-950/50 focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
             </header>
