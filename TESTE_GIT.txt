@@ -1,0 +1,3 @@
+Arquivo de teste para validar fluxo de commit e push no Git.
+Criado em 2026-03-01.
+Sem funcionalidades.
