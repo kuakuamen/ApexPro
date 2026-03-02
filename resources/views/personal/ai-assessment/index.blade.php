@@ -31,7 +31,7 @@
                 <div class="mb-8">
                     <h3 class="text-lg font-bold text-white">Como funciona?</h3>
                     <p class="text-gray-400 mt-1">
-                        Envie as fotos do aluno e nossa IA analisará a postura biomecânica, identificará desvios e 
+                        Envie as fotos do aluno e nossa IA fará a análise postural, identificará desvios e 
                         <strong class="text-indigo-400">criará automaticamente uma sugestão de treino</strong> baseada no objetivo.
                     </p>
                 </div>

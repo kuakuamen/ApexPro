@@ -29,7 +29,7 @@
         <div class="p-6">
             <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Análise Biomecânica
+                Análise Postural
             </h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
