@@ -10,6 +10,10 @@ fi
 
 cd "$APP_DIR"
 
+sudo chown -R ubuntu:www-data "$APP_DIR"
+sudo find storage bootstrap/cache -type d -exec chmod 775 {} \;
+sudo find storage bootstrap/cache -type f -exec chmod 664 {} \;
+
 git fetch origin main
 git reset --hard origin/main
 
@@ -24,7 +28,7 @@ sudo -u www-data php artisan migrate --force
 sudo -u www-data php artisan optimize:clear
 sudo -u www-data php artisan optimize
 
-sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chown -R ubuntu:www-data storage bootstrap/cache
 sudo find storage bootstrap/cache -type d -exec chmod 775 {} \;
 sudo find storage bootstrap/cache -type f -exec chmod 664 {} \;
 
