@@ -153,6 +153,33 @@
             margin-bottom: 3rem;
         }
 
+        .mobile-menu-btn {
+            display: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-menu-btn:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 150;
+        }
+
         .topbar-title {
             font-size: 2.5rem;
             font-weight: 800;
@@ -346,7 +373,7 @@
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
-                width: 100%;
+                width: min(88vw, 320px);
                 transition: transform 0.3s ease;
                 z-index: 200;
             }
@@ -357,21 +384,46 @@
 
             main {
                 margin-left: 0;
-                padding: 2rem 1.5rem;
+                padding: 1.5rem 1rem;
             }
 
             .topbar {
                 flex-direction: column;
                 gap: 1rem;
-                align-items: flex-start;
+                align-items: stretch;
+                margin-bottom: 2rem;
+            }
+
+            .topbar .d-flex {
+                align-items: center;
             }
 
             .topbar-title {
                 font-size: 2rem;
+                line-height: 1.1;
+                letter-spacing: -1px;
+            }
+
+            .mobile-menu-btn {
+                display: inline-flex;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .topbar-user {
+                width: 100%;
+                justify-content: space-between;
+                padding: 0.7rem 1rem;
             }
 
             .card-body {
-                padding: 1.5rem;
+                padding: 1.25rem;
+            }
+
+            .stat-value {
+                font-size: 2.4rem;
             }
         }
 
@@ -460,10 +512,17 @@
         </form>
     </aside>
 
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- Main Content -->
     <main>
         <div class="topbar">
-            <h1 class="topbar-title">@yield('page-title', 'Dashboard')</h1>
+            <div class="d-flex align-items-center gap-3">
+                <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Abrir menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="topbar-title mb-0">@yield('page-title', 'Dashboard')</h1>
+            </div>
             <div class="topbar-user">
                 <span>{{ auth()->user()->name }}</span>
                 <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
@@ -491,5 +550,40 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function() {
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            if (!sidebar || !mobileMenuBtn || !sidebarOverlay) return;
+
+            const closeSidebar = () => {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            };
+
+            mobileMenuBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+            });
+
+            sidebarOverlay.addEventListener('click', closeSidebar);
+
+            sidebar.querySelectorAll('.sidebar-menu-link').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        closeSidebar();
+                    }
+                });
+            });
+
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    closeSidebar();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
