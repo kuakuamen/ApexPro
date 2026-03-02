@@ -1,0 +1,114 @@
+@extends('admin.layout')
+
+@section('admin-content')
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+    <h1 class="h2">Adicionar Novo Personal</h1>
+    <a href="{{ route('admin.personals.index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ route('admin.personals.store') }}" novalidate>
+                    @csrf
+
+                    <!-- Nome -->
+                    <div class="form-group mb-3">
+                        <label for="name">Nome Completo <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                               id="name" name="name" value="{{ old('name') }}" required>
+                        @error('name')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group mb-3">
+                        <label for="email">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control @error('email') is-invalid @enderror" 
+                               id="email" name="email" value="{{ old('email') }}" required>
+                        @error('email')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Telefone -->
+                    <div class="form-group mb-3">
+                        <label for="phone">Telefone</label>
+                        <input type="tel" class="form-control @error('phone') is-invalid @enderror" 
+                               id="phone" name="phone" value="{{ old('phone') }}" placeholder="(00) 00000-0000">
+                        @error('phone')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Profissão -->
+                    <div class="form-group mb-3">
+                        <label for="profession">Profissão</label>
+                        <input type="text" class="form-control @error('profession') is-invalid @enderror" 
+                               id="profession" name="profession" value="{{ old('profession') }}" placeholder="Ex: Personal Trainer">
+                        @error('profession')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Senha -->
+                    <div class="form-group mb-3">
+                        <label for="password">Senha <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control @error('password') is-invalid @enderror" 
+                               id="password" name="password" required>
+                        <small class="form-text text-muted">Mínimo 8 caracteres, deve conter letras maiúsculas, minúsculas, números e símbolos.</small>
+                        @error('password')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Confirmação de Senha -->
+                    <div class="form-group mb-3">
+                        <label for="password_confirmation">Confirmar Senha <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control @error('password_confirmation') is-invalid @enderror" 
+                               id="password_confirmation" name="password_confirmation" required>
+                        @error('password_confirmation')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Data de Expiração da Licença -->
+                    <div class="form-group mb-3">
+                        <label for="license_expires_at">Data de Expiração da Licença</label>
+                        <input type="date" class="form-control @error('license_expires_at') is-invalid @enderror" 
+                               id="license_expires_at" name="license_expires_at" value="{{ old('license_expires_at') }}">
+                        @error('license_expires_at')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Notas Administrativas -->
+                    <div class="form-group mb-3">
+                        <label for="admin_notes">Notas Administrativas</label>
+                        <textarea class="form-control @error('admin_notes') is-invalid @enderror" 
+                                  id="admin_notes" name="admin_notes" rows="3">{{ old('admin_notes') }}</textarea>
+                        <small class="form-text text-muted">Adicione observações sobre este personal se necessário.</small>
+                        @error('admin_notes')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Criar Personal
+                        </button>
+                        <a href="{{ route('admin.personals.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
