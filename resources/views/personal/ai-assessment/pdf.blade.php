@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Laudo Biomecânico - {{ $student->name }}</title>
+    <title>Laudo Postural - {{ $student->name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
@@ -16,7 +16,7 @@
     <!-- Cabeçalho -->
     <div class="border-b-2 border-gray-800 pb-4 mb-8 flex justify-between items-end">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Laudo Biomecânico & Prescrição</h1>
+            <h1 class="text-3xl font-bold text-gray-900">Laudo Postural & Prescrição</h1>
             <p class="text-sm text-gray-500 mt-1">Gerado por Inteligência Artificial - ApexPro</p>
         </div>
         <div class="text-right">
