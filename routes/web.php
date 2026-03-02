@@ -31,10 +31,12 @@ Route::middleware(['auth', 'role:personal'])->prefix('personal')->name('personal
     Route::get('/dashboard', [PersonalController::class, 'dashboard'])->name('dashboard');
     
     // Alunos
+    Route::get('/alunos', [PersonalController::class, 'studentsIndex'])->name('students.index');
     Route::get('/alunos/novo', [PersonalController::class, 'createStudent'])->name('students.create');
     Route::post('/alunos', [PersonalController::class, 'storeStudent'])->name('students.store');
     Route::get('/alunos/{student}', [PersonalController::class, 'showStudent'])->name('students.show');
     Route::patch('/alunos/{student}/toggle-status', [PersonalController::class, 'toggleStatus'])->name('students.toggle-status');
+    Route::patch('/alunos/{student}/reset-password', [PersonalController::class, 'resetStudentPassword'])->name('students.reset-password');
     
     // Medidas
     Route::get('/alunos/{student}/medidas/nova', [PersonalController::class, 'createMeasurement'])->name('measurements.create');

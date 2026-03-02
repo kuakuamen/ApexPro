@@ -3,7 +3,7 @@
 @section('content')
 <script src="//unpkg.com/alpinejs" defer></script>
 
-<div x-data="{ activeTab: 'overview' }">
+<div x-data="{ activeTab: 'overview', showResetPassword: false }">
     
     <!-- Cabeçalho do Perfil -->
     <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg mb-6 overflow-hidden">
@@ -40,6 +40,9 @@
                 <a href="{{ route('workouts.create') }}?student_id={{ $student->id }}" class="inline-flex justify-center items-center px-4 py-2 border border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-gray-500 transition-all duration-300">
                     Criar Treino
                 </a>
+                <button type="button" @click="showResetPassword = true" class="inline-flex justify-center items-center px-4 py-2 border border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-all duration-300">
+                    Reset Senha
+                </button>
                 
                 <!-- Menu de Ações Extras (Dropdown ou Botão Simples) -->
                 <form action="{{ route('personal.students.toggle-status', $student) }}" method="POST">
@@ -50,8 +53,8 @@
                     </button>
                 </form>
             </div>
+
         </div>
-        
         <!-- Navegação de Abas -->
         <div class="border-t border-gray-700">
             <nav class="-mb-px flex" aria-label="Tabs">
@@ -77,6 +80,34 @@
                 </button>
             </nav>
         </div>
+    </div>
+
+    <div x-show="showResetPassword"
+         x-cloak
+         x-transition.opacity
+         @keydown.escape.window="showResetPassword = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+         @click.self="showResetPassword = false">
+        <form action="{{ route('personal.students.reset-password', $student) }}" method="POST" class="w-full max-w-md bg-gray-800 border border-gray-700 rounded-xl p-5 space-y-4 shadow-2xl">
+            @csrf
+            @method('PATCH')
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-semibold text-white">Redefinir senha do aluno</h3>
+                <button type="button" @click="showResetPassword = false" class="text-gray-400 hover:text-white">✕</button>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Nova senha</label>
+                <input type="password" name="password" required minlength="6" class="w-full rounded-lg border border-gray-600 bg-gray-900 text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Digite a nova senha">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Confirmar nova senha</label>
+                <input type="password" name="password_confirmation" required minlength="6" class="w-full rounded-lg border border-gray-600 bg-gray-900 text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Repita a nova senha">
+            </div>
+            <div class="flex justify-end gap-2 pt-1">
+                <button type="button" @click="showResetPassword = false" class="px-3 py-2 text-xs rounded-md border border-gray-600 text-gray-300 hover:bg-gray-700">Cancelar</button>
+                <button type="submit" class="px-3 py-2 text-xs rounded-md bg-indigo-600 text-white hover:bg-indigo-700">Salvar senha</button>
+            </div>
+        </form>
     </div>
 
     <!-- Conteúdo das Abas -->

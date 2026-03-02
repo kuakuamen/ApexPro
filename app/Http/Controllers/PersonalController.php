@@ -44,6 +44,21 @@ class PersonalController extends Controller
     }
 
     /**
+     * Listagem de alunos do personal.
+     */
+    public function studentsIndex()
+    {
+        $students = Auth::user()->students()
+            ->with(['measurements' => function($query) {
+                $query->latest('date');
+            }])
+            ->orderBy('name')
+            ->get();
+
+        return view('personal.students.index', compact('students'));
+    }
+
+    /**
      * Formulário para cadastrar novo aluno.
      */
     public function createStudent()
@@ -409,6 +424,23 @@ class PersonalController extends Controller
         $status = $student->is_active ? 'ativado' : 'desativado';
         
         return back()->with('success', "Aluno {$status} com sucesso.");
+    }
+
+    /**
+     * Redefine a senha de um aluno vinculado ao personal.
+     */
+    public function resetStudentPassword(Request $request, User $student)
+    {
+        $this->validateStudentBelongsToPersonal($student);
+
+        $validated = $request->validate([
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $student->password = Hash::make($validated['password']);
+        $student->save();
+
+        return back()->with('success', 'Senha do aluno redefinida com sucesso.');
     }
 
     /**
