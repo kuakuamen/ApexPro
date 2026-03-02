@@ -52,7 +52,7 @@
                             Email
                         </label>
                         <div class="mt-2">
-                            <input id="email" name="email" type="email" autocomplete="email" required 
+                            <input id="email" name="email" type="email" autocomplete="username" required 
                                 class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition duration-200"
                                 placeholder="seu@email.com"
                                 value="{{ old('email') }}">
@@ -71,7 +71,7 @@
                     </div>
 
                     <div class="flex items-center">
-                        <input id="remember" name="remember" type="checkbox" class="h-4 w-4 text-cyan-500 focus:ring-cyan-400 border-gray-600 rounded bg-gray-700">
+                        <input id="remember" name="remember" type="checkbox" @checked(old('remember', true)) class="h-4 w-4 text-cyan-500 focus:ring-cyan-400 border-gray-600 rounded bg-gray-700">
                         <label for="remember" class="ml-2 block text-sm text-gray-300">
                             Lembrar de mim
                         </label>
@@ -92,5 +92,33 @@
             </div>
         </div>
     </div>
+
+    <script>
+        (function () {
+            const storageKey = 'apexpro_last_login_email';
+            const form = document.querySelector('form[action="{{ route('login') }}"]');
+            const emailInput = document.getElementById('email');
+            const rememberInput = document.getElementById('remember');
+
+            if (!form || !emailInput || !rememberInput) return;
+
+            const savedEmail = localStorage.getItem(storageKey);
+            if (!emailInput.value && savedEmail) {
+                emailInput.value = savedEmail;
+            }
+
+            form.addEventListener('submit', function () {
+                const currentEmail = (emailInput.value || '').trim();
+
+                if (!currentEmail) return;
+
+                if (rememberInput.checked) {
+                    localStorage.setItem(storageKey, currentEmail);
+                } else {
+                    localStorage.removeItem(storageKey);
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

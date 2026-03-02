@@ -14,10 +14,13 @@ use App\Http\Controllers\AiAssessmentController; // Importar o novo controller
 use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Auth;
 
-// Rotas de Autenticação (Simples)
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Rotas de Autenticação
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+});
+
+Route::middleware('auth')->post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Rota de Segurança: Servir Fotos com Validação de Permissão
 Route::middleware('auth')->get('/photo/{assessmentId}/{type}', [PhotoController::class, 'show'])->name('photo.show');
