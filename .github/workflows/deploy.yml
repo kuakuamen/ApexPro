@@ -27,5 +27,4 @@ jobs:
           command_timeout: 20m
           script: |
             set -e
-            chmod +x /var/www/fitmanager/scripts/deploy.sh
-            /var/www/fitmanager/scripts/deploy.sh
+            bash /var/www/fitmanager/scripts/deploy.sh
