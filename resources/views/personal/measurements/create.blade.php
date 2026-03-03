@@ -27,9 +27,14 @@
             @csrf
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6" x-data="{ 
-                evalDate: '{{ date('Y-m-d') }}', 
+                evalDate: '{{ old('date', '') }}', 
                 birthDate: '{{ $student->birth_date ? $student->birth_date->format('Y-m-d') : '' }}',
                 age: null,
+                setTodayLocal() {
+                    const now = new Date();
+                    const local = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
+                    this.evalDate = local.toISOString().split('T')[0];
+                },
                 calculateAge() {
                     if (!this.birthDate || !this.evalDate) {
                         this.age = null;
@@ -44,7 +49,7 @@
                     }
                     this.age = age;
                 }
-            }" x-init="calculateAge()">
+            }" x-init="if (!evalDate) setTodayLocal(); calculateAge()">
                 <div>
                     <label class="block text-sm font-medium text-gray-300">Data da Avaliação</label>
                     <input type="date" name="date" x-model="evalDate" @change="calculateAge()" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500" required>
