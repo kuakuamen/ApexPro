@@ -889,11 +889,33 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(response => {
+        .then(async response => {
+            const contentType = response.headers.get('content-type') || '';
+            const isJson = contentType.includes('application/json');
+            const payload = isJson ? await response.json() : await response.text();
+
             if (!response.ok) {
-                throw new Error('Erro ao salvar');
+                if (response.status === 413) {
+                    throw new Error('As imagens são muito grandes para o servidor. Reduza o tamanho das fotos e tente novamente.');
+                }
+
+                if (isJson && payload && payload.errors) {
+                    const firstField = Object.keys(payload.errors)[0];
+                    const firstMessage = firstField && Array.isArray(payload.errors[firstField])
+                        ? payload.errors[firstField][0]
+                        : null;
+
+                    throw new Error(firstMessage || payload.message || 'Erro ao salvar a avaliação.');
+                }
+
+                if (isJson && payload && payload.message) {
+                    throw new Error(payload.message);
+                }
+
+                throw new Error('Erro ao salvar a avaliação. Tente novamente.');
             }
-            return response.json();
+
+            return isJson ? payload : { success: true };
         })
         .then(data => {
             // Redirecionar para tela do aluno
@@ -903,7 +925,7 @@
             console.error('Erro:', error);
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
-            alert('Erro ao salvar a avaliação. Tente novamente.');
+            alert(error?.message || 'Erro ao salvar a avaliação. Tente novamente.');
         });
     }
     
