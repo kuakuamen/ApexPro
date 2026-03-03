@@ -152,17 +152,16 @@
         </div>
 
         <!-- Classificação do Percentual de Gordura -->
-        <div x-data="{ showGenderTable: 'female' }">
+        @php
+            $dashboardGenderValue = strtolower((string) (auth()->user()->gender ?? ''));
+            $dashboardIsMaleGender = str_contains($dashboardGenderValue, 'masc') || $dashboardGenderValue === 'm' || $dashboardGenderValue === 'male';
+        @endphp
+        <div>
             <h4 class="text-sm font-bold text-teal-300 mb-3 border-b border-gray-700 pb-2">📋 Classificação do Percentual de Gordura</h4>
-            
-            <!-- Abas de Seleção de Gênero -->
-            <div class="flex gap-2 mb-3">
-                <button @click="showGenderTable = 'female'" :class="showGenderTable === 'female' ? 'bg-teal-700 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'" class="px-3 py-1 rounded text-xs font-semibold transition">👩 Mulheres</button>
-                <button @click="showGenderTable = 'male'" :class="showGenderTable === 'male' ? 'bg-teal-700 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'" class="px-3 py-1 rounded text-xs font-semibold transition">👨 Homens</button>
-            </div>
 
             <!-- Tabela Mulheres -->
-            <div x-show="showGenderTable === 'female'" class="overflow-x-auto">
+            @if(!$dashboardIsMaleGender)
+            <div class="overflow-x-auto">
                 <table class="w-full text-xs border-collapse">
                     <thead>
                         <tr class="bg-teal-950/30 border-b border-teal-800/40">
@@ -186,9 +185,11 @@
                     </tbody>
                 </table>
             </div>
+            @endif
 
             <!-- Tabela Homens -->
-            <div x-show="showGenderTable === 'male'" class="overflow-x-auto">
+            @if($dashboardIsMaleGender)
+            <div class="overflow-x-auto">
                 <table class="w-full text-xs border-collapse">
                     <thead>
                         <tr class="bg-teal-950/30 border-b border-teal-800/40">
@@ -212,6 +213,7 @@
                     </tbody>
                 </table>
             </div>
+            @endif
         </div>
 
         <!-- Observações -->

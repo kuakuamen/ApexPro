@@ -25,6 +25,7 @@ Route::middleware('auth')->post('/logout', [AuthController::class, 'logout'])->n
 // Rota de Segurança: Servir Fotos com Validação de Permissão
 Route::middleware('auth')->get('/photo/{assessmentId}/{type}', [PhotoController::class, 'show'])->name('photo.show');
 Route::middleware('auth')->get('/measurement/{measurementId}/{type}', [PhotoController::class, 'showMeasurement'])->name('measurement.photo');
+Route::middleware('auth')->get('/measurement/{measurementId}/extra/{index}', [PhotoController::class, 'showMeasurementExtra'])->whereNumber('index')->name('measurement.photo.extra');
 
 // Rotas do Personal (Área Administrativa)
 Route::middleware(['auth', 'role:personal'])->prefix('personal')->name('personal.')->group(function () {

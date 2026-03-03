@@ -31,6 +31,9 @@ class BodyMeasurement extends Model
         'photo_front',
         'photo_back',
         'photo_side',
+        'photo_side_right',
+        'photo_side_left',
+        'extra_photos',
         'injuries',
         'medications',
         'surgeries',
@@ -71,6 +74,7 @@ class BodyMeasurement extends Model
 
     protected $casts = [
         'date' => 'date',
+        'extra_photos' => 'array',
     ];
 
     public function student()

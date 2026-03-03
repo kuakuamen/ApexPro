@@ -369,14 +369,14 @@
             </div>
 
             <h4 class="text-lg font-medium text-white mb-4 border-b border-gray-700 pb-2">Galeria de Evolução</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <!-- Frente -->
                 <div class="space-y-2">
                     <label class="block text-sm font-medium text-gray-300 text-center">Frente</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors">
                         <div class="space-y-1 text-center">
                             @if($measurement->photo_front)
-                                <img src="{{ route('measurement.photo', [$measurement->id, 'front']) }}" class="mx-auto h-32 object-cover rounded-md mb-2">
+                                <img src="{{ route('measurement.photo', [$measurement->id, 'front']) }}?v={{ $measurement->updated_at?->timestamp }}" class="mx-auto h-32 object-cover rounded-md mb-2">
                             @else
                                 <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -398,7 +398,7 @@
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors">
                         <div class="space-y-1 text-center">
                             @if($measurement->photo_back)
-                                <img src="{{ route('measurement.photo', [$measurement->id, 'back']) }}" class="mx-auto h-32 object-cover rounded-md mb-2">
+                                <img src="{{ route('measurement.photo', [$measurement->id, 'back']) }}?v={{ $measurement->updated_at?->timestamp }}" class="mx-auto h-32 object-cover rounded-md mb-2">
                             @else
                                 <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -414,25 +414,114 @@
                     </div>
                 </div>
 
-                <!-- Lado -->
+                <!-- Lado D -->
                 <div class="space-y-2">
-                    <label class="block text-sm font-medium text-gray-300 text-center">Lado (Perfil)</label>
+                    <label class="block text-sm font-medium text-gray-300 text-center">Lado D</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors">
                         <div class="space-y-1 text-center">
-                            @if($measurement->photo_side)
-                                <img src="{{ route('measurement.photo', [$measurement->id, 'side']) }}" class="mx-auto h-32 object-cover rounded-md mb-2">
+                            @if($measurement->photo_side_right || $measurement->photo_side)
+                                <img src="{{ route('measurement.photo', [$measurement->id, 'side_right']) }}?v={{ $measurement->updated_at?->timestamp }}" class="mx-auto h-32 object-cover rounded-md mb-2">
                             @else
                                 <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             @endif
                             <div class="flex text-sm text-gray-400 justify-center">
-                                <label for="photo_side" class="relative cursor-pointer bg-gray-800 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none">
-                                    <span>{{ $measurement->photo_side ? 'Alterar' : 'Tirar / Upload' }}</span>
-                                    <input id="photo_side" name="photo_side" type="file" class="sr-only" accept="image/*" capture="environment">
+                                <label for="photo_side_right" class="relative cursor-pointer bg-gray-800 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none">
+                                    <span>{{ ($measurement->photo_side_right || $measurement->photo_side) ? 'Alterar' : 'Tirar / Upload' }}</span>
+                                    <input id="photo_side_right" name="photo_side_right" type="file" class="sr-only" accept="image/*" capture="environment">
                                 </label>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Lado E -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-300 text-center">Lado E</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors">
+                        <div class="space-y-1 text-center">
+                            @if($measurement->photo_side_left)
+                                <img src="{{ route('measurement.photo', [$measurement->id, 'side_left']) }}?v={{ $measurement->updated_at?->timestamp }}" class="mx-auto h-32 object-cover rounded-md mb-2">
+                            @else
+                                <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            @endif
+                            <div class="flex text-sm text-gray-400 justify-center">
+                                <label for="photo_side_left" class="relative cursor-pointer bg-gray-800 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none">
+                                    <span>{{ $measurement->photo_side_left ? 'Alterar' : 'Tirar / Upload' }}</span>
+                                    <input id="photo_side_left" name="photo_side_left" type="file" class="sr-only" accept="image/*" capture="environment">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Mais</label>
+                @php
+                    $existingSinglesCount = (!empty($measurement->photo_front) ? 1 : 0)
+                        + (!empty($measurement->photo_back) ? 1 : 0)
+                        + ((!empty($measurement->photo_side_right) || !empty($measurement->photo_side)) ? 1 : 0)
+                        + (!empty($measurement->photo_side_left) ? 1 : 0);
+                    $existingExtraCount = is_array($measurement->extra_photos) ? count($measurement->extra_photos) : 0;
+                    $remainingExtraSlots = max(0, 9 - $existingSinglesCount - $existingExtraCount);
+                @endphp
+                <p id="edit_photo_limit_hint" class="text-xs text-gray-400 mb-2">Máximo de 9 imagens no total por avaliação. Restante para "Mais": {{ $remainingExtraSlots }}.</p>
+                <div class="border-2 border-gray-600 border-dashed rounded-md p-4 hover:border-indigo-500 transition-colors">
+                    @if(is_array($measurement->extra_photos) && count($measurement->extra_photos) > 0)
+                        <p class="text-xs text-gray-400 mb-3">{{ count($measurement->extra_photos) }} imagem(ns) extra(s) já cadastrada(s). Você pode adicionar mais abaixo.</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
+                            @foreach($measurement->extra_photos as $index => $photoPath)
+                                <div id="extra_card_{{ $index }}" class="space-y-2">
+                                    <img
+                                        id="extra_preview_{{ $index }}"
+                                        src="{{ route('measurement.photo.extra', [$measurement->id, $index]) }}?v={{ $measurement->updated_at?->timestamp }}"
+                                        alt="Foto extra {{ $index + 1 }}"
+                                        class="w-full object-contain rounded-md border border-gray-600 bg-gray-900"
+                                        style="aspect-ratio: 16 / 9;"
+                                    >
+                                    <div class="flex items-center justify-center gap-2">
+                                        <label for="replace_extra_{{ $index }}" class="cursor-pointer px-2 py-1 text-xs rounded-md border border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600">
+                                            Alterar
+                                            <input
+                                                id="replace_extra_{{ $index }}"
+                                                name="replace_extra_photos[{{ $index }}]"
+                                                type="file"
+                                                class="sr-only replace-extra-input"
+                                                data-index="{{ $index }}"
+                                                accept="image/*"
+                                                capture="environment"
+                                            >
+                                        </label>
+
+                                        <button
+                                            type="button"
+                                            class="px-2 py-1 text-xs rounded-md border border-red-500 text-red-300 bg-red-900/30 hover:bg-red-900/50 remove-extra-btn"
+                                            data-index="{{ $index }}"
+                                        >
+                                            Remover
+                                        </button>
+
+                                        <input
+                                            id="remove_extra_{{ $index }}"
+                                            type="checkbox"
+                                            name="remove_extra_photos[]"
+                                            value="{{ $index }}"
+                                            class="hidden"
+                                        >
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                    <div class="flex justify-center">
+                        <label for="photo_extra" class="relative cursor-pointer bg-gray-800 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none px-3 py-1 text-sm">
+                            <span>Adicionar imagens extras</span>
+                            <input id="photo_extra" name="photo_extra[]" type="file" class="sr-only" accept="image/*" capture="environment" multiple data-max-extra="{{ $remainingExtraSlots }}">
+                        </label>
                     </div>
                 </div>
             </div>
@@ -701,46 +790,7 @@
         document.querySelector('input[name="body_fat"]').value = protocol.fatPct.toFixed(2);
         document.querySelector('input[name="muscle_mass"]').value = protocol.leanMass.toFixed(2);
         closeProtocolModal();
-        
-        // Submeter formulário em background com Fetch API
-        submitFormInBackground();
-    }
-    
-    function submitFormInBackground() {
-        const form = document.getElementById('measurementForm');
-        const formData = new FormData(form);
-        const studentUrl = form.getAttribute('data-student-url');
-        const actionUrl = form.getAttribute('action');
-        
-        // Mostrar loading/spinner se desejar
-        const submitBtn = document.getElementById('hiddenSubmit');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Salvando...';
-        
-        fetch(actionUrl, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Erro ao salvar');
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Redirecionar para tela do aluno
-            window.location.href = studentUrl;
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
-            alert('Erro ao salvar a avaliação. Tente novamente.');
-        });
+        document.getElementById('measurementForm').submit();
     }
     
     function closeProtocolModal() {
@@ -753,5 +803,123 @@
         document.getElementById('confirmButton').disabled = true;
         document.getElementById('selected_protocol').value = '';
     }
+
+    function setupEditImageLivePreview(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+
+        let objectUrl = null;
+
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (!file || !file.type.startsWith('image/')) {
+                return;
+            }
+
+            const container = input.closest('.space-y-1');
+            if (!container) return;
+
+            const existingSvg = container.querySelector('svg');
+            if (existingSvg) {
+                existingSvg.classList.add('hidden');
+            }
+
+            let previewImage = container.querySelector('img');
+            if (!previewImage) {
+                previewImage = document.createElement('img');
+                previewImage.className = 'mx-auto h-32 object-cover rounded-md mb-2';
+                container.insertBefore(previewImage, container.firstChild);
+            }
+
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+
+            objectUrl = URL.createObjectURL(file);
+            previewImage.src = objectUrl;
+        });
+    }
+
+    setupEditImageLivePreview('photo_front');
+    setupEditImageLivePreview('photo_back');
+    setupEditImageLivePreview('photo_side_right');
+    setupEditImageLivePreview('photo_side_left');
+
+    const editExtraInput = document.getElementById('photo_extra');
+    if (editExtraInput) {
+        editExtraInput.addEventListener('change', () => {
+            const maxExtra = parseInt(editExtraInput.dataset.maxExtra || '0', 10);
+            const selectedCount = (editExtraInput.files || []).length;
+
+            if (selectedCount > maxExtra) {
+                alert(`Limite excedido. Você pode adicionar no máximo ${maxExtra} imagem(ns) em "Mais" nesta avaliação.`);
+                editExtraInput.value = '';
+            }
+        });
+    }
+
+    document.querySelectorAll('.replace-extra-input').forEach((input) => {
+        let objectUrl = null;
+
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (!file || !file.type.startsWith('image/')) return;
+
+            const index = input.dataset.index;
+            const preview = document.getElementById(`extra_preview_${index}`);
+            const removeCheckbox = document.getElementById(`remove_extra_${index}`);
+            const card = document.getElementById(`extra_card_${index}`);
+            const removeBtn = document.querySelector(`.remove-extra-btn[data-index="${index}"]`);
+
+            if (!preview) return;
+
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+
+            objectUrl = URL.createObjectURL(file);
+            preview.src = objectUrl;
+
+            if (removeCheckbox && removeCheckbox.checked) {
+                removeCheckbox.checked = false;
+                if (card) {
+                    card.classList.remove('opacity-40');
+                }
+                if (removeBtn) {
+                    removeBtn.textContent = 'Remover';
+                    removeBtn.classList.remove('border-emerald-500', 'text-emerald-300', 'bg-emerald-900/30');
+                    removeBtn.classList.add('border-red-500', 'text-red-300', 'bg-red-900/30');
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('.remove-extra-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+            const index = button.dataset.index;
+            const checkbox = document.getElementById(`remove_extra_${index}`);
+            const card = document.getElementById(`extra_card_${index}`);
+
+            if (!checkbox) return;
+
+            checkbox.checked = !checkbox.checked;
+
+            if (checkbox.checked) {
+                button.textContent = 'Desfazer';
+                button.classList.remove('border-red-500', 'text-red-300', 'bg-red-900/30');
+                button.classList.add('border-emerald-500', 'text-emerald-300', 'bg-emerald-900/30');
+                if (card) {
+                    card.classList.add('opacity-40');
+                }
+            } else {
+                button.textContent = 'Remover';
+                button.classList.remove('border-emerald-500', 'text-emerald-300', 'bg-emerald-900/30');
+                button.classList.add('border-red-500', 'text-red-300', 'bg-red-900/30');
+                if (card) {
+                    card.classList.remove('opacity-40');
+                }
+            }
+        });
+    });
 </script>
 @endsection

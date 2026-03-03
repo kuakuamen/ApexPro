@@ -70,13 +70,14 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-400">% Gordura</label>
-                    <input type="number" step="any" name="body_fat" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="number" step="any" name="body_fat" readonly tabindex="-1" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed pointer-events-none" title="Preenchido automaticamente pelos cálculos">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-400">Massa Muscular (kg)</label>
-                    <input type="number" step="any" name="muscle_mass" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="number" step="any" name="muscle_mass" readonly tabindex="-1" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed pointer-events-none" title="Preenchido automaticamente pelos cálculos">
                 </div>
             </div>
+            <p class="-mt-3 mb-6 text-xs text-indigo-300">ℹ️ % Gordura e Massa Muscular são preenchidos automaticamente após a seleção do resultado dos cálculos.</p>
 
             <h4 class="text-lg font-medium text-gray-200 mb-4 border-b border-gray-700 pb-2">Dobras Cutâneas (mm)</h4>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" x-data="{ 
@@ -139,51 +140,6 @@
             <h4 class="text-lg font-medium text-gray-200 mb-4 border-b border-gray-700 pb-2">Circunferências (cm)</h4>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div>
-                    <label class="block text-xs font-medium text-gray-400">Peitoral</label>
-                    <input type="number" step="0.1" name="chest" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Cintura</label>
-                    <input type="number" step="0.1" name="waist" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Abdômen</label>
-                    <input type="number" step="0.1" name="abdomen" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Quadril</label>
-                    <input type="number" step="0.1" name="hips" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                
-                <!-- Membros -->
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Braço Esq.</label>
-                    <input type="number" step="0.1" name="left_arm" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Braço Dir.</label>
-                    <input type="number" step="0.1" name="right_arm" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Coxa Esq.</label>
-                    <input type="number" step="0.1" name="left_thigh" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Coxa Dir.</label>
-                    <input type="number" step="0.1" name="right_thigh" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Panturrilha Esq.</label>
-                    <input type="number" step="0.1" name="left_calf" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Panturrilha Dir.</label>
-                    <input type="number" step="0.1" name="right_calf" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div>
                     <label class="block text-xs font-medium text-gray-400">Ombro (cm)</label>
                     <input type="number" step="0.1" name="ombro" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
                 </div>
@@ -192,14 +148,69 @@
                     <input type="number" step="0.1" name="torax" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
                 </div>
                 <div>
+                    <label class="block text-xs font-medium text-gray-400">Cintura (cm)</label>
+                    <input type="number" step="0.1" name="waist" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Abdômen (cm)</label>
+                    <input type="number" step="0.1" name="abdomen" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+
+                <div>
                     <label class="block text-xs font-medium text-gray-400">Abdômen inferior (cm)</label>
                     <input type="number" step="0.1" name="abdomen_inferior" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Quadril (cm)</label>
+                    <input type="number" step="0.1" name="hips" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Coxa proximal D (cm)</label>
+                    <input type="number" step="0.1" name="right_thigh_proximal" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Coxa medial D (cm)</label>
+                    <input type="number" step="0.1" name="right_thigh_medial" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Coxa distal D (cm)</label>
+                    <input type="number" step="0.1" name="right_thigh_distal" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Coxa proximal E (cm)</label>
+                    <input type="number" step="0.1" name="left_thigh_proximal" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Coxa medial E (cm)</label>
+                    <input type="number" step="0.1" name="left_thigh_medial" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Coxa distal E (cm)</label>
+                    <input type="number" step="0.1" name="left_thigh_distal" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Panturrilha D (cm)</label>
+                    <input type="number" step="0.1" name="right_calf" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Panturrilha E (cm)</label>
+                    <input type="number" step="0.1" name="left_calf" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Braço relaxado D (cm)</label>
+                    <input type="number" step="0.1" name="right_arm" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-400">Braço contraído D (cm)</label>
                     <input type="number" step="0.1" name="right_arm_contracted" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
                 </div>
 
+                <div>
+                    <label class="block text-xs font-medium text-gray-400">Braço relaxado E (cm)</label>
+                    <input type="number" step="0.1" name="left_arm" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-400">Braço contraído E (cm)</label>
                     <input type="number" step="0.1" name="left_arm_contracted" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
@@ -211,107 +222,6 @@
                 <div>
                     <label class="block text-xs font-medium text-gray-400">Antebraço E (cm)</label>
                     <input type="number" step="0.1" name="left_forearm" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Coxa proximal D (cm)</label>
-                    <input type="number" step="0.1" name="right_thigh_proximal" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Coxa medial D (cm)</label>
-                    <input type="number" step="0.1" name="right_thigh_medial" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Coxa distal D (cm)</label>
-                    <input type="number" step="0.1" name="right_thigh_distal" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Coxa proximal E (cm)</label>
-                    <input type="number" step="0.1" name="left_thigh_proximal" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Coxa medial E (cm)</label>
-                    <input type="number" step="0.1" name="left_thigh_medial" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400">Coxa distal E (cm)</label>
-                    <input type="number" step="0.1" name="left_thigh_distal" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
-                </div>
-            </div>
-
-            <div class="bg-gradient-to-r from-indigo-900/30 to-purple-900/30 border border-indigo-700/50 rounded-lg p-6 mb-6">
-                <h4 class="text-lg font-medium text-indigo-300 mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    Resultados dos Cálculos (Auto)
-                </h4>
-                <p class="text-xs text-gray-400 mb-4">Os valores abaixo serão calculados automaticamente ao salvar. (Preenchimento manual é opcional)</p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- GUEDES -->
-                    <div class="space-y-3">
-                        <h5 class="text-sm font-semibold text-indigo-300 border-b border-indigo-700 pb-2">GUEDES (3 Dobras)</h5>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">Densidade (g/ml)</label>
-                            <input type="number" step="0.0001" name="guedes_density" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">% Gordura</label>
-                            <input type="number" step="0.01" name="guedes_fat_pct" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">Massa Gordura (kg)</label>
-                            <input type="number" step="0.01" name="guedes_fat_mass" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">Massa Livre (kg)</label>
-                            <input type="number" step="0.01" name="guedes_lean_mass" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                    </div>
-
-                    <!-- POLLOCK 3 -->
-                    <div class="space-y-3">
-                        <h5 class="text-sm font-semibold text-purple-300 border-b border-purple-700 pb-2">POLLOCK 3</h5>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">Densidade (g/ml)</label>
-                            <input type="number" step="0.0001" name="pollock3_density" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">% Gordura</label>
-                            <input type="number" step="0.01" name="pollock3_fat_pct" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">Massa Gordura (kg)</label>
-                            <input type="number" step="0.01" name="pollock3_fat_mass" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">Massa Livre (kg)</label>
-                            <input type="number" step="0.01" name="pollock3_lean_mass" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                    </div>
-
-                    <!-- POLLOCK 7 -->
-                    <div class="space-y-3">
-                        <h5 class="text-sm font-semibold text-pink-300 border-b border-pink-700 pb-2">POLLOCK 7</h5>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">Densidade (g/ml)</label>
-                            <input type="number" step="0.0001" name="pollock7_density" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">% Gordura</label>
-                            <input type="number" step="0.01" name="pollock7_fat_pct" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">Massa Gordura (kg)</label>
-                            <input type="number" step="0.01" name="pollock7_fat_mass" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400">Massa Livre (kg)</label>
-                            <input type="number" step="0.01" name="pollock7_lean_mass" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed" readonly />
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -359,12 +269,12 @@
             </div>
 
             <h4 class="text-lg font-medium text-gray-200 mb-4 border-b border-gray-700 pb-2">Galeria de Evolução (Opcional)</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <!-- Frente -->
                 <div class="space-y-2">
                     <label class="block text-sm font-medium text-gray-300 text-center">Frente</label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors">
-                        <div class="space-y-1 text-center">
+                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors p-4 min-h-[160px] flex items-center justify-center">
+                        <div id="photo_front_placeholder" class="space-y-1 text-center">
                             <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
@@ -375,14 +285,20 @@
                                 </label>
                             </div>
                         </div>
+                        <div id="photo_front_preview_wrapper" class="hidden w-full">
+                            <img id="photo_front_preview" src="" alt="Preview frente" class="w-full h-32 object-cover rounded-md border border-gray-600">
+                            <div class="mt-2 flex justify-center">
+                                <button type="button" id="photo_front_remove" class="px-3 py-1 text-xs rounded-md border border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">Remover</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Costas -->
                 <div class="space-y-2">
                     <label class="block text-sm font-medium text-gray-300 text-center">Costas</label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors">
-                        <div class="space-y-1 text-center">
+                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors p-4 min-h-[160px] flex items-center justify-center">
+                        <div id="photo_back_placeholder" class="space-y-1 text-center">
                             <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
@@ -393,23 +309,78 @@
                                 </label>
                             </div>
                         </div>
+                        <div id="photo_back_preview_wrapper" class="hidden w-full">
+                            <img id="photo_back_preview" src="" alt="Preview costas" class="w-full h-32 object-cover rounded-md border border-gray-600">
+                            <div class="mt-2 flex justify-center">
+                                <button type="button" id="photo_back_remove" class="px-3 py-1 text-xs rounded-md border border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">Remover</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Lado -->
+                <!-- Lado D -->
                 <div class="space-y-2">
-                    <label class="block text-sm font-medium text-gray-300 text-center">Lado (Perfil)</label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors">
-                        <div class="space-y-1 text-center">
+                    <label class="block text-sm font-medium text-gray-300 text-center">Lado D</label>
+                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors p-4 min-h-[160px] flex items-center justify-center">
+                        <div id="photo_side_right_placeholder" class="space-y-1 text-center">
                             <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             <div class="flex text-sm text-gray-400 justify-center">
-                                <label for="photo_side" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none px-3 py-1">
+                                <label for="photo_side_right" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none px-3 py-1">
                                     <span>Tirar / Upload</span>
-                                    <input id="photo_side" name="photo_side" type="file" class="sr-only" accept="image/*" capture="environment">
+                                    <input id="photo_side_right" name="photo_side_right" type="file" class="sr-only" accept="image/*" capture="environment">
                                 </label>
                             </div>
+                        </div>
+                        <div id="photo_side_right_preview_wrapper" class="hidden w-full">
+                            <img id="photo_side_right_preview" src="" alt="Preview lateral direito" class="w-full h-32 object-cover rounded-md border border-gray-600">
+                            <div class="mt-2 flex justify-center">
+                                <button type="button" id="photo_side_right_remove" class="px-3 py-1 text-xs rounded-md border border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">Remover</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lado E -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-300 text-center">Lado E</label>
+                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors p-4 min-h-[160px] flex items-center justify-center">
+                        <div id="photo_side_left_placeholder" class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex text-sm text-gray-400 justify-center">
+                                <label for="photo_side_left" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none px-3 py-1">
+                                    <span>Tirar / Upload</span>
+                                    <input id="photo_side_left" name="photo_side_left" type="file" class="sr-only" accept="image/*" capture="environment">
+                                </label>
+                            </div>
+                        </div>
+                        <div id="photo_side_left_preview_wrapper" class="hidden w-full">
+                            <img id="photo_side_left_preview" src="" alt="Preview lateral esquerdo" class="w-full h-32 object-cover rounded-md border border-gray-600">
+                            <div class="mt-2 flex justify-center">
+                                <button type="button" id="photo_side_left_remove" class="px-3 py-1 text-xs rounded-md border border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">Remover</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Mais</label>
+                <p id="photo_limit_hint" class="text-xs text-gray-400 mb-2">Máximo de 9 imagens no total por avaliação.</p>
+                <div class="border-2 border-gray-600 border-dashed rounded-md p-4 hover:border-indigo-500 transition-colors">
+                    <div class="flex items-center justify-center">
+                        <label for="photo_extra" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none px-3 py-1 text-sm">
+                            <span>Adicionar imagens extras</span>
+                            <input id="photo_extra" name="photo_extra[]" type="file" class="sr-only" accept="image/*" capture="environment" multiple>
+                        </label>
+                    </div>
+                    <div id="photo_extra_preview_wrapper" class="hidden mt-4">
+                        <div id="photo_extra_preview_grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"></div>
+                        <div class="mt-3 flex justify-center">
+                            <button type="button" id="photo_extra_remove" class="px-3 py-1 text-xs rounded-md border border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">Remover todas</button>
                         </div>
                     </div>
                 </div>
@@ -426,7 +397,7 @@
                     Cancelar
                 </a>
                 <button type="button" onclick="showProtocolSelector()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-all">
-                    Continuar
+                    Selecionar cálculo
                 </button>
             </div>
         </form>
@@ -508,6 +479,174 @@
     let calculatedProtocols = {};
     const studentGender = '{{ $student->gender ?? "" }}';
     const studentBirthDate = '{{ $student->birth_date ? $student->birth_date->format("Y-m-d") : "" }}';
+
+    function setupImagePreview(inputId, previewId, placeholderId, previewWrapperId, removeBtnId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        const placeholder = document.getElementById(placeholderId);
+        const previewWrapper = document.getElementById(previewWrapperId);
+        const removeBtn = document.getElementById(removeBtnId);
+
+        if (!input || !preview || !placeholder || !previewWrapper || !removeBtn) return;
+
+        const resetPreview = () => {
+            if (preview.dataset.objectUrl) {
+                URL.revokeObjectURL(preview.dataset.objectUrl);
+                delete preview.dataset.objectUrl;
+            }
+            preview.removeAttribute('src');
+            input.value = '';
+            previewWrapper.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+        };
+
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (!file || !file.type.startsWith('image/')) {
+                resetPreview();
+                return;
+            }
+
+            if (preview.dataset.objectUrl) {
+                URL.revokeObjectURL(preview.dataset.objectUrl);
+            }
+
+            const objectUrl = URL.createObjectURL(file);
+            preview.src = objectUrl;
+            preview.dataset.objectUrl = objectUrl;
+            placeholder.classList.add('hidden');
+            previewWrapper.classList.remove('hidden');
+        });
+
+        removeBtn.addEventListener('click', resetPreview);
+    }
+
+    function setupMultipleImagesPreview(inputId, previewWrapperId, previewGridId, removeBtnId) {
+        const input = document.getElementById(inputId);
+        const previewWrapper = document.getElementById(previewWrapperId);
+        const previewGrid = document.getElementById(previewGridId);
+        const removeBtn = document.getElementById(removeBtnId);
+
+        if (!input || !previewWrapper || !previewGrid || !removeBtn) return;
+
+        let objectUrls = [];
+        let bufferedFiles = [];
+
+        const getSelectedSinglePhotosCount = () => {
+            let count = 0;
+            if (document.getElementById('photo_front')?.files?.length) count++;
+            if (document.getElementById('photo_back')?.files?.length) count++;
+            if (document.getElementById('photo_side_right')?.files?.length) count++;
+            if (document.getElementById('photo_side_left')?.files?.length) count++;
+            return count;
+        };
+
+        const updateLimitHint = () => {
+            const hint = document.getElementById('photo_limit_hint');
+            if (!hint) return;
+
+            const selectedSingles = getSelectedSinglePhotosCount();
+            const maxExtras = Math.max(0, 9 - selectedSingles);
+            const remainingExtras = Math.max(0, maxExtras - bufferedFiles.length);
+            hint.textContent = `Máximo de 9 imagens no total por avaliação. Você pode enviar até ${remainingExtras} imagem(ns) em "Mais".`;
+        };
+
+        const clearPreviews = () => {
+            objectUrls.forEach(url => URL.revokeObjectURL(url));
+            objectUrls = [];
+            previewGrid.innerHTML = '';
+            previewWrapper.classList.add('hidden');
+        };
+
+        const syncInputFiles = () => {
+            const dataTransfer = new DataTransfer();
+            bufferedFiles.forEach(file => dataTransfer.items.add(file));
+            input.files = dataTransfer.files;
+        };
+
+        const renderPreviews = () => {
+            clearPreviews();
+
+            if (!bufferedFiles.length) {
+                input.value = '';
+                updateLimitHint();
+                return;
+            }
+
+            bufferedFiles.forEach(file => {
+                const objectUrl = URL.createObjectURL(file);
+                objectUrls.push(objectUrl);
+
+                const img = document.createElement('img');
+                img.src = objectUrl;
+                img.alt = 'Preview imagem extra';
+                img.className = 'w-full object-contain rounded-md border border-gray-600 bg-gray-900';
+                img.style.aspectRatio = '16 / 9';
+                previewGrid.appendChild(img);
+            });
+
+            previewWrapper.classList.remove('hidden');
+            updateLimitHint();
+        };
+
+        input.addEventListener('change', () => {
+            const newFiles = Array.from(input.files || []).filter(file => file.type.startsWith('image/'));
+            if (!newFiles.length) {
+                syncInputFiles();
+                return;
+            }
+
+            const maxExtras = Math.max(0, 9 - getSelectedSinglePhotosCount());
+            const availableSlots = Math.max(0, maxExtras - bufferedFiles.length);
+
+            if (availableSlots <= 0) {
+                alert('Limite de imagens extras atingido para esta avaliação.');
+                syncInputFiles();
+                updateLimitHint();
+                return;
+            }
+
+            const filesToAdd = newFiles.slice(0, availableSlots);
+            if (filesToAdd.length < newFiles.length) {
+                alert(`Limite excedido. Você pode adicionar apenas mais ${availableSlots} imagem(ns) em "Mais".`);
+            }
+
+            bufferedFiles = [...bufferedFiles, ...filesToAdd];
+            syncInputFiles();
+            renderPreviews();
+        });
+
+        removeBtn.addEventListener('click', () => {
+            bufferedFiles = [];
+            syncInputFiles();
+            renderPreviews();
+        });
+
+        ['photo_front', 'photo_back', 'photo_side_right', 'photo_side_left'].forEach(id => {
+            const singleInput = document.getElementById(id);
+            if (singleInput) {
+                singleInput.addEventListener('change', () => {
+                    const maxExtras = Math.max(0, 9 - getSelectedSinglePhotosCount());
+                    if (bufferedFiles.length > maxExtras) {
+                        bufferedFiles = bufferedFiles.slice(0, maxExtras);
+                        syncInputFiles();
+                        renderPreviews();
+                        alert('Ajustamos a quantidade de imagens extras para respeitar o limite total de 9 imagens.');
+                    } else {
+                        updateLimitHint();
+                    }
+                });
+            }
+        });
+
+        updateLimitHint();
+    }
+
+    setupImagePreview('photo_front', 'photo_front_preview', 'photo_front_placeholder', 'photo_front_preview_wrapper', 'photo_front_remove');
+    setupImagePreview('photo_back', 'photo_back_preview', 'photo_back_placeholder', 'photo_back_preview_wrapper', 'photo_back_remove');
+    setupImagePreview('photo_side_right', 'photo_side_right_preview', 'photo_side_right_placeholder', 'photo_side_right_preview_wrapper', 'photo_side_right_remove');
+    setupImagePreview('photo_side_left', 'photo_side_left_preview', 'photo_side_left_placeholder', 'photo_side_left_preview_wrapper', 'photo_side_left_remove');
+    setupMultipleImagesPreview('photo_extra', 'photo_extra_preview_wrapper', 'photo_extra_preview_grid', 'photo_extra_remove');
     
     function showProtocolSelector() {
         const weight = parseFloat(document.querySelector('input[name="weight"]').value);

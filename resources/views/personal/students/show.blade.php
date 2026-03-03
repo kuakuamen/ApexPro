@@ -125,11 +125,52 @@
                         @forelse($measurements->take(5) as $measurement)
                             <li class="px-4 py-4 flex justify-between items-center hover:bg-gray-700/30 transition-colors">
                                 <span class="text-sm text-gray-300">{{ $measurement->date->format('d/m/Y') }}</span>
-                                <div>
+                                <div class="flex items-center">
                                     <span class="text-sm font-bold text-white">{{ $measurement->weight }} kg</span>
                                     @if($measurement->body_fat)
                                         <span class="text-xs text-gray-400 ml-2">({{ $measurement->body_fat }}% gordura)</span>
                                     @endif
+                                    <button @click="$dispatch('open-measurement-modal', { 
+                                        date: '{{ $measurement->date->format('d/m/Y') }}',
+                                        weight: '{{ $measurement->weight }}',
+                                        height: '{{ $measurement->height }}',
+                                        body_fat: '{{ $measurement->body_fat }}',
+                                        muscle_mass: '{{ $measurement->muscle_mass }}',
+                                        chest: '{{ $measurement->chest }}',
+                                        left_arm: '{{ $measurement->left_arm }}',
+                                        right_arm: '{{ $measurement->right_arm }}',
+                                        waist: '{{ $measurement->waist }}',
+                                        abdomen: '{{ $measurement->abdomen }}',
+                                        hips: '{{ $measurement->hips }}',
+                                        left_thigh: '{{ $measurement->left_thigh }}',
+                                        right_thigh: '{{ $measurement->right_thigh }}',
+                                        left_calf: '{{ $measurement->left_calf }}',
+                                        right_calf: '{{ $measurement->right_calf }}',
+                                        injuries: '{{ addslashes($measurement->injuries ?? 'Nenhuma') }}',
+                                        medications: '{{ addslashes($measurement->medications ?? 'Nenhum') }}',
+                                        surgeries: '{{ addslashes($measurement->surgeries ?? 'Nenhuma') }}',
+                                        pain_points: '{{ addslashes($measurement->pain_points ?? 'Nenhuma') }}',
+                                        habits: '{{ addslashes($measurement->habits ?? 'Não informado') }}',
+                                        goal: '{{ addslashes($measurement->goal ?? 'Não informado') }}',
+                                        notes: '{{ addslashes($measurement->notes ?? 'Sem observações') }}',
+                                        photo_front: '{{ $measurement->photo_front ? '/' . ltrim(route('measurement.photo', [$measurement->id, 'front'], false), '/') . '?v=' . ($measurement->updated_at?->timestamp ?? time()) : '' }}',
+                                        photo_side: '{{ $measurement->photo_side ? '/' . ltrim(route('measurement.photo', [$measurement->id, 'side'], false), '/') . '?v=' . ($measurement->updated_at?->timestamp ?? time()) : '' }}',
+                                        photo_back: '{{ $measurement->photo_back ? '/' . ltrim(route('measurement.photo', [$measurement->id, 'back'], false), '/') . '?v=' . ($measurement->updated_at?->timestamp ?? time()) : '' }}',
+                                        guedes_density: '{{ $measurement->guedes_density }}',
+                                        guedes_fat_pct: '{{ $measurement->guedes_fat_pct }}',
+                                        guedes_fat_mass: '{{ $measurement->guedes_fat_mass }}',
+                                        guedes_lean_mass: '{{ $measurement->guedes_lean_mass }}',
+                                        pollock3_density: '{{ $measurement->pollock3_density }}',
+                                        pollock3_fat_pct: '{{ $measurement->pollock3_fat_pct }}',
+                                        pollock3_fat_mass: '{{ $measurement->pollock3_fat_mass }}',
+                                        pollock3_lean_mass: '{{ $measurement->pollock3_lean_mass }}',
+                                        pollock7_density: '{{ $measurement->pollock7_density }}',
+                                        pollock7_fat_pct: '{{ $measurement->pollock7_fat_pct }}',
+                                        pollock7_fat_mass: '{{ $measurement->pollock7_fat_mass }}',
+                                        pollock7_lean_mass: '{{ $measurement->pollock7_lean_mass }}'
+                                    })" class="text-gray-300 hover:text-white ml-3 transition-colors" title="Ver Detalhes">
+                                        <svg class="h-5 w-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    </button>
                                 </div>
                             </li>
                         @empty
@@ -290,21 +331,67 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                                         {{ $measurement->muscle_mass ? $measurement->muscle_mass . ' kg' : '-' }}
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 flex space-x-2">
-                                        @if($measurement->photo_front)
-                                            <a href="{{ route('measurement.photo', [$measurement->id, 'front']) }}" target="_blank" class="text-indigo-400 hover:text-indigo-300 transition-colors" title="Frente">
-                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                            </a>
-                                        @endif
-                                        @if($measurement->photo_back)
-                                            <a href="{{ route('measurement.photo', [$measurement->id, 'back']) }}" target="_blank" class="text-indigo-400 hover:text-indigo-300 transition-colors" title="Costas">
-                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                            </a>
-                                        @endif
-                                        @if($measurement->photo_side)
-                                            <a href="{{ route('measurement.photo', [$measurement->id, 'side']) }}" target="_blank" class="text-indigo-400 hover:text-indigo-300 transition-colors" title="Perfil">
-                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                            </a>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                        @php
+                                            $photoItems = [];
+
+                                            if ($measurement->photo_front) {
+                                                $photoItems[] = [
+                                                    'label' => 'Frente',
+                                                    'url' => route('measurement.photo', [$measurement->id, 'front']) . '?v=' . ($measurement->updated_at?->timestamp ?? time()),
+                                                ];
+                                            }
+
+                                            if ($measurement->photo_back) {
+                                                $photoItems[] = [
+                                                    'label' => 'Costas',
+                                                    'url' => route('measurement.photo', [$measurement->id, 'back']) . '?v=' . ($measurement->updated_at?->timestamp ?? time()),
+                                                ];
+                                            }
+
+                                            if ($measurement->photo_side_right || $measurement->photo_side) {
+                                                $photoItems[] = [
+                                                    'label' => 'Lado D',
+                                                    'url' => route('measurement.photo', [$measurement->id, 'side_right']) . '?v=' . ($measurement->updated_at?->timestamp ?? time()),
+                                                ];
+                                            }
+
+                                            if ($measurement->photo_side_left) {
+                                                $photoItems[] = [
+                                                    'label' => 'Lado E',
+                                                    'url' => route('measurement.photo', [$measurement->id, 'side_left']) . '?v=' . ($measurement->updated_at?->timestamp ?? time()),
+                                                ];
+                                            }
+
+                                            if (is_array($measurement->extra_photos)) {
+                                                foreach ($measurement->extra_photos as $index => $extraPhotoPath) {
+                                                    $photoItems[] = [
+                                                        'label' => 'Extra ' . ($index + 1),
+                                                        'url' => route('measurement.photo.extra', [$measurement->id, $index]) . '?v=' . ($measurement->updated_at?->timestamp ?? time()),
+                                                    ];
+                                                }
+                                            }
+
+                                            $photoModalPayload = [
+                                                'date' => $measurement->date->format('d/m/Y'),
+                                                'photos' => $photoItems,
+                                            ];
+                                        @endphp
+
+                                        @if(count($photoItems) > 0)
+                                            @php $photoCount = count($photoItems); @endphp
+                                            <script type="application/json" id="photos-payload-{{ $measurement->id }}">@json($photoModalPayload)</script>
+                                            <button
+                                                type="button"
+                                                onclick="openMeasurementPhotosModal({{ $measurement->id }})"
+                                                class="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-zinc-600 text-indigo-300 bg-zinc-800/60 hover:bg-zinc-700/80 hover:border-indigo-500 transition-colors"
+                                                title="Ver {{ $photoCount }} imagem(ns)"
+                                            >
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                <span class="sr-only">Ver imagens</span>
+                                            </button>
+                                        @else
+                                            <span class="text-gray-500">-</span>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -332,9 +419,9 @@
                                             habits: '{{ addslashes($measurement->habits ?? 'Não informado') }}',
                                             goal: '{{ addslashes($measurement->goal ?? 'Não informado') }}',
                                             notes: '{{ addslashes($measurement->notes ?? 'Sem observações') }}',
-                                            photo_front: '{{ $measurement->photo_front ? route('measurement.photo', [$measurement->id, 'front']) : '' }}',
-                                            photo_side: '{{ $measurement->photo_side ? route('measurement.photo', [$measurement->id, 'side']) : '' }}',
-                                            photo_back: '{{ $measurement->photo_back ? route('measurement.photo', [$measurement->id, 'back']) : '' }}',
+                                            photo_front: '{{ $measurement->photo_front ? '/' . ltrim(route('measurement.photo', [$measurement->id, 'front'], false), '/') . '?v=' . ($measurement->updated_at?->timestamp ?? time()) : '' }}',
+                                            photo_side: '{{ $measurement->photo_side ? '/' . ltrim(route('measurement.photo', [$measurement->id, 'side'], false), '/') . '?v=' . ($measurement->updated_at?->timestamp ?? time()) : '' }}',
+                                            photo_back: '{{ $measurement->photo_back ? '/' . ltrim(route('measurement.photo', [$measurement->id, 'back'], false), '/') . '?v=' . ($measurement->updated_at?->timestamp ?? time()) : '' }}',
                                             guedes_density: '{{ $measurement->guedes_density }}',
                                             guedes_fat_pct: '{{ $measurement->guedes_fat_pct }}',
                                             guedes_fat_mass: '{{ $measurement->guedes_fat_mass }}',
@@ -372,7 +459,7 @@
     </div>
 
     <!-- Modal de Detalhes da Avaliação -->
-    <div x-data="{ open: false, data: {}, zoomedImage: null }" 
+    <div x-data="{ open: false, data: {} }" 
          @open-measurement-modal.window="open = true; data = $event.detail"
          x-show="open" 
          class="fixed inset-0 overflow-y-auto" 
@@ -493,17 +580,16 @@
                             </div>
 
                             <!-- Tabela de Referência de Classificação de Gordura -->
-                            <div x-data="{ showGenderTable: 'female' }">
+                            @php
+                                $genderValue = strtolower((string) ($student->gender ?? ''));
+                                $isMaleGender = str_contains($genderValue, 'masc') || $genderValue === 'm' || $genderValue === 'male';
+                            @endphp
+                            <div>
                                 <h4 class="text-sm font-bold text-teal-300 mb-3 border-b border-zinc-700 pb-1">📋 Classificação do Percentual de Gordura</h4>
-                                
-                                <!-- Abas de Seleção de Gênero -->
-                                <div class="flex gap-2 mb-3">
-                                    <button @click="showGenderTable = 'female'" :class="showGenderTable === 'female' ? 'bg-teal-700 text-stone-100' : 'bg-zinc-800 text-stone-300 hover:bg-zinc-700'" class="px-3 py-1 rounded text-xs font-semibold transition">👩 Mulheres</button>
-                                    <button @click="showGenderTable = 'male'" :class="showGenderTable === 'male' ? 'bg-teal-700 text-stone-100' : 'bg-zinc-800 text-stone-300 hover:bg-zinc-700'" class="px-3 py-1 rounded text-xs font-semibold transition">👨 Homens</button>
-                                </div>
 
                                 <!-- Tabela Mulheres -->
-                                <div x-show="showGenderTable === 'female'" class="overflow-x-auto">
+                                @if(!$isMaleGender)
+                                <div class="overflow-x-auto">
                                     <table class="w-full text-xs border-collapse">
                                         <thead>
                                             <tr class="bg-teal-950/30 border-b border-teal-800/40">
@@ -527,9 +613,11 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                @endif
 
                                 <!-- Tabela Homens -->
-                                <div x-show="showGenderTable === 'male'" class="overflow-x-auto">
+                                @if($isMaleGender)
+                                <div class="overflow-x-auto">
                                     <table class="w-full text-xs border-collapse">
                                         <thead>
                                             <tr class="bg-teal-950/30 border-b border-teal-800/40">
@@ -553,31 +641,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                            </div>
-
-                            <!-- Fotos (Agora com Zoom Modal) -->
-                            <div x-show="data.photo_front || data.photo_back || data.photo_side">
-                                <h4 class="text-sm font-bold text-teal-300 mb-2 border-b border-zinc-700 pb-1">Galeria de Fotos (Clique para ampliar)</h4>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <template x-if="data.photo_front">
-                                        <div @click="zoomedImage = data.photo_front" class="cursor-pointer border border-zinc-700 rounded hover:opacity-75 transition">
-                                            <img :src="data.photo_front" class="w-full h-24 object-cover rounded" alt="Frente">
-                                            <p class="text-xs text-center p-1 text-stone-400">Frente</p>
-                                        </div>
-                                    </template>
-                                    <template x-if="data.photo_side">
-                                        <div @click="zoomedImage = data.photo_side" class="cursor-pointer border border-zinc-700 rounded hover:opacity-75 transition">
-                                            <img :src="data.photo_side" class="w-full h-24 object-cover rounded" alt="Perfil">
-                                            <p class="text-xs text-center p-1 text-stone-400">Perfil</p>
-                                        </div>
-                                    </template>
-                                    <template x-if="data.photo_back">
-                                        <div @click="zoomedImage = data.photo_back" class="cursor-pointer border border-zinc-700 rounded hover:opacity-75 transition">
-                                            <img :src="data.photo_back" class="w-full h-24 object-cover rounded" alt="Costas">
-                                            <p class="text-xs text-center p-1 text-stone-400">Costas</p>
-                                        </div>
-                                    </template>
-                                </div>
+                                @endif
                             </div>
 
                             <!-- Observações -->
@@ -596,25 +660,81 @@
             </div>
         </div>
 
-        <!-- Overlay de Zoom de Imagem -->
-        <div x-show="zoomedImage" 
-             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-90"
-             style="z-index: 6000; display: none;"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0">
-            
-            <!-- Botão Fechar -->
-            <button @click="zoomedImage = null" class="absolute top-4 right-4 text-white hover:text-gray-300 focus:outline-none">
-                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
+    </div>
 
-            <!-- Imagem Ampliada -->
-            <img :src="zoomedImage" class="max-h-screen max-w-full p-4 rounded shadow-lg" @click.away="zoomedImage = null">
+    <!-- Modal de Fotos da Avaliação -->
+        <div x-data="{ open: false, data: { date: '', photos: [] }, zoomOpen: false, zoomPhoto: null }"
+            @open-measurement-photos-modal.window="open = true; data = $event.detail || { date: '', photos: [] }; zoomOpen = false; zoomPhoto = null"
+                @keydown.escape.window="if (zoomOpen) { zoomOpen = false } else { open = false }"
+         x-show="open"
+         x-cloak
+         class="fixed inset-0"
+         style="z-index: 5100;"
+         aria-labelledby="photos-modal-title" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 bg-black/80" style="z-index: 1;" @click="open = false"></div>
+
+        <div class="absolute inset-0 flex items-center justify-center p-2 sm:p-4" style="z-index: 10;">
+            <div :class="zoomOpen ? 'opacity-35' : 'opacity-100'" class="relative w-full max-w-4xl h-[94vh] sm:h-auto sm:max-h-[90vh] bg-zinc-900 border border-zinc-700 rounded-xl p-3 sm:p-6 shadow-xl overflow-hidden flex flex-col transition-opacity duration-200">
+                <div class="sticky top-0 z-10 bg-zinc-900 pb-3 mb-3 border-b border-zinc-700 flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-stone-100" id="photos-modal-title">
+                        Fotos da Avaliação (<span x-text="data.date"></span>)
+                    </h3>
+                    <button type="button" @click="open = false" class="px-3 py-1.5 rounded-md border border-zinc-600 text-sm text-gray-200 hover:bg-zinc-800">Fechar</button>
+                </div>
+
+                <div x-show="(data.photos || []).length > 0" class="flex-1 overflow-hidden pr-1">
+                    <div class="grid" style="grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.35rem; align-content: start;">
+                    <template x-for="(photo, idx) in (data.photos || [])" :key="idx">
+                        <button type="button" @click="zoomPhoto = photo; zoomOpen = true" class="block w-full text-left bg-zinc-800/60 border border-zinc-700 rounded-md p-0.5 hover:border-indigo-500 transition-colors cursor-zoom-in" style="touch-action: manipulation;" :title="photo.label">
+                            <img :src="photo.url" :alt="photo.label" class="w-full object-cover rounded-sm bg-zinc-950" style="aspect-ratio: 1 / 1; display: block;">
+                        </button>
+                    </template>
+                    </div>
+                </div>
+
+                <p x-show="(data.photos || []).length === 0" class="text-sm text-gray-400">Nenhuma imagem disponível para esta avaliação.</p>
+
+                <div class="sticky bottom-0 z-10 bg-zinc-900 pt-3 mt-3 border-t border-zinc-700">
+                    <button type="button" class="inline-flex justify-center w-full rounded-md border border-zinc-600 shadow-sm px-4 py-2 bg-zinc-700 text-base font-medium text-stone-100 hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-teal-600 sm:text-sm transition-all duration-300" @click="open = false">
+                        Fechar
+                    </button>
+                </div>
+
+                <!-- Zoom da Imagem (na própria tela) -->
+                <div x-show="zoomOpen" x-cloak class="fixed inset-0" style="z-index: 5200;" @keydown.escape.window="zoomOpen = false"
+                     x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                     x-transition:leave="ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                    <div class="absolute inset-0 bg-black/55" @click="zoomOpen = false"></div>
+                    <div class="absolute inset-0 flex items-center justify-center p-4">
+                        <div class="w-full max-w-6xl"
+                             x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                             x-transition:leave="ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-sm text-indigo-300 font-medium" x-text="zoomPhoto?.label || 'Imagem'"></p>
+                                <button type="button" @click="zoomOpen = false" class="text-gray-300 hover:text-white text-xl">✕</button>
+                            </div>
+                            <img :src="zoomPhoto?.url" :alt="zoomPhoto?.label || 'Imagem ampliada'" class="w-full max-h-[82vh] object-contain rounded-lg border border-zinc-700 bg-zinc-950">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script>
+        function openMeasurementPhotosModal(measurementId) {
+            const payloadElement = document.getElementById(`photos-payload-${measurementId}`);
+            if (!payloadElement) {
+                return;
+            }
+
+            try {
+                const payload = JSON.parse(payloadElement.textContent || '{}');
+                window.dispatchEvent(new CustomEvent('open-measurement-photos-modal', { detail: payload }));
+            } catch (error) {
+                console.error('Erro ao abrir modal de fotos:', error);
+            }
+        }
+    </script>
 </div>
 @endsection

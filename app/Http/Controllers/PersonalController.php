@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PersonalController extends Controller
 {
@@ -204,6 +205,14 @@ class PersonalController extends Controller
             'photo_front' => 'nullable|image|max:5120', // Max 5MB
             'photo_back' => 'nullable|image|max:5120',
             'photo_side' => 'nullable|image|max:5120',
+            'photo_side_right' => 'nullable|image|max:5120',
+            'photo_side_left' => 'nullable|image|max:5120',
+            'photo_extra' => 'nullable|array|max:9',
+            'photo_extra.*' => 'nullable|image|max:5120',
+            'replace_extra_photos' => 'nullable|array',
+            'replace_extra_photos.*' => 'nullable|image|max:5120',
+            'remove_extra_photos' => 'nullable|array',
+            'remove_extra_photos.*' => 'nullable|integer|min:0',
             'injuries' => 'nullable|string',
             'medications' => 'nullable|string',
             'surgeries' => 'nullable|string',
@@ -232,6 +241,8 @@ class PersonalController extends Controller
         $data['student_id'] = $student->id;
         $data['professional_id'] = Auth::id();
 
+        $this->validateTotalPhotosLimitOnCreate($request);
+
         // If sum not provided, calculate sum of available skinfolds
         if (empty($data['sum_skinfolds'])) {
             $sum = 0;
@@ -258,6 +269,19 @@ class PersonalController extends Controller
         }
         if ($request->hasFile('photo_side')) {
             $data['photo_side'] = $request->file('photo_side')->store('assessments', 'private');
+        }
+        if ($request->hasFile('photo_side_right')) {
+            $data['photo_side_right'] = $request->file('photo_side_right')->store('assessments', 'private');
+        }
+        if ($request->hasFile('photo_side_left')) {
+            $data['photo_side_left'] = $request->file('photo_side_left')->store('assessments', 'private');
+        }
+        if ($request->hasFile('photo_extra')) {
+            $extraPhotos = [];
+            foreach ($request->file('photo_extra') as $extraPhoto) {
+                $extraPhotos[] = $extraPhoto->store('assessments', 'private');
+            }
+            $data['extra_photos'] = $extraPhotos;
         }
 
         BodyMeasurement::create($data);
@@ -354,9 +378,21 @@ class PersonalController extends Controller
             'photo_front' => 'nullable|image|max:5120',
             'photo_back' => 'nullable|image|max:5120',
             'photo_side' => 'nullable|image|max:5120',
+            'photo_side_right' => 'nullable|image|max:5120',
+            'photo_side_left' => 'nullable|image|max:5120',
+            'photo_extra' => 'nullable|array|max:9',
+            'photo_extra.*' => 'nullable|image|max:5120',
+            'injuries' => 'nullable|string',
+            'medications' => 'nullable|string',
+            'surgeries' => 'nullable|string',
+            'pain_points' => 'nullable|string',
+            'habits' => 'nullable|string',
+            'goal' => 'nullable|string',
         ]);
 
         $data = $validated;
+
+        $this->validateTotalPhotosLimitOnUpdate($request, $measurement);
 
         // Recalculate sum of skinfolds if not provided
         if (empty($data['sum_skinfolds'])) {
@@ -384,6 +420,45 @@ class PersonalController extends Controller
         }
         if ($request->hasFile('photo_side')) {
             $data['photo_side'] = $request->file('photo_side')->store('assessments', 'private');
+        }
+        if ($request->hasFile('photo_side_right')) {
+            $data['photo_side_right'] = $request->file('photo_side_right')->store('assessments', 'private');
+        }
+        if ($request->hasFile('photo_side_left')) {
+            $data['photo_side_left'] = $request->file('photo_side_left')->store('assessments', 'private');
+        }
+        $existingExtraPhotos = is_array($measurement->extra_photos) ? $measurement->extra_photos : [];
+        $hasExtraChanges = $request->hasFile('photo_extra') || $request->hasFile('replace_extra_photos') || $request->filled('remove_extra_photos');
+
+        if ($hasExtraChanges) {
+            $removeIndexes = collect($request->input('remove_extra_photos', []))
+                ->map(fn ($index) => (int) $index)
+                ->unique()
+                ->values()
+                ->all();
+
+            $replaceExtraPhotos = $request->file('replace_extra_photos', []);
+            $processedExtraPhotos = [];
+
+            foreach ($existingExtraPhotos as $index => $existingPath) {
+                if (in_array((int) $index, $removeIndexes, true)) {
+                    continue;
+                }
+
+                if (isset($replaceExtraPhotos[$index])) {
+                    $processedExtraPhotos[] = $replaceExtraPhotos[$index]->store('assessments', 'private');
+                } else {
+                    $processedExtraPhotos[] = $existingPath;
+                }
+            }
+
+            if ($request->hasFile('photo_extra')) {
+                foreach ($request->file('photo_extra') as $extraPhoto) {
+                    $processedExtraPhotos[] = $extraPhoto->store('assessments', 'private');
+                }
+            }
+
+            $data['extra_photos'] = array_values($processedExtraPhotos);
         }
 
         $measurement->update($data);
@@ -446,6 +521,62 @@ class PersonalController extends Controller
     /**
      * Calcula composição corporal (Guedes, Pollock 3 e 7) e preenche os campos automaticamente
      */
+    private function validateTotalPhotosLimitOnCreate(Request $request): void
+    {
+        $singlePhotosCount = 0;
+        if ($request->hasFile('photo_front')) $singlePhotosCount++;
+        if ($request->hasFile('photo_back')) $singlePhotosCount++;
+        if ($request->hasFile('photo_side') || $request->hasFile('photo_side_right')) $singlePhotosCount++;
+        if ($request->hasFile('photo_side_left')) $singlePhotosCount++;
+
+        $extraPhotosCount = count($request->file('photo_extra', []));
+        $totalPhotos = $singlePhotosCount + $extraPhotosCount;
+
+        if ($totalPhotos > 9) {
+            throw ValidationException::withMessages([
+                'photo_extra' => 'Você pode enviar no máximo 9 imagens no total por avaliação.',
+            ]);
+        }
+    }
+
+    private function validateTotalPhotosLimitOnUpdate(Request $request, BodyMeasurement $measurement): void
+    {
+        $frontExists = $request->hasFile('photo_front') || !empty($measurement->photo_front);
+        $backExists = $request->hasFile('photo_back') || !empty($measurement->photo_back);
+        $sideRightExists =
+            $request->hasFile('photo_side') ||
+            $request->hasFile('photo_side_right') ||
+            !empty($measurement->photo_side_right) ||
+            !empty($measurement->photo_side);
+        $sideLeftExists = $request->hasFile('photo_side_left') || !empty($measurement->photo_side_left);
+
+        $singlePhotosCount = ($frontExists ? 1 : 0)
+            + ($backExists ? 1 : 0)
+            + ($sideRightExists ? 1 : 0)
+            + ($sideLeftExists ? 1 : 0);
+
+        $existingExtraPhotosCount = is_array($measurement->extra_photos)
+            ? count($measurement->extra_photos)
+            : 0;
+
+        $removeIndexes = collect($request->input('remove_extra_photos', []))
+            ->map(fn ($index) => (int) $index)
+            ->filter(fn ($index) => $index >= 0 && $index < $existingExtraPhotosCount)
+            ->unique()
+            ->count();
+
+        $remainingExistingExtraPhotosCount = max(0, $existingExtraPhotosCount - $removeIndexes);
+        $newExtraPhotosCount = count($request->file('photo_extra', []));
+
+        $totalPhotos = $singlePhotosCount + $remainingExistingExtraPhotosCount + $newExtraPhotosCount;
+
+        if ($totalPhotos > 9) {
+            throw ValidationException::withMessages([
+                'photo_extra' => 'Limite máximo atingido: esta avaliação permite até 9 imagens no total.',
+            ]);
+        }
+    }
+
     private function calculateBodyComposition(&$data, User $student)
     {
         if (empty($data['weight'])) {
