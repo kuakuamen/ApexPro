@@ -74,7 +74,7 @@ class AiAnalysisService
                            "Hábitos: " . ($anamnese['habits'] ?? 'Não informado') . ".";
 
             $prompt = "Você é um Personal Trainer de elite e especialista em biomecânica. " .
-                "Analise estas 3 fotos do aluno e seus dados: " .
+                "Analise estas fotos do aluno (frontal, lateral, costas e extras, quando enviados) e seus dados: " .
                 "Objetivo: " . ($studentData['goal'] ?? 'Geral') . ". " .
                 "Experiência: " . ($studentData['experience'] ?? 'Iniciante') . ". " .
                 "PERFIL: Sexo: " . ($studentData['gender'] ?? 'Não inf.') . ". " .

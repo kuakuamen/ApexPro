@@ -91,15 +91,16 @@
                     <div class="border-t border-gray-700 pt-6">
                         <h4 class="text-md font-bold text-white mb-4">Fotos para Análise</h4>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <!-- Foto Frente -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-300 mb-2">Vista Frontal</label>
-                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm">
+                                <div id="photo_front_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm">
                                     <div class="space-y-3 text-center w-full">
-                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                        <svg id="photo_front_icon" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                         </svg>
+                                        <img id="photo_front_preview" src="" alt="Preview frontal" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
                                         <div class="flex flex-col gap-2">
                                             <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_front')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -110,42 +111,55 @@
                                                 Galeria
                                             </button>
                                         </div>
-                                        <div id="photo_front_status" class="hidden">
-                                            <span class="inline-flex items-center gap-2 bg-green-500 text-white px-3 py-2 rounded-lg font-medium">
-                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                                                Foto adicionada
-                                            </span>
-                                        </div>
                                         <input id="photo_front" name="photo_front" type="file" class="sr-only" accept="image/*" required>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Foto Lado -->
+                            <!-- Foto Lado D -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Vista Lateral (Perfil)</label>
-                                <div id="photo_side_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Vista Lateral D</label>
+                                <div id="photo_side_right_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm">
                                     <div class="space-y-3 text-center w-full">
-                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                        <svg id="photo_side_right_icon" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                         </svg>
+                                        <img id="photo_side_right_preview" src="" alt="Preview lateral direita" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
                                         <div class="flex flex-col gap-2">
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_side')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_side_right')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                                 Câmera
                                             </button>
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_side')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_side_right')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 Galeria
                                             </button>
                                         </div>
-                                        <div id="photo_side_status" class="hidden">
-                                            <span class="inline-flex items-center gap-2 bg-green-500 text-white px-3 py-2 rounded-lg font-medium">
-                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                                                Foto adicionada
-                                            </span>
+                                        <input id="photo_side_right" name="photo_side_right" type="file" class="sr-only" accept="image/*" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Foto Lado E -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Vista Lateral E</label>
+                                <div id="photo_side_left_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm">
+                                    <div class="space-y-3 text-center w-full">
+                                        <svg id="photo_side_left_icon" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        <img id="photo_side_left_preview" src="" alt="Preview lateral esquerda" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
+                                        <div class="flex flex-col gap-2">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_side_left')">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                                Câmera
+                                            </button>
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_side_left')">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                Galeria
+                                            </button>
                                         </div>
-                                        <input id="photo_side" name="photo_side" type="file" class="sr-only" accept="image/*" required>
+                                        <input id="photo_side_left" name="photo_side_left" type="file" class="sr-only" accept="image/*" required>
                                     </div>
                                 </div>
                             </div>
@@ -155,9 +169,10 @@
                                 <label class="block text-sm font-medium text-gray-300 mb-2">Vista Costas</label>
                                 <div id="photo_back_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm">
                                     <div class="space-y-3 text-center w-full">
-                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                        <svg id="photo_back_icon" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                         </svg>
+                                        <img id="photo_back_preview" src="" alt="Preview costas" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
                                         <div class="flex flex-col gap-2">
                                             <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_back')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -168,15 +183,24 @@
                                                 Galeria
                                             </button>
                                         </div>
-                                        <div id="photo_back_status" class="hidden">
-                                            <span class="inline-flex items-center gap-2 bg-green-500 text-white px-3 py-2 rounded-lg font-medium">
-                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                                                Foto adicionada
-                                            </span>
-                                        </div>
                                         <input id="photo_back" name="photo_back" type="file" class="sr-only" accept="image/*" required>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Fotos Extras (Opcional)</label>
+                            <div id="photo_extra_container" class="mt-1 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm p-4">
+                                <div class="flex flex-col sm:flex-row gap-2 items-center justify-between">
+                                    <p class="text-xs text-gray-400">Adicione até 6 fotos extras para a IA analisar melhor.</p>
+                                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_extra')">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        Adicionar Fotos Extras
+                                    </button>
+                                </div>
+                                <input id="photo_extra" name="photo_extra[]" type="file" class="sr-only" accept="image/*" multiple>
+                                <div id="photo_extra_preview_grid" class="hidden mt-4 grid grid-cols-2 md:grid-cols-3 gap-3"></div>
                             </div>
                         </div>
                     </div>
@@ -325,18 +349,6 @@
         activeBtn.classList.remove('border-transparent', 'text-gray-400');
     }
 
-    // Preview simples do nome do arquivo (opcional)
-    document.querySelectorAll('input[type="file"]').forEach(input => {
-        input.addEventListener('change', (e) => {
-            const fileName = e.target.files[0]?.name;
-            if(fileName) {
-                const label = e.target.closest('div').querySelector('span');
-                label.innerText = fileName;
-                label.classList.add('text-green-400');
-            }
-        });
-    });
-
     // Funções para abrir câmera ou galeria
     function openCamera(inputId) {
         const input = document.getElementById(inputId);
@@ -350,32 +362,42 @@
         input.click();
     }
 
-    // Indicador visual de foto adicionada
+    // Miniatura + borda visual para fotos principais
     function setupPhotoIndicators() {
         const photos = [
-            { input: 'photo_front', status: 'photo_front_status', container: 'photo_front_container' },
-            { input: 'photo_side', status: 'photo_side_status', container: 'photo_side_container' },
-            { input: 'photo_back', status: 'photo_back_status', container: 'photo_back_container' }
+            { input: 'photo_front', container: 'photo_front_container', preview: 'photo_front_preview', icon: 'photo_front_icon' },
+            { input: 'photo_side_right', container: 'photo_side_right_container', preview: 'photo_side_right_preview', icon: 'photo_side_right_icon' },
+            { input: 'photo_side_left', container: 'photo_side_left_container', preview: 'photo_side_left_preview', icon: 'photo_side_left_icon' },
+            { input: 'photo_back', container: 'photo_back_container', preview: 'photo_back_preview', icon: 'photo_back_icon' }
         ];
 
         photos.forEach(photo => {
             const input = document.getElementById(photo.input);
-            const statusBadge = document.getElementById(photo.status);
             const container = document.getElementById(photo.container);
+            const preview = document.getElementById(photo.preview);
+            const icon = document.getElementById(photo.icon);
+
+            if (!input || !container || !preview || !icon) {
+                return;
+            }
 
             const updateStatus = () => {
                 if (input.files.length > 0) {
-                    // Mostrar badge verde
-                    statusBadge.classList.remove('hidden');
-                    // Mudar cor da borda para verde
                     container.classList.remove('border-gray-600', 'hover:border-indigo-400');
                     container.classList.add('border-green-500', 'hover:border-green-400');
+
+                    const file = input.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        preview.src = URL.createObjectURL(file);
+                        preview.classList.remove('hidden');
+                        icon.classList.add('hidden');
+                    }
                 } else {
-                    // Ocultar badge
-                    statusBadge.classList.add('hidden');
-                    // Voltar cor normal
                     container.classList.add('border-gray-600', 'hover:border-indigo-400');
                     container.classList.remove('border-green-500', 'hover:border-green-400');
+                    preview.classList.add('hidden');
+                    preview.removeAttribute('src');
+                    icon.classList.remove('hidden');
                 }
             };
 
@@ -383,6 +405,53 @@
         });
     }
 
+    // Miniaturas para fotos extras
+    function setupExtraPhotosPreview() {
+        const input = document.getElementById('photo_extra');
+        const grid = document.getElementById('photo_extra_preview_grid');
+        if (!input || !grid) return;
+
+        input.addEventListener('change', () => {
+            let files = Array.from(input.files || []).filter(file => file.type.startsWith('image/'));
+
+            if (files.length > 6) {
+                files = files.slice(0, 6);
+                const dt = new DataTransfer();
+                files.forEach(file => dt.items.add(file));
+                input.files = dt.files;
+                alert('Máximo de 6 fotos extras. Mantivemos as 6 primeiras.');
+            }
+
+            grid.innerHTML = '';
+            if (!files.length) {
+                grid.classList.add('hidden');
+                return;
+            }
+
+            files.forEach((file, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative border border-gray-600 rounded-md overflow-hidden bg-gray-900';
+
+                const label = document.createElement('div');
+                label.className = 'absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded';
+                label.textContent = `Extra ${index + 1}`;
+
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.alt = `Preview Extra ${index + 1}`;
+                img.className = 'w-full object-cover';
+                img.style.aspectRatio = '16 / 9';
+
+                wrapper.appendChild(img);
+                wrapper.appendChild(label);
+                grid.appendChild(wrapper);
+            });
+
+            grid.classList.remove('hidden');
+        });
+    }
+
     setupPhotoIndicators();
+    setupExtraPhotosPreview();
 </script>
 @endsection

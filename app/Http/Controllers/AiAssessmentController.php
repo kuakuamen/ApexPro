@@ -61,16 +61,27 @@ class AiAssessmentController extends Controller
             'experience_level' => 'required|string',
             'additional_notes' => 'nullable|string',
             'photo_front' => 'required|image|max:5120', // 5MB
-            'photo_side' => 'required|image|max:5120',
+            'photo_side_right' => 'required|image|max:5120',
+            'photo_side_left' => 'required|image|max:5120',
             'photo_back' => 'required|image|max:5120',
+            'photo_extra' => 'nullable|array|max:6',
+            'photo_extra.*' => 'nullable|image|max:5120',
         ]);
 
         $student = User::find($request->student_id);
 
         // Salvar imagens em disco PRIVADO (não público) para segurança
         $frontPath = $request->file('photo_front')->store('assessments', 'private');
-        $sidePath = $request->file('photo_side')->store('assessments', 'private');
+        $sideRightPath = $request->file('photo_side_right')->store('assessments', 'private');
+        $sideLeftPath = $request->file('photo_side_left')->store('assessments', 'private');
         $backPath = $request->file('photo_back')->store('assessments', 'private');
+        $extraPaths = [];
+
+        if ($request->hasFile('photo_extra')) {
+            foreach ($request->file('photo_extra') as $extraPhoto) {
+                $extraPaths[] = $extraPhoto->store('assessments', 'private');
+            }
+        }
 
         // BUSCA INTELIGENTE DE ANAMNESE (Última válida)
         // Procura a avaliação mais recente que tenha algum dado de anamnese preenchido
@@ -104,7 +115,7 @@ class AiAssessmentController extends Controller
 
         // Chamar o serviço de IA
         $analysisResult = $this->aiService->analyzeImages(
-            [$frontPath, $sidePath, $backPath], 
+            array_merge([$frontPath, $sideRightPath, $sideLeftPath, $backPath], $extraPaths), 
             $studentData
         );
 
@@ -116,8 +127,10 @@ class AiAssessmentController extends Controller
         session([
             'last_analysis_result' => $analysisResult,
             'last_front_path' => $frontPath,
-            'last_side_path' => $sidePath,
+            'last_side_path' => $sideRightPath,
+            'last_side_left_path' => $sideLeftPath,
             'last_back_path' => $backPath,
+            'last_extra_paths' => $extraPaths,
             // 'last_anamnese' => $studentData['anamnese'] // Removido
         ]);
 
@@ -125,9 +138,9 @@ class AiAssessmentController extends Controller
             'student', 
             'analysisResult', 
             'allExercises',
-            'frontPath', 'sidePath', 'backPath',
+            'frontPath', 'backPath',
             'request' // Passar dados do request original (goal, etc)
-        ));
+        ) + ['sidePath' => $sideRightPath]);
     }
 
     /**
@@ -159,6 +172,7 @@ class AiAssessmentController extends Controller
         $frontPath = session('last_front_path');
         $sidePath = session('last_side_path');
         $backPath = session('last_back_path');
+        $extraPaths = session('last_extra_paths', []);
 
         return view('personal.ai-assessment.pdf', compact(
             'student',
@@ -185,7 +199,9 @@ class AiAssessmentController extends Controller
         $previousAnalysis = session('last_analysis_result', []);
         $frontPath = session('last_front_path');
         $sidePath = session('last_side_path');
+        $sideLeftPath = session('last_side_left_path');
         $backPath = session('last_back_path');
+        $extraPaths = session('last_extra_paths', []);
 
         if (!$previousAnalysis || !$frontPath) {
             return back()->with('error', 'Sessão expirada. Por favor, refaça o upload das imagens.');
@@ -203,7 +219,7 @@ class AiAssessmentController extends Controller
         $analysisResult = $this->aiService->refineAnalysis(
             $previousAnalysis,
             $request->feedback,
-            [$frontPath, $sidePath, $backPath],
+            array_merge(array_filter([$frontPath, $sidePath, $sideLeftPath, $backPath]), is_array($extraPaths) ? $extraPaths : []),
             $studentData
         );
 
@@ -384,7 +400,9 @@ class AiAssessmentController extends Controller
             'last_analysis_result' => $analysisResult,
             'last_front_path' => null,
             'last_side_path' => null,
+            'last_side_left_path' => null,
             'last_back_path' => null,
+            'last_extra_paths' => [],
         ]);
 
         return view('personal.ai-assessment.review', array_merge(
