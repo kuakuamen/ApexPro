@@ -6,6 +6,52 @@ use Carbon\Carbon;
 
 class BodyCompositionService
 {
+    private static function toPositiveFloat($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        $number = (float) $value;
+
+        if ($number <= 0) {
+            return null;
+        }
+
+        return $number;
+    }
+
+    private static function buildResult(float $density, float $weight): ?array
+    {
+        if (!is_finite($density) || $density <= 0) {
+            return null;
+        }
+
+        $fatPct = ((4.95 / $density) - 4.5) * 100;
+
+        if (!is_finite($fatPct)) {
+            return null;
+        }
+
+        $fatMass = ($fatPct / 100) * $weight;
+        $leanMass = $weight - $fatMass;
+
+        if (!is_finite($fatMass) || !is_finite($leanMass)) {
+            return null;
+        }
+
+        return [
+            'density' => round($density, 4),
+            'fat_pct' => round($fatPct, 2),
+            'fat_mass' => round($fatMass, 2),
+            'lean_mass' => round($leanMass, 2),
+        ];
+    }
+
     private static function isMale($gender): bool
     {
         if ($gender === null) {
@@ -30,9 +76,9 @@ class BodyCompositionService
     public static function calculateGuedes($weight, $age, $gender, $skinfolds)
     {
         // Dobras: subescapular, suprailíaca, coxa
-        $subescapular = isset($skinfolds['subescapular']) ? (float)$skinfolds['subescapular'] : null;
-        $suprailiaca = isset($skinfolds['suprailiaca']) ? (float)$skinfolds['suprailiaca'] : null;
-        $coxa = isset($skinfolds['coxa_fold']) ? (float)$skinfolds['coxa_fold'] : null;
+        $subescapular = self::toPositiveFloat($skinfolds['subescapular'] ?? null);
+        $suprailiaca = self::toPositiveFloat($skinfolds['suprailiaca'] ?? null);
+        $coxa = self::toPositiveFloat($skinfolds['coxa_fold'] ?? null);
 
         // Se algum valor é null, retorna null (não calcula)
         if ($subescapular === null || $suprailiaca === null || $coxa === null) {
@@ -50,20 +96,7 @@ class BodyCompositionService
             $density = 1.16055 - (0.06706 * log10($sum));
         }
 
-        // Converter densidade para % gordura
-        // Percentual = ((4.95 / Densidade) - 4.5) * 100
-        $fatPct = ((4.95 / $density) - 4.5) * 100;
-
-        // Massa de gordura e massa livre
-        $fatMass = ($fatPct / 100) * $weight;
-        $leanMass = $weight - $fatMass;
-
-        return [
-            'density' => round($density, 4),
-            'fat_pct' => round($fatPct, 2),
-            'fat_mass' => round($fatMass, 2),
-            'lean_mass' => round($leanMass, 2),
-        ];
+        return self::buildResult($density, (float) $weight);
     }
 
     /**
@@ -74,11 +107,11 @@ class BodyCompositionService
     public static function calculatePollock3($weight, $age, $gender, $skinfolds)
     {
         // Dobras necessárias para as variações do protocolo
-        $toracica = isset($skinfolds['toracica']) ? (float)$skinfolds['toracica'] : null;
-        $abdominal = isset($skinfolds['abdominal_fold']) ? (float)$skinfolds['abdominal_fold'] : null;
-        $tricipital = isset($skinfolds['tricipital']) ? (float)$skinfolds['tricipital'] : null;
-        $suprailiaca = isset($skinfolds['suprailiaca']) ? (float)$skinfolds['suprailiaca'] : null;
-        $coxa = isset($skinfolds['coxa_fold']) ? (float)$skinfolds['coxa_fold'] : null;
+        $toracica = self::toPositiveFloat($skinfolds['toracica'] ?? null);
+        $abdominal = self::toPositiveFloat($skinfolds['abdominal_fold'] ?? null);
+        $tricipital = self::toPositiveFloat($skinfolds['tricipital'] ?? null);
+        $suprailiaca = self::toPositiveFloat($skinfolds['suprailiaca'] ?? null);
+        $coxa = self::toPositiveFloat($skinfolds['coxa_fold'] ?? null);
 
         // Fórmula Pollock 3 para HOMENS (planilha Excel)
         // Densidade = 1.10938 - 0.0008267*sum + 0.0000016*sum² - 0.0002574*idade
@@ -101,19 +134,7 @@ class BodyCompositionService
             $density = 1.0994921 - (0.0009929 * $sum) + (0.0000023 * pow($sum, 2)) - (0.0001392 * $age);
         }
 
-        // Converter densidade para % gordura
-        // Percentual = ((4.95 / Densidade) - 4.5) * 100
-        $fatPct = ((4.95 / $density) - 4.5) * 100;
-
-        $fatMass = ($fatPct / 100) * $weight;
-        $leanMass = $weight - $fatMass;
-
-        return [
-            'density' => round($density, 4),
-            'fat_pct' => round($fatPct, 2),
-            'fat_mass' => round($fatMass, 2),
-            'lean_mass' => round($leanMass, 2),
-        ];
+        return self::buildResult($density, (float) $weight);
     }
 
     /**
@@ -125,13 +146,13 @@ class BodyCompositionService
     {
         // Dobras: tricipital, subescapular, torácica, axilar_media, abdominal_fold, suprailiaca, coxa_fold
         // NÃO inclui: bicipital, panturrilha_fold
-        $tricipital = isset($skinfolds['tricipital']) ? (float)$skinfolds['tricipital'] : null;
-        $subescapular = isset($skinfolds['subescapular']) ? (float)$skinfolds['subescapular'] : null;
-        $toracica = isset($skinfolds['toracica']) ? (float)$skinfolds['toracica'] : null;
-        $axilar_media = isset($skinfolds['axilar_media']) ? (float)$skinfolds['axilar_media'] : null;
-        $abdominal = isset($skinfolds['abdominal_fold']) ? (float)$skinfolds['abdominal_fold'] : null;
-        $suprailiaca = isset($skinfolds['suprailiaca']) ? (float)$skinfolds['suprailiaca'] : null;
-        $coxa = isset($skinfolds['coxa_fold']) ? (float)$skinfolds['coxa_fold'] : null;
+        $tricipital = self::toPositiveFloat($skinfolds['tricipital'] ?? null);
+        $subescapular = self::toPositiveFloat($skinfolds['subescapular'] ?? null);
+        $toracica = self::toPositiveFloat($skinfolds['toracica'] ?? null);
+        $axilar_media = self::toPositiveFloat($skinfolds['axilar_media'] ?? null);
+        $abdominal = self::toPositiveFloat($skinfolds['abdominal_fold'] ?? null);
+        $suprailiaca = self::toPositiveFloat($skinfolds['suprailiaca'] ?? null);
+        $coxa = self::toPositiveFloat($skinfolds['coxa_fold'] ?? null);
 
         // Verifica se todos os valores obrigatórios estão disponíveis
         if ($tricipital === null || $subescapular === null || $abdominal === null || $suprailiaca === null || $coxa === null) {
@@ -150,19 +171,7 @@ class BodyCompositionService
             $density = 1.097 - (0.00046971 * $sum) + (0.00000056 * pow($sum, 2)) - (0.00012828 * $age);
         }
 
-        // Converter densidade para % gordura
-        // Percentual = ((4.95 / Densidade) - 4.5) * 100
-        $fatPct = ((4.95 / $density) - 4.5) * 100;
-
-        $fatMass = ($fatPct / 100) * $weight;
-        $leanMass = $weight - $fatMass;
-
-        return [
-            'density' => round($density, 4),
-            'fat_pct' => round($fatPct, 2),
-            'fat_mass' => round($fatMass, 2),
-            'lean_mass' => round($leanMass, 2),
-        ];
+        return self::buildResult($density, (float) $weight);
     }
 
     /**
