@@ -4,8 +4,8 @@
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex justify-between items-center">
-        <h2 class="text-2xl font-bold text-white flex items-center">
-            <svg class="w-8 h-8 mr-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+        <h2 class="text-2xl font-bold text-stone-100 flex items-center">
+            <svg class="w-8 h-8 mr-3 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
             Avaliação com Inteligência Artificial
         </h2>
     </div>
@@ -26,13 +26,13 @@
 
     <!-- TAB 1: COM IMAGENS -->
     <div id="tab-images" class="tab-content">
-        <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-zinc-900/70 backdrop-blur-sm border border-zinc-700 rounded-xl shadow-lg overflow-hidden">
             <div class="p-6">
                 <div class="mb-8">
-                    <h3 class="text-lg font-bold text-white">Como funciona?</h3>
+                    <h3 class="text-lg font-bold text-stone-100">Como funciona?</h3>
                     <p class="text-gray-400 mt-1">
                         Envie as fotos do aluno e nossa IA fará a análise postural, identificará desvios e 
-                        <strong class="text-indigo-400">criará automaticamente uma sugestão de treino</strong> baseada no objetivo.
+                        <strong class="text-teal-400">criará automaticamente uma sugestão de treino</strong> baseada no objetivo.
                     </p>
                 </div>
 
@@ -43,7 +43,7 @@
                         <!-- Seleção de Aluno -->
                         <div>
                             <label for="student_id" class="block text-sm font-medium text-gray-300 mb-2">Selecione o Aluno</label>
-                            <select id="student_id" name="student_id" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                            <select id="student_id" name="student_id" class="block w-full bg-zinc-800 border border-zinc-600 rounded-lg px-4 py-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-colors" required>
                                 <option value="" class="bg-gray-700">Selecione...</option>
                                 @foreach($students as $student)
                                     <option value="{{ $student->id }}" class="bg-gray-700">{{ $student->name }}</option>
@@ -54,7 +54,7 @@
                         <!-- Objetivo -->
                         <div>
                             <label for="goal" class="block text-sm font-medium text-gray-300 mb-2">Objetivo do Treino</label>
-                            <select id="goal" name="goal" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                            <select id="goal" name="goal" class="block w-full bg-zinc-800 border border-zinc-600 rounded-lg px-4 py-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-colors" required>
                                 <option value="Hipertrofia" class="bg-gray-700">Hipertrofia (Ganho de Massa)</option>
                                 <option value="Emagrecimento" class="bg-gray-700">Emagrecimento (Perda de Gordura)</option>
                                 <option value="Resistência" class="bg-gray-700">Resistência Muscular</option>
@@ -66,7 +66,7 @@
                         <!-- Nível de Experiência -->
                         <div>
                             <label for="experience_level" class="block text-sm font-medium text-gray-300 mb-2">Nível de Experiência</label>
-                            <select id="experience_level" name="experience_level" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                            <select id="experience_level" name="experience_level" class="block w-full bg-zinc-800 border border-zinc-600 rounded-lg px-4 py-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-colors" required>
                                 <option value="Iniciante" class="bg-gray-700">Iniciante (Nunca treinou ou parou há muito tempo)</option>
                                 <option value="Intermediário" class="bg-gray-700">Intermediário (Treina regularmente há 6 meses+)</option>
                                 <option value="Avançado" class="bg-gray-700">Avançado (Treina sério há anos)</option>
@@ -76,11 +76,11 @@
 
                     <!-- Observações do Personal (Contexto Extra para este Treino) -->
                     <div class="pt-6 border-t border-gray-700">
-                        <h4 class="text-md font-bold text-white mb-4">Contexto do Treino</h4>
+                        <h4 class="text-md font-bold text-stone-100 mb-4">Contexto do Treino</h4>
                         <div>
                             <label for="additional_notes" class="block text-sm font-medium text-gray-300 mb-2">Observações Específicas para este Treino</label>
                             <div class="mt-1">
-                                <textarea id="additional_notes" name="additional_notes" rows="3" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: Focar em glúteos hoje. O aluno reclamou de cansaço..."></textarea>
+                                <textarea id="additional_notes" name="additional_notes" rows="3" class="block w-full bg-zinc-800 border border-zinc-600 rounded-lg px-4 py-3 text-stone-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-colors" placeholder="Ex: Focar em glúteos hoje. O aluno reclamou de cansaço..."></textarea>
                             </div>
                             <p class="mt-2 text-sm text-gray-400">
                                 Use este campo para dar instruções pontuais à IA sobre o treino.
@@ -89,24 +89,24 @@
                     </div>
 
                     <div class="border-t border-gray-700 pt-6">
-                        <h4 class="text-md font-bold text-white mb-4">Fotos para Análise</h4>
+                        <h4 class="text-md font-bold text-stone-100 mb-4">Fotos para Análise</h4>
                         
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <!-- Foto Frente -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-300 mb-2">Vista Frontal</label>
-                                <div id="photo_front_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm">
+                                <div id="photo_front_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-zinc-600 border-dashed rounded-lg hover:border-teal-500 transition-colors bg-zinc-900/40 backdrop-blur-sm">
                                     <div class="space-y-3 text-center w-full">
                                         <svg id="photo_front_icon" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                         </svg>
                                         <img id="photo_front_preview" src="" alt="Preview frontal" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
                                         <div class="flex flex-col gap-2">
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_front')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-teal-700 hover:bg-teal-600 text-stone-100 font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_front')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                                 Câmera
                                             </button>
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_front')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-stone-100 font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_front')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 Galeria
                                             </button>
@@ -119,18 +119,18 @@
                             <!-- Foto Lado D -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-300 mb-2">Vista Lateral D</label>
-                                <div id="photo_side_right_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm">
+                                <div id="photo_side_right_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-zinc-600 border-dashed rounded-lg hover:border-teal-500 transition-colors bg-zinc-900/40 backdrop-blur-sm">
                                     <div class="space-y-3 text-center w-full">
                                         <svg id="photo_side_right_icon" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                         </svg>
                                         <img id="photo_side_right_preview" src="" alt="Preview lateral direita" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
                                         <div class="flex flex-col gap-2">
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_side_right')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-teal-700 hover:bg-teal-600 text-stone-100 font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_side_right')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                                 Câmera
                                             </button>
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_side_right')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-stone-100 font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_side_right')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 Galeria
                                             </button>
@@ -143,18 +143,18 @@
                             <!-- Foto Lado E -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-300 mb-2">Vista Lateral E</label>
-                                <div id="photo_side_left_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm">
+                                <div id="photo_side_left_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-zinc-600 border-dashed rounded-lg hover:border-teal-500 transition-colors bg-zinc-900/40 backdrop-blur-sm">
                                     <div class="space-y-3 text-center w-full">
                                         <svg id="photo_side_left_icon" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                         </svg>
                                         <img id="photo_side_left_preview" src="" alt="Preview lateral esquerda" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
                                         <div class="flex flex-col gap-2">
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_side_left')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-teal-700 hover:bg-teal-600 text-stone-100 font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_side_left')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                                 Câmera
                                             </button>
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_side_left')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-stone-100 font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_side_left')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 Galeria
                                             </button>
@@ -167,18 +167,18 @@
                             <!-- Foto Costas -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-300 mb-2">Vista Costas</label>
-                                <div id="photo_back_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm">
+                                <div id="photo_back_container" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-zinc-600 border-dashed rounded-lg hover:border-teal-500 transition-colors bg-zinc-900/40 backdrop-blur-sm">
                                     <div class="space-y-3 text-center w-full">
                                         <svg id="photo_back_icon" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                         </svg>
                                         <img id="photo_back_preview" src="" alt="Preview costas" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
                                         <div class="flex flex-col gap-2">
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_back')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-teal-700 hover:bg-teal-600 text-stone-100 font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_back')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                                 Câmera
                                             </button>
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_back')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-stone-100 font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_back')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 Galeria
                                             </button>
@@ -191,10 +191,10 @@
 
                         <div class="mt-6">
                             <label class="block text-sm font-medium text-gray-300 mb-2">Fotos Extras (Opcional)</label>
-                            <div id="photo_extra_container" class="mt-1 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm p-4">
+                            <div id="photo_extra_container" class="mt-1 border-2 border-zinc-600 border-dashed rounded-lg hover:border-teal-500 transition-colors bg-zinc-900/40 backdrop-blur-sm p-4">
                                 <div class="flex flex-col sm:flex-row gap-2 items-center justify-between">
                                     <p class="text-xs text-gray-400">Adicione até 6 fotos extras para a IA analisar melhor.</p>
-                                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_extra')">
+                                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-teal-700 hover:bg-teal-600 text-stone-100 font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_extra')">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                         Adicionar Fotos Extras
                                     </button>
@@ -207,7 +207,7 @@
 
                     <div class="pt-6 border-t border-gray-700">
                         <div class="flex justify-end">
-                            <button type="submit" class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-all duration-300">
+                            <button type="submit" class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-lg text-stone-100 bg-gradient-to-r from-zinc-800 to-teal-700 hover:from-zinc-700 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-teal-600 transition-all duration-300">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                 </svg>
@@ -217,7 +217,7 @@
                     </div>
 
                     <p class="mt-4 text-sm text-gray-400">
-                        <strong class="text-indigo-400">Importante:</strong> Certifique-se de que as fotos estejam bem iluminadas e mostrem claramente a postura do aluno.
+                        <strong class="text-teal-400">Importante:</strong> Certifique-se de que as fotos estejam bem iluminadas e mostrem claramente a postura do aluno.
                     </p>
                 </form>
             </div>
@@ -226,13 +226,13 @@
 
     <!-- TAB 2: SEM IMAGENS -->
     <div id="tab-noimage" class="tab-content hidden">
-        <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-zinc-900/70 backdrop-blur-sm border border-zinc-700 rounded-xl shadow-lg overflow-hidden">
             <div class="p-6">
                 <div class="mb-8">
-                    <h3 class="text-lg font-bold text-white">Gerar Treino Direto</h3>
+                    <h3 class="text-lg font-bold text-stone-100">Gerar Treino Direto</h3>
                     <p class="text-gray-400 mt-1">
                         Crie um treino personalizado para seu aluno sem necessidade de análise de imagens. 
-                        <strong class="text-indigo-400">A IA usará dados pessoais e suas observações</strong> para sugerir o melhor plano.
+                        <strong class="text-teal-400">A IA usará dados pessoais e suas observações</strong> para sugerir o melhor plano.
                     </p>
                 </div>
 
@@ -243,7 +243,7 @@
                         <!-- Seleção de Aluno -->
                         <div>
                             <label for="student_id_noimg" class="block text-sm font-medium text-gray-300 mb-2">Selecione o Aluno</label>
-                            <select id="student_id_noimg" name="student_id" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                            <select id="student_id_noimg" name="student_id" class="block w-full bg-zinc-800 border border-zinc-600 rounded-lg px-4 py-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-colors" required>
                                 <option value="" class="bg-gray-700">Selecione...</option>
                                 @foreach($students as $student)
                                     <option value="{{ $student->id }}" class="bg-gray-700">{{ $student->name }}</option>
@@ -254,7 +254,7 @@
                         <!-- Objetivo -->
                         <div>
                             <label for="goal_noimg" class="block text-sm font-medium text-gray-300 mb-2">Objetivo do Treino</label>
-                            <select id="goal_noimg" name="goal" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                            <select id="goal_noimg" name="goal" class="block w-full bg-zinc-800 border border-zinc-600 rounded-lg px-4 py-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-colors" required>
                                 <option value="Hipertrofia" class="bg-gray-700">Hipertrofia (Ganho de Massa)</option>
                                 <option value="Emagrecimento" class="bg-gray-700">Emagrecimento (Perda de Gordura)</option>
                                 <option value="Resistência" class="bg-gray-700">Resistência Muscular</option>
@@ -266,7 +266,7 @@
                         <!-- Nível de Experiência -->
                         <div>
                             <label for="experience_level_noimg" class="block text-sm font-medium text-gray-300 mb-2">Nível de Experiência</label>
-                            <select id="experience_level_noimg" name="experience_level" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                            <select id="experience_level_noimg" name="experience_level" class="block w-full bg-zinc-800 border border-zinc-600 rounded-lg px-4 py-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-colors" required>
                                 <option value="Iniciante" class="bg-gray-700">Iniciante (Nunca treinou ou parou há muito tempo)</option>
                                 <option value="Intermediário" class="bg-gray-700">Intermediário (Treina regularmente há 6 meses+)</option>
                                 <option value="Avançado" class="bg-gray-700">Avançado (Treina sério há anos)</option>
@@ -276,18 +276,18 @@
 
                     <!-- Observações e Contexto -->
                     <div class="pt-6 border-t border-gray-700">
-                        <h4 class="text-md font-bold text-white mb-4">Informações Importantes</h4>
+                        <h4 class="text-md font-bold text-stone-100 mb-4">Informações Importantes</h4>
                         
                         <div class="space-y-4">
                             <div>
                                 <label for="description_noimg" class="block text-sm font-medium text-gray-300 mb-2">Descreva o Aluno (Física/Condicionamento)</label>
-                                <textarea id="description_noimg" name="description" rows="3" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: Genético ectomorfo, postura curvada, mobilidade limitada em lombares..."></textarea>
+                                <textarea id="description_noimg" name="description" rows="3" class="block w-full bg-zinc-800 border border-zinc-600 rounded-lg px-4 py-3 text-stone-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-colors" placeholder="Ex: Genético ectomorfo, postura curvada, mobilidade limitada em lombares..."></textarea>
                                 <p class="mt-2 text-sm text-gray-400">Descreva características físicas, limitações e pontos fortes do aluno.</p>
                             </div>
 
                             <div>
                                 <label for="notes_noimg" class="block text-sm font-medium text-gray-300 mb-2">Objetivos e Observações Específicas</label>
-                                <textarea id="notes_noimg" name="additional_notes" rows="4" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: Quer melhorar postura para trabalho. Dor em ombros. Quer ganhar massa em peito e costas. Tem lesão no joelho esquerdo..."></textarea>
+                                <textarea id="notes_noimg" name="additional_notes" rows="4" class="block w-full bg-zinc-800 border border-zinc-600 rounded-lg px-4 py-3 text-stone-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-colors" placeholder="Ex: Quer melhorar postura para trabalho. Dor em ombros. Quer ganhar massa em peito e costas. Tem lesão no joelho esquerdo..."></textarea>
                                 <p class="mt-2 text-sm text-gray-400">Inclua lesões, dores, restrições, prioridades e qualquer contexto importante.</p>
                             </div>
                         </div>
@@ -295,7 +295,7 @@
 
                     <div class="pt-6 border-t border-gray-700">
                         <div class="flex justify-end">
-                            <button type="submit" class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-lg text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-green-500 transition-all duration-300">
+                            <button type="submit" class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-lg text-stone-100 bg-gradient-to-r from-zinc-800 to-teal-700 hover:from-zinc-700 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-teal-600 transition-all duration-300">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                 </svg>
@@ -305,7 +305,7 @@
                     </div>
 
                     <p class="mt-4 text-sm text-gray-400">
-                        <strong class="text-green-400">Dica:</strong> Quanto mais detalhes você fornecer, melhor será o treino personalizado gerado pela IA.
+                        <strong class="text-teal-400">Dica:</strong> Quanto mais detalhes você fornecer, melhor será o treino personalizado gerado pela IA.
                     </p>
                 </form>
             </div>
@@ -313,7 +313,7 @@
     </div>
 
     <!-- Footer -->
-    <div class="bg-gray-800/50 backdrop-blur-sm border-t border-gray-700 px-6 py-4">
+    <div class="bg-zinc-900/60 backdrop-blur-sm border-t border-zinc-700 px-6 py-4">
         <div class="flex justify-between items-center">
             <div class="text-sm text-gray-400">
                 <p>© {{ date('Y') }} FitManager - Todos os direitos reservados</p>
@@ -383,8 +383,8 @@
 
             const updateStatus = () => {
                 if (input.files.length > 0) {
-                    container.classList.remove('border-gray-600', 'hover:border-indigo-400');
-                    container.classList.add('border-green-500', 'hover:border-green-400');
+                    container.classList.remove('border-zinc-600', 'hover:border-teal-500');
+                    container.classList.add('border-teal-500', 'hover:border-teal-400');
 
                     const file = input.files[0];
                     if (file && file.type.startsWith('image/')) {
@@ -393,8 +393,8 @@
                         icon.classList.add('hidden');
                     }
                 } else {
-                    container.classList.add('border-gray-600', 'hover:border-indigo-400');
-                    container.classList.remove('border-green-500', 'hover:border-green-400');
+                    container.classList.add('border-zinc-600', 'hover:border-teal-500');
+                    container.classList.remove('border-teal-500', 'hover:border-teal-400');
                     preview.classList.add('hidden');
                     preview.removeAttribute('src');
                     icon.classList.remove('hidden');
