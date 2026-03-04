@@ -35,13 +35,57 @@ class PersonalController extends Controller
     {
         // Carrega APENAS os alunos vinculados a este personal
         $students = Auth::user()->students()
-            ->with(['measurements' => function($query) {
+            ->with(['measurements' => function ($query) {
                 $query->latest('date');
             }])
             ->orderBy('name')
             ->get();
 
-        return view('personal.dashboard', compact('students'));
+        $totalStudents = $students->count();
+        $activeStudents = $students->where('is_active', true)->count();
+        $newThisMonth = $students->filter(
+            fn ($student) => $student->created_at && $student->created_at->greaterThanOrEqualTo(now()->startOfMonth())
+        )->count();
+
+        $studentsWithOldAssessments = $students->filter(function ($student) {
+            if ($student->measurements->isEmpty()) {
+                return false;
+            }
+
+            $lastAssessment = $student->measurements->first();
+            return $lastAssessment->date && $lastAssessment->date->diffInDays(now()) > 30;
+        })->values();
+
+        $pendingAssessmentsCount = $studentsWithOldAssessments->count();
+
+        $pendingAssessmentsList = $studentsWithOldAssessments
+            ->map(function ($student) {
+                $lastAssessment = $student->measurements->first();
+                return [
+                    'student' => $student,
+                    'last_assessment_date' => $lastAssessment?->date,
+                    'days_without_assessment' => $lastAssessment?->date
+                        ? $lastAssessment->date->diffInDays(now())
+                        : null,
+                ];
+            })
+            ->sortByDesc('days_without_assessment')
+            ->take(5)
+            ->values();
+
+        $studentsWithoutAssessmentCount = $students->filter(
+            fn ($student) => $student->measurements->isEmpty()
+        )->count();
+
+        return view('personal.dashboard', compact(
+            'students',
+            'totalStudents',
+            'activeStudents',
+            'newThisMonth',
+            'pendingAssessmentsCount',
+            'pendingAssessmentsList',
+            'studentsWithoutAssessmentCount'
+        ));
     }
 
     /**
