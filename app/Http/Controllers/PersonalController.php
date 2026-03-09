@@ -77,6 +77,12 @@ class PersonalController extends Controller
             fn ($student) => $student->measurements->isEmpty()
         )->count();
 
+        $studentsWithoutFirstAssessmentList = $students
+            ->filter(fn ($student) => $student->measurements->isEmpty())
+            ->sortBy('name')
+            ->take(5)
+            ->values();
+
         return view('personal.dashboard', compact(
             'students',
             'totalStudents',
@@ -84,7 +90,8 @@ class PersonalController extends Controller
             'newThisMonth',
             'pendingAssessmentsCount',
             'pendingAssessmentsList',
-            'studentsWithoutAssessmentCount'
+            'studentsWithoutAssessmentCount',
+            'studentsWithoutFirstAssessmentList'
         ));
     }
 

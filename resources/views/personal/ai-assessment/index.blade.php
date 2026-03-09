@@ -102,11 +102,11 @@
                                         </svg>
                                         <img id="photo_front_preview" src="" alt="Preview frontal" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
                                         <div class="flex flex-col gap-2">
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_front')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#0f7490;border:1px solid #22a7c7;color:#f1f5f9;" onclick="openCamera('photo_front')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                                 Câmera
                                             </button>
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_front')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#5b5fd6;border:1px solid #7c86ee;color:#f1f5f9;" onclick="openGallery('photo_front')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 Galeria
                                             </button>
@@ -126,11 +126,11 @@
                                         </svg>
                                         <img id="photo_side_right_preview" src="" alt="Preview lateral direita" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
                                         <div class="flex flex-col gap-2">
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_side_right')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#0f7490;border:1px solid #22a7c7;color:#f1f5f9;" onclick="openCamera('photo_side_right')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                                 Câmera
                                             </button>
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_side_right')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#5b5fd6;border:1px solid #7c86ee;color:#f1f5f9;" onclick="openGallery('photo_side_right')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 Galeria
                                             </button>
@@ -150,11 +150,11 @@
                                         </svg>
                                         <img id="photo_side_left_preview" src="" alt="Preview lateral esquerda" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
                                         <div class="flex flex-col gap-2">
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_side_left')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#0f7490;border:1px solid #22a7c7;color:#f1f5f9;" onclick="openCamera('photo_side_left')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                                 Câmera
                                             </button>
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_side_left')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#5b5fd6;border:1px solid #7c86ee;color:#f1f5f9;" onclick="openGallery('photo_side_left')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 Galeria
                                             </button>
@@ -174,11 +174,11 @@
                                         </svg>
                                         <img id="photo_back_preview" src="" alt="Preview costas" class="hidden w-full object-cover rounded-lg border border-gray-600" style="aspect-ratio: 16 / 9;">
                                         <div class="flex flex-col gap-2">
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openCamera('photo_back')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#0f7490;border:1px solid #22a7c7;color:#f1f5f9;" onclick="openCamera('photo_back')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                                 Câmera
                                             </button>
-                                            <button type="button" class="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_back')">
+                                            <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#5b5fd6;border:1px solid #7c86ee;color:#f1f5f9;" onclick="openGallery('photo_back')">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                 Galeria
                                             </button>
@@ -194,7 +194,7 @@
                             <div id="photo_extra_container" class="mt-1 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm p-4">
                                 <div class="flex flex-col sm:flex-row gap-2 items-center justify-between">
                                     <p class="text-xs text-gray-400">Adicione até 6 fotos extras para a IA analisar melhor.</p>
-                                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" onclick="openGallery('photo_extra')">
+                                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#5b5fd6;border:1px solid #7c86ee;color:#f1f5f9;" onclick="openGallery('photo_extra')">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                         Adicionar Fotos Extras
                                     </button>

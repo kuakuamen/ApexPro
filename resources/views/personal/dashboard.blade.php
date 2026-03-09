@@ -1,7 +1,7 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('content')
-<div class="space-y-8">
+<div class="mt-3 md:mt-4 space-y-8">
     <div class="relative rounded-2xl border bg-gray-900 p-6 sm:p-8 shadow-xl" style="border-color:#0f766e;">
         <div class="flex flex-col gap-4">
             <div class="min-w-0 sm:pr-[24rem]">
@@ -12,12 +12,12 @@
                 </p>
             </div>
 
-            <div class="absolute flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end" style="top:24px;right:24px;">
-                <a href="{{ route('personal.students.create') }}" class="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition" style="background:#0d9488;color:#ffffff;min-width:150px;">
+            <div class="mt-3 flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end sm:absolute" style="top:24px;right:24px;">
+                <a href="{{ route('personal.students.create') }}" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition" style="background:#0d9488;color:#ffffff;">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" style="stroke:#ffffff;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                     Novo Aluno
                 </a>
-                <a href="{{ route('personal.ai-assessment.index') }}" class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition" style="border-color:#14b8a6;background:#1f2937;color:#99f6e4;min-width:185px;">
+                <a href="{{ route('personal.ai-assessment.index') }}" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition" style="border-color:#14b8a6;background:#1f2937;color:#99f6e4;">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" style="stroke:#99f6e4;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
                     Registrar Avaliação IA
                 </a>
@@ -76,42 +76,78 @@
         </section>
     @else
         <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
-            <section class="xl:col-span-2 rounded-2xl border bg-gray-800 shadow-lg" style="border-color:#334155;">
-                <div class="flex items-center justify-between border-b px-5 py-4" style="border-color:#334155;">
-                    <h2 class="text-lg font-semibold" style="color:#ffffff;">Alunos com Avaliação Atrasada</h2>
-                    <span class="rounded-full border px-3 py-1 text-xs font-semibold" style="border-color:#f59e0b;background:linear-gradient(180deg,#92400e,#78350f);color:#ffedd5;box-shadow:inset 0 0 0 1px rgba(245,158,11,.28);">
-                        {{ $pendingAssessmentsCount }} pendência(s)
-                    </span>
-                </div>
+            <div class="xl:col-span-2 space-y-6">
+                <section class="rounded-2xl border bg-gray-800 shadow-lg" style="border-color:#334155;">
+                    <div class="flex items-center justify-between border-b px-5 py-4" style="border-color:#334155;">
+                        <h2 class="text-lg font-semibold" style="color:#ffffff;">Alunos com Avaliação Atrasada</h2>
+                        <span class="rounded-full border px-3 py-1 text-xs font-semibold" style="{{ $pendingAssessmentsCount === 0 ? 'border-color:#10b981;background:linear-gradient(180deg,#065f46,#064e3b);color:#d1fae5;box-shadow:inset 0 0 0 1px rgba(16,185,129,.25);' : 'border-color:#f59e0b;background:linear-gradient(180deg,#92400e,#78350f);color:#ffedd5;box-shadow:inset 0 0 0 1px rgba(245,158,11,.28);' }}">
+                            {{ $pendingAssessmentsCount === 0 ? 'Sem pendências' : $pendingAssessmentsCount . ' pendência(s)' }}
+                        </span>
+                    </div>
 
-                <div class="p-3 sm:p-4">
-                    @if($pendingAssessmentsList->isEmpty())
-                        <div class="rounded-xl border p-4 text-sm" style="border-color:#10b981;background:#064e3b;color:#d1fae5;">
-                            Sem pendências no momento. Todas as avaliações estão em dia.
-                        </div>
-                    @else
-                        <div class="space-y-2">
-                            @foreach($pendingAssessmentsList as $item)
-                                <a href="{{ route('personal.students.show', $item['student']) }}" class="group flex items-center justify-between rounded-xl border bg-gray-900 px-4 py-3 transition" style="border-color:#334155;">
-                                    <div class="min-w-0">
-                                        <p class="truncate text-sm font-semibold" style="color:#ffffff;">{{ $item['student']->name }}</p>
-                                        <p class="mt-1 text-xs" style="color:#d1d5db;">
-                                            Última avaliação:
-                                            {{ $item['last_assessment_date'] ? $item['last_assessment_date']->format('d/m/Y') : 'não registrada' }}
-                                        </p>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <span class="rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#78350f;color:#fef3c7;">
-                                            {{ $item['days_without_assessment'] }} dias
-                                        </span>
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" style="stroke:#9ca3af;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                    </div>
-                                </a>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
-            </section>
+                    <div class="p-3 sm:p-4">
+                        @if($pendingAssessmentsList->isEmpty())
+                            <div class="rounded-xl border p-4 text-sm" style="border-color:#10b981;background:#064e3b;color:#d1fae5;">
+                                Sem pendências no momento. Todas as avaliações estão em dia.
+                            </div>
+                        @else
+                            <div class="space-y-2">
+                                @foreach($pendingAssessmentsList as $item)
+                                    <a href="{{ route('personal.students.show', $item['student']) }}" class="group flex items-center justify-between rounded-xl border bg-gray-900 px-4 py-3 transition" style="border-color:#334155;">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold" style="color:#ffffff;">{{ $item['student']->name }}</p>
+                                            <p class="mt-1 text-xs" style="color:#d1d5db;">
+                                                Última avaliação:
+                                                {{ $item['last_assessment_date'] ? $item['last_assessment_date']->format('d/m/Y') : 'não registrada' }}
+                                            </p>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <span class="rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#78350f;color:#fef3c7;">
+                                                {{ $item['days_without_assessment'] }} dias
+                                            </span>
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" style="stroke:#9ca3af;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                        </div>
+                                    </a>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </section>
+
+                <section class="rounded-2xl border bg-gray-800 shadow-lg" style="border-color:#334155;">
+                    <div class="flex items-center justify-between border-b px-5 py-4" style="border-color:#334155;">
+                        <h2 class="text-lg font-semibold" style="color:#ffffff;">Alunos sem Primeira Avaliação</h2>
+                        <span class="rounded-full border px-3 py-1 text-xs font-semibold" style="{{ $studentsWithoutAssessmentCount === 0 ? 'border-color:#10b981;background:linear-gradient(180deg,#065f46,#064e3b);color:#d1fae5;box-shadow:inset 0 0 0 1px rgba(16,185,129,.25);' : 'border-color:#818cf8;background:linear-gradient(180deg,#3730a3,#312e81);color:#e0e7ff;box-shadow:inset 0 0 0 1px rgba(129,140,248,.28);' }}">
+                            {{ $studentsWithoutAssessmentCount === 0 ? 'Todos avaliados' : $studentsWithoutAssessmentCount . ' sem avaliação' }}
+                        </span>
+                    </div>
+
+                    <div class="p-3 sm:p-4">
+                        @if($studentsWithoutFirstAssessmentList->isEmpty())
+                            <div class="rounded-xl border p-4 text-sm" style="border-color:#10b981;background:#064e3b;color:#d1fae5;">
+                                Todos os alunos já têm ao menos uma avaliação registrada.
+                            </div>
+                        @else
+                            <div class="space-y-2">
+                                @foreach($studentsWithoutFirstAssessmentList as $student)
+                                    <a href="{{ route('personal.students.show', $student) }}" class="group flex items-center justify-between rounded-xl border bg-gray-900 px-4 py-3 transition" style="border-color:#334155;">
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold" style="color:#ffffff;">{{ $student->name }}</p>
+                                            <p class="mt-1 text-xs" style="color:#d1d5db;">Aguardando primeira medição</p>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <span class="rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#312e81;color:#e0e7ff;">
+                                                Sem avaliação
+                                            </span>
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" style="stroke:#9ca3af;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                        </div>
+                                    </a>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </section>
+            </div>
 
             <section class="rounded-2xl border bg-gray-800 shadow-lg" style="border-color:#334155;">
                 <div class="flex items-center justify-between border-b px-5 py-4" style="border-color:#334155;">
@@ -140,3 +176,4 @@
     @endif
 </div>
 @endsection
+
