@@ -712,7 +712,7 @@
                     removeSingleBtn.style.background = '#f87171';
                 });
                 removeSingleBtn.addEventListener('mouseleave', () => {
-                    removeSingleBtn.style.background = '#ef4444';
+                    removeSingleBtn.style.background = '#fda4af';
                 });
                 removeSingleBtn.addEventListener('click', () => {
                     bufferedFiles = bufferedFiles.filter((_, fileIndex) => fileIndex !== index);
