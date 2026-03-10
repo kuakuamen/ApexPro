@@ -270,10 +270,13 @@ class PersonalController extends Controller
             'pain_points' => 'nullable|string',
             'habits' => 'nullable|string',
             'goal' => 'nullable|string',
+            'skip_skinfold_protocol' => 'nullable|boolean',
         ]);
 
         // Adiciona IDs que não vêm do formulário
         $data = $validated;
+        $skipSkinfoldProtocol = !empty($data['skip_skinfold_protocol']);
+        unset($data['skip_skinfold_protocol']);
         
         // DEBUG: Log TODOS os valores de dobras
         \Log::info('DEBUG COMPLETO: Valores de dobras recebidos', [
@@ -309,7 +312,25 @@ class PersonalController extends Controller
         }
 
         // Calcula composição corporal automaticamente
-        $this->calculateBodyComposition($data, $student);
+        if ($skipSkinfoldProtocol) {
+            $data['selected_protocol'] = null;
+            $data['body_fat'] = null;
+            $data['muscle_mass'] = null;
+            $data['guedes_density'] = null;
+            $data['guedes_fat_pct'] = null;
+            $data['guedes_fat_mass'] = null;
+            $data['guedes_lean_mass'] = null;
+            $data['pollock3_density'] = null;
+            $data['pollock3_fat_pct'] = null;
+            $data['pollock3_fat_mass'] = null;
+            $data['pollock3_lean_mass'] = null;
+            $data['pollock7_density'] = null;
+            $data['pollock7_fat_pct'] = null;
+            $data['pollock7_fat_mass'] = null;
+            $data['pollock7_lean_mass'] = null;
+        } else {
+            $this->calculateBodyComposition($data, $student);
+        }
 
         // Upload de Fotos
         if ($request->hasFile('photo_front')) {
@@ -439,9 +460,16 @@ class PersonalController extends Controller
             'pain_points' => 'nullable|string',
             'habits' => 'nullable|string',
             'goal' => 'nullable|string',
+            'skip_skinfold_protocol' => 'nullable|boolean',
         ]);
 
         $data = $validated;
+        
+        // Verifica flag para pular protocolo (compatibilidade com create e edit)
+        // No edit o campo pode vir como no_skinfold_info ou skip_skinfold_protocol
+        $skipSkinfoldProtocol = !empty($data['skip_skinfold_protocol']) || $request->has('no_skinfold_info');
+        if (isset($data['skip_skinfold_protocol'])) unset($data['skip_skinfold_protocol']);
+        if (isset($data['no_skinfold_info'])) unset($data['no_skinfold_info']);
 
         $this->validateTotalPhotosLimitOnUpdate($request, $measurement);
 
@@ -460,7 +488,30 @@ class PersonalController extends Controller
         }
 
         // Calcula composição corporal automaticamente
-        $this->calculateBodyComposition($data, $measurement->student);
+        if ($skipSkinfoldProtocol) {
+            $data['selected_protocol'] = null;
+            // Se o usuário quiser limpar gordura/massa também, descomente abaixo. 
+            // Geralmente se não tem dobras, esses valores calculados não fazem sentido, 
+            // mas o usuário pode ter inserido manualmente? 
+            // No create nós limpamos. Vamos manter consistência.
+            $data['body_fat'] = null;
+            $data['muscle_mass'] = null;
+            
+            $data['guedes_density'] = null;
+            $data['guedes_fat_pct'] = null;
+            $data['guedes_fat_mass'] = null;
+            $data['guedes_lean_mass'] = null;
+            $data['pollock3_density'] = null;
+            $data['pollock3_fat_pct'] = null;
+            $data['pollock3_fat_mass'] = null;
+            $data['pollock3_lean_mass'] = null;
+            $data['pollock7_density'] = null;
+            $data['pollock7_fat_pct'] = null;
+            $data['pollock7_fat_mass'] = null;
+            $data['pollock7_lean_mass'] = null;
+        } else {
+            $this->calculateBodyComposition($data, $measurement->student);
+        }
 
         // Upload de Fotos (apaga antiga se enviar nova)
         if ($request->hasFile('photo_front')) {

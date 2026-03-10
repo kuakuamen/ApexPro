@@ -85,21 +85,89 @@
             <p class="-mt-3 mb-6 text-xs text-indigo-300">ℹ️ % Gordura e Massa Muscular são preenchidos automaticamente após a seleção do resultado dos cálculos.</p>
 
             <h4 class="text-lg font-medium text-gray-200 mb-4 border-b border-gray-700 pb-2">Dobras Cutâneas (mm)</h4>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" x-data="{ 
-                subescapular: 0,
-                tricipital: 0,
-                bicipital: 0,
-                toracica: 0,
-                abdominal_fold: 0,
-                axilar_media: 0,
-                suprailiaca: 0,
-                coxa_fold: 0,
-                panturrilha_fold: 0,
+            <style>
+                .ios-skinfold-switch {
+                    position: absolute;
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                }
+
+                .ios-skinfold-track {
+                    position: relative;
+                    display: inline-flex;
+                    align-items: center;
+                    width: 2.9rem;
+                    height: 1.7rem;
+                    border-radius: 9999px;
+                    background: rgba(71, 85, 105, 0.72);
+                    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16);
+                    transition: background-color 180ms ease, box-shadow 180ms ease;
+                }
+
+                .ios-skinfold-thumb {
+                    position: absolute;
+                    left: 0.18rem;
+                    width: 1.3rem;
+                    height: 1.3rem;
+                    border-radius: 9999px;
+                    background: #ffffff;
+                    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.28);
+                    transition: transform 180ms ease;
+                }
+
+                .ios-skinfold-switch:checked + .ios-skinfold-track {
+                    background: oklch(67.3% .182 276.935);
+                    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.08);
+                }
+
+                .ios-skinfold-switch:checked + .ios-skinfold-track .ios-skinfold-thumb {
+                    transform: translateX(1.18rem);
+                }
+
+                .ios-skinfold-switch:focus-visible + .ios-skinfold-track {
+                    outline: 2px solid rgba(129, 140, 248, 0.45);
+                    outline-offset: 2px;
+                }
+            </style>
+            <div class="mb-4 rounded-xl border border-gray-700 bg-gray-800/60 px-4 py-3 shadow-sm">
+                <label for="skip_skinfold_protocol" class="flex cursor-pointer items-start justify-between gap-4">
+                    <span class="min-w-0">
+                        <span class="block text-sm font-semibold" style="color: oklch(67.3% .182 276.935);">Sem informacao de dobras</span>
+                        <span class="mt-1 block text-xs leading-5 text-gray-400">
+                            Use esta opcao quando a avaliacao nao tiver coleta de dobras. O sistema salva sem exigir selecao de calculo.
+                        </span>
+                    </span>
+                    <span class="relative mt-0.5 shrink-0">
+                        <input
+                            id="skip_skinfold_protocol"
+                            name="skip_skinfold_protocol"
+                            type="checkbox"
+                            value="1"
+                            {{ old('skip_skinfold_protocol') ? 'checked' : '' }}
+                            class="ios-skinfold-switch"
+                        >
+                        <span class="ios-skinfold-track">
+                            <span class="ios-skinfold-thumb"></span>
+                        </span>
+                    </span>
+                </label>
+            </div>
+            <div id="skinfolds_container" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" x-data="{ 
+                subescapular: @js(old('subescapular', '')),
+                tricipital: @js(old('tricipital', '')),
+                bicipital: @js(old('bicipital', '')),
+                toracica: @js(old('toracica', '')),
+                abdominal_fold: @js(old('abdominal_fold', '')),
+                axilar_media: @js(old('axilar_media', '')),
+                suprailiaca: @js(old('suprailiaca', '')),
+                coxa_fold: @js(old('coxa_fold', '')),
+                panturrilha_fold: @js(old('panturrilha_fold', '')),
                 calculateSum() {
                     const sum = parseFloat(this.subescapular || 0) + parseFloat(this.tricipital || 0) + parseFloat(this.bicipital || 0) + parseFloat(this.toracica || 0) + parseFloat(this.abdominal_fold || 0) + parseFloat(this.axilar_media || 0) + parseFloat(this.suprailiaca || 0) + parseFloat(this.coxa_fold || 0) + parseFloat(this.panturrilha_fold || 0);
                     document.querySelector('input[name=sum_skinfolds]').value = sum > 0 ? sum.toFixed(1) : '';
                 }
-            }">
+            }" x-init="calculateSum()">
                 <div>
                     <label class="block text-xs font-medium text-gray-400">Subescapular (mm)</label>
                     <input type="number" step="0.1" name="subescapular" x-model="subescapular" @input="calculateSum()" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
@@ -278,20 +346,25 @@
                 <!-- Frente -->
                 <div class="space-y-2">
                     <label class="block text-sm font-medium text-gray-300 text-center">Frente</label>
-                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors p-4 min-h-[160px] flex items-center justify-center">
-                        <div id="photo_front_placeholder" class="space-y-1 text-center">
+                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-lg relative hover:border-indigo-400 transition-colors p-4 min-h-[210px] flex items-center justify-center bg-gray-800/50 backdrop-blur-sm">
+                        <div id="photo_front_placeholder" class="space-y-3 text-center w-full">
                             <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            <div class="flex text-sm text-gray-400 justify-center">
-                                <label for="photo_front" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none px-3 py-1">
-                                    <span>Tirar / Upload</span>
-                                    <input id="photo_front" name="photo_front" type="file" class="sr-only" accept="image/*" capture="environment">
-                                </label>
+                            <div class="flex flex-col gap-2">
+                                <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#0f7490;border:1px solid #22a7c7;color:#f1f5f9;" onclick="openCamera('photo_front')">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    Camera
+                                </button>
+                                <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#5b5fd6;border:1px solid #7c86ee;color:#f1f5f9;" onclick="openGallery('photo_front')">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    Galeria
+                                </button>
                             </div>
+                            <input id="photo_front" name="photo_front" type="file" class="sr-only" accept="image/*">
                         </div>
-                        <div id="photo_front_preview_wrapper" class="hidden w-full">
-                            <img id="photo_front_preview" src="" alt="Preview frente" class="w-full h-32 object-cover rounded-md border border-gray-600">
+                        <div id="photo_front_preview_wrapper" class="hidden w-full space-y-3 text-center">
+                            <img id="photo_front_preview" src="" alt="Preview frente" class="mx-auto w-full max-w-[11rem] object-cover object-top rounded-lg border border-gray-600" style="aspect-ratio: 3 / 4;">
                             <div class="mt-2 flex justify-center">
                                 <button type="button" id="photo_front_remove" class="px-3 py-1 text-xs rounded-md border border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">Remover</button>
                             </div>
@@ -302,20 +375,25 @@
                 <!-- Costas -->
                 <div class="space-y-2">
                     <label class="block text-sm font-medium text-gray-300 text-center">Costas</label>
-                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors p-4 min-h-[160px] flex items-center justify-center">
-                        <div id="photo_back_placeholder" class="space-y-1 text-center">
+                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-lg relative hover:border-indigo-400 transition-colors p-4 min-h-[210px] flex items-center justify-center bg-gray-800/50 backdrop-blur-sm">
+                        <div id="photo_back_placeholder" class="space-y-3 text-center w-full">
                             <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            <div class="flex text-sm text-gray-400 justify-center">
-                                <label for="photo_back" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none px-3 py-1">
-                                    <span>Tirar / Upload</span>
-                                    <input id="photo_back" name="photo_back" type="file" class="sr-only" accept="image/*" capture="environment">
-                                </label>
+                            <div class="flex flex-col gap-2">
+                                <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#0f7490;border:1px solid #22a7c7;color:#f1f5f9;" onclick="openCamera('photo_back')">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    Camera
+                                </button>
+                                <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#5b5fd6;border:1px solid #7c86ee;color:#f1f5f9;" onclick="openGallery('photo_back')">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    Galeria
+                                </button>
                             </div>
+                            <input id="photo_back" name="photo_back" type="file" class="sr-only" accept="image/*">
                         </div>
-                        <div id="photo_back_preview_wrapper" class="hidden w-full">
-                            <img id="photo_back_preview" src="" alt="Preview costas" class="w-full h-32 object-cover rounded-md border border-gray-600">
+                        <div id="photo_back_preview_wrapper" class="hidden w-full space-y-3 text-center">
+                            <img id="photo_back_preview" src="" alt="Preview costas" class="mx-auto w-full max-w-[11rem] object-cover object-top rounded-lg border border-gray-600" style="aspect-ratio: 3 / 4;">
                             <div class="mt-2 flex justify-center">
                                 <button type="button" id="photo_back_remove" class="px-3 py-1 text-xs rounded-md border border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">Remover</button>
                             </div>
@@ -326,20 +404,25 @@
                 <!-- Lado D -->
                 <div class="space-y-2">
                     <label class="block text-sm font-medium text-gray-300 text-center">Lado D</label>
-                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors p-4 min-h-[160px] flex items-center justify-center">
-                        <div id="photo_side_right_placeholder" class="space-y-1 text-center">
+                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-lg relative hover:border-indigo-400 transition-colors p-4 min-h-[210px] flex items-center justify-center bg-gray-800/50 backdrop-blur-sm">
+                        <div id="photo_side_right_placeholder" class="space-y-3 text-center w-full">
                             <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            <div class="flex text-sm text-gray-400 justify-center">
-                                <label for="photo_side_right" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none px-3 py-1">
-                                    <span>Tirar / Upload</span>
-                                    <input id="photo_side_right" name="photo_side_right" type="file" class="sr-only" accept="image/*" capture="environment">
-                                </label>
+                            <div class="flex flex-col gap-2">
+                                <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#0f7490;border:1px solid #22a7c7;color:#f1f5f9;" onclick="openCamera('photo_side_right')">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    Camera
+                                </button>
+                                <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#5b5fd6;border:1px solid #7c86ee;color:#f1f5f9;" onclick="openGallery('photo_side_right')">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    Galeria
+                                </button>
                             </div>
+                            <input id="photo_side_right" name="photo_side_right" type="file" class="sr-only" accept="image/*">
                         </div>
-                        <div id="photo_side_right_preview_wrapper" class="hidden w-full">
-                            <img id="photo_side_right_preview" src="" alt="Preview lateral direito" class="w-full h-32 object-cover rounded-md border border-gray-600">
+                        <div id="photo_side_right_preview_wrapper" class="hidden w-full space-y-3 text-center">
+                            <img id="photo_side_right_preview" src="" alt="Preview lateral direito" class="mx-auto w-full max-w-[11rem] object-cover object-top rounded-lg border border-gray-600" style="aspect-ratio: 3 / 4;">
                             <div class="mt-2 flex justify-center">
                                 <button type="button" id="photo_side_right_remove" class="px-3 py-1 text-xs rounded-md border border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">Remover</button>
                             </div>
@@ -350,20 +433,25 @@
                 <!-- Lado E -->
                 <div class="space-y-2">
                     <label class="block text-sm font-medium text-gray-300 text-center">Lado E</label>
-                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-md relative hover:border-indigo-500 transition-colors p-4 min-h-[160px] flex items-center justify-center">
-                        <div id="photo_side_left_placeholder" class="space-y-1 text-center">
+                    <div class="mt-1 border-2 border-gray-600 border-dashed rounded-lg relative hover:border-indigo-400 transition-colors p-4 min-h-[210px] flex items-center justify-center bg-gray-800/50 backdrop-blur-sm">
+                        <div id="photo_side_left_placeholder" class="space-y-3 text-center w-full">
                             <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            <div class="flex text-sm text-gray-400 justify-center">
-                                <label for="photo_side_left" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none px-3 py-1">
-                                    <span>Tirar / Upload</span>
-                                    <input id="photo_side_left" name="photo_side_left" type="file" class="sr-only" accept="image/*" capture="environment">
-                                </label>
+                            <div class="flex flex-col gap-2">
+                                <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#0f7490;border:1px solid #22a7c7;color:#f1f5f9;" onclick="openCamera('photo_side_left')">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    Camera
+                                </button>
+                                <button type="button" class="w-full flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#5b5fd6;border:1px solid #7c86ee;color:#f1f5f9;" onclick="openGallery('photo_side_left')">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    Galeria
+                                </button>
                             </div>
+                            <input id="photo_side_left" name="photo_side_left" type="file" class="sr-only" accept="image/*">
                         </div>
-                        <div id="photo_side_left_preview_wrapper" class="hidden w-full">
-                            <img id="photo_side_left_preview" src="" alt="Preview lateral esquerdo" class="w-full h-32 object-cover rounded-md border border-gray-600">
+                        <div id="photo_side_left_preview_wrapper" class="hidden w-full space-y-3 text-center">
+                            <img id="photo_side_left_preview" src="" alt="Preview lateral esquerdo" class="mx-auto w-full max-w-[11rem] object-cover object-top rounded-lg border border-gray-600" style="aspect-ratio: 3 / 4;">
                             <div class="mt-2 flex justify-center">
                                 <button type="button" id="photo_side_left_remove" class="px-3 py-1 text-xs rounded-md border border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">Remover</button>
                             </div>
@@ -375,15 +463,17 @@
             <div class="mb-8">
                 <label class="block text-sm font-medium text-gray-300 mb-2">Mais</label>
                 <p id="photo_limit_hint" class="text-xs text-gray-400 mb-2">Máximo de 9 imagens no total por avaliação.</p>
-                <div class="border-2 border-gray-600 border-dashed rounded-md p-4 hover:border-indigo-500 transition-colors">
-                    <div class="flex items-center justify-center">
-                        <label for="photo_extra" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-indigo-400 hover:text-indigo-300 focus-within:outline-none px-3 py-1 text-sm">
-                            <span>Adicionar imagens extras</span>
-                            <input id="photo_extra" name="photo_extra[]" type="file" class="sr-only" accept="image/*" capture="environment" multiple>
-                        </label>
+                <div class="border-2 border-gray-600 border-dashed rounded-lg p-4 hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm">
+                    <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                        <p class="text-xs text-gray-400 text-center sm:text-left">Adicione imagens extras para complementar a evolucao do aluno.</p>
+                        <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#5b5fd6;border:1px solid #7c86ee;color:#f1f5f9;" onclick="openGallery('photo_extra')">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            Adicionar imagens extras
+                        </button>
                     </div>
+                    <input id="photo_extra" name="photo_extra[]" type="file" class="sr-only" accept="image/*" multiple>
                     <div id="photo_extra_preview_wrapper" class="hidden mt-4">
-                        <div id="photo_extra_preview_grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"></div>
+                        <div id="photo_extra_preview_grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 justify-items-center"></div>
                         <div class="mt-3 flex justify-center">
                             <button type="button" id="photo_extra_remove" class="px-3 py-1 text-xs rounded-md border border-gray-500 text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">Remover todas</button>
                         </div>
@@ -485,6 +575,20 @@
     const studentGender = '{{ $student->gender ?? "" }}';
     const studentBirthDate = '{{ $student->birth_date ? $student->birth_date->format("Y-m-d") : "" }}';
 
+    function openCamera(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        input.setAttribute('capture', 'environment');
+        input.click();
+    }
+
+    function openGallery(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        input.removeAttribute('capture');
+        input.click();
+    }
+
     function setupImagePreview(inputId, previewId, placeholderId, previewWrapperId, removeBtnId) {
         const input = document.getElementById(inputId);
         const preview = document.getElementById(previewId);
@@ -578,16 +682,48 @@
                 return;
             }
 
-            bufferedFiles.forEach(file => {
+            bufferedFiles.forEach((file, index) => {
                 const objectUrl = URL.createObjectURL(file);
                 objectUrls.push(objectUrl);
+
+                const card = document.createElement('div');
+                card.className = 'relative';
+                card.style.position = 'relative';
+                card.style.width = '100%';
+                card.style.maxWidth = '11rem';
+                card.style.margin = '0 auto';
+
+                const media = document.createElement('div');
+                media.className = 'overflow-hidden rounded-md border border-gray-600 bg-gray-900';
+                media.style.aspectRatio = '3 / 4';
 
                 const img = document.createElement('img');
                 img.src = objectUrl;
                 img.alt = 'Preview imagem extra';
-                img.className = 'w-full object-contain rounded-md border border-gray-600 bg-gray-900';
-                img.style.aspectRatio = '16 / 9';
-                previewGrid.appendChild(img);
+                img.className = 'h-full w-full object-cover';
+                img.style.objectPosition = 'center top';
+
+                const removeSingleBtn = document.createElement('button');
+                removeSingleBtn.type = 'button';
+                removeSingleBtn.setAttribute('aria-label', `Remover imagem extra ${index + 1}`);
+                removeSingleBtn.setAttribute('style', 'position:absolute;top:-7px;right:-7px;z-index:10;width:28px;height:28px;border:1px solid rgba(255,255,255,.35);border-radius:10px;background:#fda4af;color:#334155;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.28);');
+                removeSingleBtn.innerHTML = '<svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                removeSingleBtn.addEventListener('mouseenter', () => {
+                    removeSingleBtn.style.background = '#f87171';
+                });
+                removeSingleBtn.addEventListener('mouseleave', () => {
+                    removeSingleBtn.style.background = '#ef4444';
+                });
+                removeSingleBtn.addEventListener('click', () => {
+                    bufferedFiles = bufferedFiles.filter((_, fileIndex) => fileIndex !== index);
+                    syncInputFiles();
+                    renderPreviews();
+                });
+
+                media.appendChild(img);
+                card.appendChild(media);
+                card.appendChild(removeSingleBtn);
+                previewGrid.appendChild(card);
             });
 
             previewWrapper.classList.remove('hidden');
@@ -652,8 +788,50 @@
     setupImagePreview('photo_side_right', 'photo_side_right_preview', 'photo_side_right_placeholder', 'photo_side_right_preview_wrapper', 'photo_side_right_remove');
     setupImagePreview('photo_side_left', 'photo_side_left_preview', 'photo_side_left_placeholder', 'photo_side_left_preview_wrapper', 'photo_side_left_remove');
     setupMultipleImagesPreview('photo_extra', 'photo_extra_preview_wrapper', 'photo_extra_preview_grid', 'photo_extra_remove');
+
+    function shouldSkipSkinfoldProtocol() {
+        return document.getElementById('skip_skinfold_protocol')?.checked;
+    }
+
+    function clearProtocolDerivedFields() {
+        document.getElementById('selected_protocol').value = '';
+        document.querySelector('input[name="body_fat"]').value = '';
+        document.querySelector('input[name="muscle_mass"]').value = '';
+    }
+
+    const skipSkinfoldCheckbox = document.getElementById('skip_skinfold_protocol');
+    const skinfoldsContainer = document.getElementById('skinfolds_container');
+
+    function toggleSkinfoldsVisibility() {
+        if (!skipSkinfoldCheckbox || !skinfoldsContainer) return;
+        
+        if (skipSkinfoldCheckbox.checked) {
+            skinfoldsContainer.style.display = 'none';
+        } else {
+            skinfoldsContainer.style.display = '';
+        }
+    }
+
+    if (skipSkinfoldCheckbox) {
+        // Estado inicial
+        toggleSkinfoldsVisibility();
+
+        skipSkinfoldCheckbox.addEventListener('change', (event) => {
+            toggleSkinfoldsVisibility();
+            if (event.target.checked) {
+                clearProtocolDerivedFields();
+                closeProtocolModal();
+            }
+        });
+    }
     
     function showProtocolSelector() {
+        if (shouldSkipSkinfoldProtocol()) {
+            clearProtocolDerivedFields();
+            submitFormInBackground();
+            return;
+        }
+
         const weight = parseFloat(document.querySelector('input[name="weight"]').value);
         const evalDate = document.querySelector('input[name="date"]').value;
         
@@ -692,6 +870,12 @@
             coxa_fold: parseFloat(document.querySelector('input[name="coxa_fold"]').value) || 0,
             panturrilha_fold: parseFloat(document.querySelector('input[name="panturrilha_fold"]').value) || 0
         };
+
+        const hasAnySkinfold = Object.values(skinfolds).some(value => value > 0);
+        if (!hasAnySkinfold) {
+            alert('Preencha ao menos uma dobra ou marque "Sem informacao de dobras" para salvar sem calculo.');
+            return;
+        }
         
         // Calcular protocolos
         try {
@@ -852,6 +1036,13 @@
     }
     
     function confirmAndSubmit() {
+        if (shouldSkipSkinfoldProtocol()) {
+            clearProtocolDerivedFields();
+            closeProtocolModal();
+            submitFormInBackground();
+            return;
+        }
+
         const selectedProtocol = document.getElementById('selected_protocol').value;
         if (!selectedProtocol || !calculatedProtocols[selectedProtocol]) {
             alert('Por favor, selecione um protocolo.');

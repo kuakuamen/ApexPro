@@ -1,6 +1,16 @@
 ﻿@extends('layouts.app')
 
 @section('content')
+<style>
+    @media (min-width: 640px) {
+        .dashboard-hero-actions {
+            position: absolute;
+            top: 18px;
+            right: 24px;
+            margin-top: 0;
+        }
+    }
+</style>
 <div class="mt-3 md:mt-4 space-y-8">
     <div class="relative rounded-2xl border bg-gray-900 p-6 sm:p-8 shadow-xl" style="border-color:#0f766e;">
         <div class="flex flex-col gap-4">
@@ -12,7 +22,7 @@
                 </p>
             </div>
 
-            <div class="mt-3 flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end sm:absolute" style="top:24px;right:24px;">
+            <div class="dashboard-hero-actions mt-3 sm:mt-0 flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end">
                 <a href="{{ route('personal.students.create') }}" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition" style="background:#0d9488;color:#ffffff;">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" style="stroke:#ffffff;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                     Novo Aluno
@@ -176,4 +186,3 @@
     @endif
 </div>
 @endsection
-
