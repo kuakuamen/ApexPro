@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use App\Rules\Cpf;
 
 class PersonalController extends Controller
 {
@@ -127,6 +128,8 @@ class PersonalController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:20',
+            'cpf' => ['required', 'string', 'unique:users,cpf', new Cpf],
+            'address' => 'nullable|string|max:255',
             'birth_date' => 'required|date',
             'gender' => 'required|string',
             // 'profession' => 'required|string|max:255', // Removido
@@ -139,6 +142,8 @@ class PersonalController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
+                'cpf' => preg_replace('/[^0-9]/', '', $request->cpf), // Salva apenas números
+                'address' => $request->address,
                 'birth_date' => $request->birth_date,
                 'gender' => $request->gender,
                 // 'profession' => $request->profession, // Removido

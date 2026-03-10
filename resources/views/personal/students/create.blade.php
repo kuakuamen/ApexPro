@@ -40,6 +40,18 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">CPF <span class="text-red-400">*</span></label>
+                    <input type="text" name="cpf" id="cpf_input" maxlength="14" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="000.000.000-00" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Endereço</label>
+                    <input type="text" name="address" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Rua, Número, Bairro...">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-300 mb-2">Gênero <span class="text-red-400">*</span></label>
                     <select name="gender" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
@@ -70,4 +82,23 @@
     </div>
 </div>
 </div>
+
+<script>
+document.getElementById('cpf_input').addEventListener('input', function (e) {
+    let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+    
+    if (value.length > 11) value = value.slice(0, 11); // Limita a 11 dígitos
+    
+    // Aplica a máscara: 000.000.000-00
+    if (value.length > 9) {
+        value = value.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*/, '$1.$2.$3-$4');
+    } else if (value.length > 6) {
+        value = value.replace(/^(\d{3})(\d{3})(\d{0,3}).*/, '$1.$2.$3');
+    } else if (value.length > 3) {
+        value = value.replace(/^(\d{3})(\d{0,3}).*/, '$1.$2');
+    }
+    
+    e.target.value = value;
+});
+</script>
 @endsection

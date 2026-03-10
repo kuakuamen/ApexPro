@@ -85,7 +85,7 @@
                     <input type="number" step="any" name="body_fat" value="{{ old('body_fat', $measurement->body_fat) }}" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 <div>
-                    <label for="muscle_mass" class="block text-xs font-medium text-gray-400">Massa Muscular (kg)</label>
+                    <label for="muscle_mass" class="block text-xs font-medium text-gray-400">Massa Livre de Gordura (kg)</label>
                     <input type="number" step="any" name="muscle_mass" value="{{ old('muscle_mass', $measurement->muscle_mass) }}" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
             </div>

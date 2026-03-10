@@ -78,11 +78,11 @@
                     <input type="number" step="any" name="body_fat" readonly tabindex="-1" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed pointer-events-none" title="Preenchido automaticamente pelos cálculos">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-400">Massa Muscular (kg)</label>
+                    <label class="block text-xs font-medium text-gray-400">Massa Livre de Gordura (kg)</label>
                     <input type="number" step="any" name="muscle_mass" readonly tabindex="-1" class="mt-1 block w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-300 cursor-not-allowed pointer-events-none" title="Preenchido automaticamente pelos cálculos">
                 </div>
             </div>
-            <p class="-mt-3 mb-6 text-xs text-indigo-300">ℹ️ % Gordura e Massa Muscular são preenchidos automaticamente após a seleção do resultado dos cálculos.</p>
+            <p class="-mt-3 mb-6 text-xs text-indigo-300">ℹ️ % Gordura e Massa Livre de Gordura são preenchidos automaticamente após a seleção do resultado dos cálculos.</p>
 
             <h4 class="text-lg font-medium text-gray-200 mb-4 border-b border-gray-700 pb-2">Dobras Cutâneas (mm)</h4>
             <style>
