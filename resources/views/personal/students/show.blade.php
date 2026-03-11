@@ -6,81 +6,121 @@
 <div x-data="{ activeTab: 'overview', showResetPassword: false }">
     
     <!-- Cabeçalho do Perfil -->
-    <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg mb-6 overflow-hidden">
-        <div class="p-6 sm:flex sm:items-center sm:justify-between">
-            <div class="sm:flex sm:items-center">
-                <div class="flex-shrink-0 relative mx-auto sm:mx-0">
-                    <div class="h-20 w-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl shadow-lg">
+    <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl mb-8 overflow-hidden">
+        <div class="p-8 md:flex md:items-start md:justify-between gap-6">
+            <div class="flex items-center gap-6">
+                <!-- Avatar -->
+                <div class="relative flex-shrink-0">
+                    <div class="h-24 w-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-4xl shadow-2xl ring-4 ring-gray-800/50">
                         {{ substr($student->name, 0, 1) }}
                     </div>
-                    <span class="absolute bottom-0 right-0 h-5 w-5 rounded-full border-2 border-gray-800 {{ $student->is_active ? 'bg-green-500' : 'bg-red-500' }}" title="{{ $student->is_active ? 'Ativo' : 'Inativo' }}"></span>
+                    <div class="absolute bottom-1 right-1">
+                        <span class="flex h-5 w-5 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 {{ $student->is_active ? 'bg-green-400' : 'bg-red-400' }}"></span>
+                            <span class="relative inline-flex rounded-full h-5 w-5 border-2 border-gray-800 {{ $student->is_active ? 'bg-green-500' : 'bg-red-500' }}"></span>
+                        </span>
+                    </div>
                 </div>
-                <div class="mt-4 text-center sm:mt-0 sm:ml-5 sm:text-left">
-                    <h1 class="text-2xl font-bold text-white">{{ $student->name }}</h1>
-                    <div class="flex items-center justify-center sm:justify-start space-x-2">
-                        <p class="text-sm font-medium text-gray-300">{{ $student->email }}</p>
+                
+                <!-- Info -->
+                <div>
+                    <h1 class="text-3xl font-bold text-white tracking-tight">{{ $student->name }}</h1>
+                    <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-3 text-sm text-gray-400">
+                        <span class="flex items-center gap-1.5">
+                            <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            {{ $student->email }}
+                        </span>
                         @if($student->phone)
-                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $student->phone) }}" target="_blank" class="text-green-400 hover:text-green-300" title="Conversar no WhatsApp">
-                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                            <span class="hidden sm:inline text-gray-700">|</span>
+                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $student->phone) }}" target="_blank" class="flex items-center gap-1.5 hover:text-green-400 transition-colors">
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                                {{ preg_replace('/(\d{2})(\d{5})(\d{4})/', '($1) $2-$3', $student->phone) }}
                             </a>
                         @endif
                     </div>
-                    <div class="mt-1">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $student->is_active ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400' }}">
+                    <div class="mt-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $student->is_active ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20' }}">
                             {{ $student->is_active ? 'Acesso Ativo' : 'Acesso Bloqueado' }}
                         </span>
                     </div>
                 </div>
             </div>
-            <div class="mt-5 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3 sm:mt-0">
-                <a href="{{ route('personal.measurements.create', $student) }}" class="inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-all duration-300">
+
+            <!-- Botões de Ação -->
+            <div class="mt-8 md:mt-0 flex flex-wrap items-center gap-3" x-data="{ openActions: false }">
+                <a href="{{ route('personal.measurements.create', $student) }}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                     Nova Avaliação
                 </a>
-                <a href="{{ route('personal.students.edit', $student) }}" class="inline-flex justify-center items-center px-4 py-2 border border-gray-600 shadow-sm text-sm font-medium rounded-lg text-indigo-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-all duration-300" title="Editar Perfil">
-                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    Editar
-                </a>
-                <a href="{{ route('workouts.create') }}?student_id={{ $student->id }}" class="inline-flex justify-center items-center px-4 py-2 border border-indigo-600 shadow-sm text-sm font-medium rounded-lg text-indigo-300 bg-gray-800/60 hover:bg-gray-700/70 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-all duration-300">
+                
+                <a href="{{ route('workouts.create') }}?student_id={{ $student->id }}" class="inline-flex items-center px-4 py-2.5 rounded-xl border border-gray-600 hover:border-indigo-500 text-gray-300 hover:text-white bg-gray-800/50 hover:bg-gray-700/50 text-sm font-medium transition-all">
+                    <svg class="mr-2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     Criar Treino
                 </a>
-                <button type="button" @click="showResetPassword = true" class="inline-flex justify-center items-center px-4 py-2 border border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-all duration-300">
-                    Reset Senha
-                </button>
-                
-                <!-- Menu de Ações Extras (Dropdown ou Botão Simples) -->
-                <form action="{{ route('personal.students.toggle-status', $student) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-gray-600 shadow-sm text-sm font-medium rounded-lg {{ $student->is_active ? 'text-red-400 bg-gray-700 hover:bg-red-600/20 hover:text-red-300' : 'text-green-400 bg-gray-700 hover:bg-green-600/20 hover:text-green-300' }} transition-all duration-300">
-                        {{ $student->is_active ? 'Bloquear' : 'Desbloquear' }}
-                    </button>
-                </form>
-            </div>
 
+                <!-- Dropdown Menu -->
+                <div class="relative">
+                    <button @click="openActions = !openActions" @click.away="openActions = false" class="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-gray-600 hover:border-gray-500 text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-700/50 transition-all">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+                    </button>
+                    
+                    <div x-show="openActions" x-cloak x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 mt-2 w-56 rounded-2xl shadow-xl bg-gray-800 border border-gray-700 ring-1 ring-black ring-opacity-5 divide-y divide-gray-700/50 z-50">
+                        <div class="py-1">
+                            <a href="{{ route('personal.students.edit', $student) }}" class="group flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white">
+                                <svg class="mr-3 h-5 w-5 text-gray-500 group-hover:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                Editar Perfil
+                            </a>
+                            <button @click="showResetPassword = true; openActions = false" class="group flex w-full items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white">
+                                <svg class="mr-3 h-5 w-5 text-gray-500 group-hover:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                                Redefinir Senha
+                            </button>
+                        </div>
+                        <div class="py-1">
+                            <form action="{{ route('personal.students.toggle-status', $student) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="group flex w-full items-center px-4 py-2 text-sm {{ $student->is_active ? 'text-red-400 hover:bg-red-500/10' : 'text-green-400 hover:bg-green-500/10' }}">
+                                    @if($student->is_active)
+                                        <svg class="mr-3 h-5 w-5 text-red-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                        Bloquear Acesso
+                                    @else
+                                        <svg class="mr-3 h-5 w-5 text-green-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        Desbloquear Acesso
+                                    @endif
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <!-- Navegação de Abas -->
-        <div class="border-t border-gray-700">
-            <nav class="-mb-px flex" aria-label="Tabs">
+        <div class="bg-gray-800/30 border-t border-gray-700/50 px-6 sm:px-8">
+            <nav class="-mb-px flex gap-6 sm:gap-8 overflow-x-auto hide-scrollbar" aria-label="Tabs">
                 <button @click="activeTab = 'overview'" 
                         :class="activeTab === 'overview' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'"
-                        class="w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors">
+                        class="whitespace-nowrap py-4 border-b-2 font-medium text-sm transition-all duration-200">
                     Visão Geral
                 </button>
                 <button @click="activeTab = 'workouts'" 
                         :class="activeTab === 'workouts' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'"
-                        class="w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors">
+                        class="whitespace-nowrap py-4 border-b-2 font-medium text-sm transition-all duration-200">
                     Treinos
                 </button>
                 <button @click="activeTab = 'diets'" 
                         :class="activeTab === 'diets' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'"
-                        class="w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors">
+                        class="whitespace-nowrap py-4 border-b-2 font-medium text-sm transition-all duration-200">
                     Dietas
                 </button>
                 <button @click="activeTab = 'measurements'" 
                         :class="activeTab === 'measurements' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'"
-                        class="w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors">
+                        class="whitespace-nowrap py-4 border-b-2 font-medium text-sm transition-all duration-200">
                     Histórico Avaliações
+                </button>
+                <button @click="activeTab = 'comparison'" 
+                        :class="activeTab === 'comparison' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'"
+                        class="whitespace-nowrap py-4 border-b-2 font-medium text-sm transition-all duration-200">
+                    Comparativo
                 </button>
             </nav>
         </div>
@@ -119,21 +159,39 @@
         
         <!-- Aba: Visão Geral -->
         <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-200">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Card de Peso Recente -->
-                <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden">
-                    <div class="px-4 py-5 border-b border-gray-700 bg-gray-800/30">
-                        <h3 class="text-lg leading-6 font-bold text-white">Últimas Pesagens</h3>
+                <div class="lg:col-span-2 bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl overflow-hidden flex flex-col h-full">
+                    <div class="px-6 py-5 border-b border-gray-700/50 bg-gray-800/30 flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                            <svg class="h-5 w-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            Últimas Pesagens
+                        </h3>
+                        <button @click="activeTab = 'measurements'" class="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+                            Ver histórico <span aria-hidden="true">&rarr;</span>
+                        </button>
                     </div>
-                    <ul class="divide-y divide-gray-700">
+                    <ul class="divide-y divide-gray-700/50 flex-1">
                         @forelse($measurements->take(5) as $measurement)
-                            <li class="px-4 py-4 flex justify-between items-center hover:bg-gray-700/30 transition-colors">
-                                <span class="text-sm text-gray-300">{{ $measurement->date->format('d/m/Y') }}</span>
-                                <div class="flex items-center">
-                                    <span class="text-sm font-bold text-white">{{ $measurement->weight }} kg</span>
-                                    @if($measurement->body_fat)
-                                        <span class="text-xs text-gray-400 ml-2">({{ $measurement->body_fat }}% gordura)</span>
-                                    @endif
+                            <li class="px-6 py-5 flex justify-between items-center hover:bg-gray-700/20 transition-colors group">
+                                <div class="flex items-center gap-4">
+                                    <div class="h-10 w-10 rounded-full bg-gray-700/50 flex items-center justify-center text-gray-400 group-hover:bg-indigo-500/10 group-hover:text-indigo-400 transition-colors">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-white">{{ $measurement->date->format('d/m/Y') }}</p>
+                                        <p class="text-xs text-gray-400">{{ $measurement->date->diffForHumans() }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center gap-6">
+                                    <div class="text-right">
+                                        <p class="text-sm font-bold text-white">{{ $measurement->weight }} kg</p>
+                                        @if($measurement->body_fat)
+                                            <p class="text-xs text-gray-400">{{ $measurement->body_fat }}% gordura</p>
+                                        @endif
+                                    </div>
+                                    
                                     <button @click="$dispatch('open-measurement-modal', { 
                                         date: '{{ $measurement->date->format('d/m/Y') }}',
                                         weight: '{{ $measurement->weight }}',
@@ -172,36 +230,44 @@
                                         pollock7_fat_pct: '{{ $measurement->pollock7_fat_pct }}',
                                         pollock7_fat_mass: '{{ $measurement->pollock7_fat_mass }}',
                                         pollock7_lean_mass: '{{ $measurement->pollock7_lean_mass }}'
-                                    })" class="text-gray-300 hover:text-white ml-3 transition-colors" title="Ver Detalhes">
-                                        <svg class="h-5 w-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    })" class="p-2 rounded-lg text-gray-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all" title="Ver Detalhes">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                     </button>
                                 </div>
                             </li>
                         @empty
-                            <li class="px-4 py-8 text-sm text-gray-400 text-center">Nenhuma avaliação registrada ainda.</li>
+                            <li class="px-6 py-12 text-center">
+                                <div class="mx-auto h-12 w-12 text-gray-500 mb-3">
+                                    <svg class="h-full w-full" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                </div>
+                                <p class="text-gray-400 text-sm">Nenhuma avaliação registrada ainda.</p>
+                            </li>
                         @endforelse
                     </ul>
-                    <div class="bg-gray-800/30 px-4 py-3 text-right">
-                        <button @click="activeTab = 'measurements'" class="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">Ver histórico completo &rarr;</button>
-                    </div>
                 </div>
 
                 <!-- Resumo Rápido -->
-                <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg p-6">
-                    <h3 class="text-lg font-bold text-white mb-4">Status Atual</h3>
+                <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl p-6 lg:p-8 h-fit">
+                    <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                        <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Status Atual
+                    </h3>
                     @if($measurements->isNotEmpty())
-                        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                            <div class="sm:col-span-1">
-                                <dt class="text-sm font-medium text-gray-300">Peso Atual</dt>
-                                <dd class="mt-1 text-2xl font-semibold text-white">{{ $measurements->first()->weight }} kg</dd>
+                        <div class="space-y-6">
+                            <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600/30">
+                                <dt class="text-sm font-medium text-gray-400 mb-1">Peso Atual</dt>
+                                <dd class="text-3xl font-bold text-white tracking-tight">{{ $measurements->first()->weight }} <span class="text-lg font-medium text-gray-500">kg</span></dd>
                             </div>
-                            <div class="sm:col-span-1">
-                                <dt class="text-sm font-medium text-gray-300">Altura</dt>
-                                <dd class="mt-1 text-2xl font-semibold text-white">{{ $measurements->first()->height ?? '-' }}</dd>
+                            
+                            <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600/30">
+                                <dt class="text-sm font-medium text-gray-400 mb-1">Altura</dt>
+                                <dd class="text-3xl font-bold text-white tracking-tight">{{ $measurements->first()->height ?? '-' }} <span class="text-lg font-medium text-gray-500">m</span></dd>
                             </div>
-                            <div class="sm:col-span-1">
-                                <dt class="text-sm font-medium text-gray-300">IMC (Estimado)</dt>
-                                <dd class="mt-1 text-2xl font-semibold text-white">
+
+                            <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600/30">
+                                <dt class="text-sm font-medium text-gray-400 mb-1">IMC (Estimado)</dt>
+                                <dd class="flex items-baseline gap-2">
+                                    <span class="text-3xl font-bold text-white tracking-tight">
                                     @php
                                         $h = $measurements->first()->height;
                                         $w = $measurements->first()->weight;
@@ -214,24 +280,32 @@
                                             $imc = $w / ($h * $h);
                                         }
                                     @endphp
-                                    
                                     @if($imc > 0)
                                         {{ number_format($imc, 1) }}
-                                        <span class="text-xs font-normal text-gray-400 ml-1">
-                                            @if($imc < 18.5) (Abaixo)
-                                            @elseif($imc < 25) (Normal)
-                                            @elseif($imc < 30) (Sobrepeso)
-                                            @else (Obesidade)
-                                            @endif
-                                        </span>
                                     @else
                                         -
                                     @endif
+                                    </span>
+                                    
+                                    @if($imc > 0)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                                            @if($imc < 18.5) bg-yellow-500/10 text-yellow-400
+                                            @elseif($imc < 25) bg-green-500/10 text-green-400
+                                            @elseif($imc < 30) bg-orange-500/10 text-orange-400
+                                            @else bg-red-500/10 text-red-400
+                                            @endif">
+                                            @if($imc < 18.5) Abaixo do peso
+                                            @elseif($imc < 25) Normal
+                                            @elseif($imc < 30) Sobrepeso
+                                            @else Obesidade
+                                            @endif
+                                        </span>
+                                    @endif
                                 </dd>
                             </div>
-                        </dl>
+                        </div>
                     @else
-                        <p class="text-gray-400">Sem dados suficientes.</p>
+                        <p class="text-gray-400 text-center py-8">Sem dados suficientes.</p>
                     @endif
                 </div>
             </div>
@@ -239,8 +313,8 @@
 
         <!-- Aba: Treinos -->
         <div x-show="activeTab === 'workouts'" x-cloak>
-            <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden">
-                <ul class="divide-y divide-gray-700">
+            <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl overflow-hidden">
+                <ul class="divide-y divide-gray-700/50">
                     @forelse($workouts as $workout)
                         <li>
                             <div class="px-4 py-4 flex items-center justify-between hover:bg-gray-700/30 transition-colors">
@@ -274,8 +348,8 @@
 
         <!-- Aba: Dietas -->
         <div x-show="activeTab === 'diets'" x-cloak>
-            <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden">
-                <ul class="divide-y divide-gray-700">
+            <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl overflow-hidden">
+                <ul class="divide-y divide-gray-700/50">
                     @forelse($diets as $diet)
                         <li>
                             <a href="{{ route('diets.show', $diet) }}" class="block hover:bg-gray-700/30 transition-colors">
@@ -299,9 +373,9 @@
 
         <!-- Aba: Histórico de Avaliações (CRUD Completo) -->
         <div x-show="activeTab === 'measurements'" x-cloak>
-            <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden">
-                <div class="px-4 py-5 border-b border-gray-700 sm:px-6 flex justify-between items-center bg-gray-800/30">
-                    <h3 class="text-lg leading-6 font-bold text-white">Histórico Completo</h3>
+            <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-700/50 sm:px-8 flex justify-between items-center bg-gray-800/30">
+                    <h3 class="text-lg leading-6 font-bold text-white tracking-tight">Histórico Completo</h3>
                     <a href="{{ route('personal.measurements.create', $student) }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg shadow-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-all duration-300">
                         + Nova Medida
                     </a>
@@ -460,7 +534,249 @@
             </div>
         </div>
 
+        <!-- Aba: Comparativo de Fotos (NOVA) -->
+        <div x-show="activeTab === 'comparison'" x-cloak x-data="photoComparison()">
+            @if($measurements->isEmpty())
+                <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl p-8 text-center">
+                    <p class="text-gray-400">Nenhuma avaliação encontrada para comparação.</p>
+                </div>
+            @else
+                <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl p-6 sm:p-8">
+                    <h3 class="text-lg font-medium text-white mb-6">Comparar Avaliações</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <!-- Select Left -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Avaliação 1 (Esquerda)</label>
+                            <select x-model="leftId" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-600 bg-gray-700 text-white focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-lg">
+                                <template x-for="m in measurements" :key="m.id">
+                                    <option :value="m.id" x-text="formatDate(m.date) + ' - ' + m.weight + 'kg'"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <!-- Select Right -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Avaliação 2 (Direita)</label>
+                            <select x-model="rightId" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-600 bg-gray-700 text-white focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-lg">
+                                <template x-for="m in measurements" :key="m.id">
+                                    <option :value="m.id" x-text="formatDate(m.date) + ' - ' + m.weight + 'kg'"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Comparison Display -->
+                    <div class="space-y-12">
+                        <!-- Front -->
+                        <div>
+                            <div class="flex items-center justify-center mb-4">
+                                <span class="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm font-bold">Vista Frontal</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
+                                    <template x-if="leftMeasurement && leftMeasurement.photo_front">
+                                        <div class="aspect-w-3 aspect-h-4">
+                                            <img :src="getPhotoUrl(leftMeasurement.id, 'front')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'front'))">
+                                        </div>
+                                    </template>
+                                    <template x-if="!leftMeasurement || !leftMeasurement.photo_front">
+                                        <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
+                                            <span class="text-sm">Sem foto</span>
+                                        </div>
+                                    </template>
+                                    <p class="text-center text-sm font-bold mt-2 text-gray-300" x-text="leftMeasurement ? formatDate(leftMeasurement.date) : '-'"></p>
+                                </div>
+                                <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
+                                    <template x-if="rightMeasurement && rightMeasurement.photo_front">
+                                        <div class="aspect-w-3 aspect-h-4">
+                                            <img :src="getPhotoUrl(rightMeasurement.id, 'front')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'front'))">
+                                        </div>
+                                    </template>
+                                    <template x-if="!rightMeasurement || !rightMeasurement.photo_front">
+                                        <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
+                                            <span class="text-sm">Sem foto</span>
+                                        </div>
+                                    </template>
+                                    <p class="text-center text-sm font-bold mt-2 text-gray-300" x-text="rightMeasurement ? formatDate(rightMeasurement.date) : '-'"></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Side Right -->
+                        <div>
+                            <div class="flex items-center justify-center mb-4">
+                                <span class="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm font-bold">Lado D (Direito)</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
+                                    <template x-if="leftMeasurement && leftMeasurement.photo_side_right">
+                                        <div class="aspect-w-3 aspect-h-4">
+                                            <img :src="getPhotoUrl(leftMeasurement.id, 'side_right')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'side_right'))">
+                                        </div>
+                                    </template>
+                                    <template x-if="!leftMeasurement || !leftMeasurement.photo_side_right">
+                                        <!-- Fallback -->
+                                        <template x-if="leftMeasurement && leftMeasurement.photo_side">
+                                            <div class="aspect-w-3 aspect-h-4">
+                                                <img :src="getPhotoUrl(leftMeasurement.id, 'side')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'side'))">
+                                            </div>
+                                        </template>
+                                        <template x-if="!leftMeasurement || (!leftMeasurement.photo_side_right && !leftMeasurement.photo_side)">
+                                            <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
+                                                <span class="text-sm">Sem foto</span>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <p class="text-center text-sm font-bold mt-2 text-gray-300" x-text="leftMeasurement ? formatDate(leftMeasurement.date) : '-'"></p>
+                                </div>
+                                <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
+                                    <template x-if="rightMeasurement && rightMeasurement.photo_side_right">
+                                        <div class="aspect-w-3 aspect-h-4">
+                                            <img :src="getPhotoUrl(rightMeasurement.id, 'side_right')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'side_right'))">
+                                        </div>
+                                    </template>
+                                    <template x-if="!rightMeasurement || !rightMeasurement.photo_side_right">
+                                        <!-- Fallback -->
+                                        <template x-if="rightMeasurement && rightMeasurement.photo_side">
+                                            <div class="aspect-w-3 aspect-h-4">
+                                                <img :src="getPhotoUrl(rightMeasurement.id, 'side')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'side'))">
+                                            </div>
+                                        </template>
+                                        <template x-if="!rightMeasurement || (!rightMeasurement.photo_side_right && !rightMeasurement.photo_side)">
+                                            <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
+                                                <span class="text-sm">Sem foto</span>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <p class="text-center text-sm font-bold mt-2 text-gray-300" x-text="rightMeasurement ? formatDate(rightMeasurement.date) : '-'"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Side Left -->
+                        <div>
+                            <div class="flex items-center justify-center mb-4">
+                                <span class="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm font-bold">Lado E (Esquerdo)</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
+                                    <template x-if="leftMeasurement && leftMeasurement.photo_side_left">
+                                        <div class="aspect-w-3 aspect-h-4">
+                                            <img :src="getPhotoUrl(leftMeasurement.id, 'side_left')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'side_left'))">
+                                        </div>
+                                    </template>
+                                    <template x-if="!leftMeasurement || !leftMeasurement.photo_side_left">
+                                        <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
+                                            <span class="text-sm">Sem foto</span>
+                                        </div>
+                                    </template>
+                                    <p class="text-center text-sm font-bold mt-2 text-gray-300" x-text="leftMeasurement ? formatDate(leftMeasurement.date) : '-'"></p>
+                                </div>
+                                <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
+                                    <template x-if="rightMeasurement && rightMeasurement.photo_side_left">
+                                        <div class="aspect-w-3 aspect-h-4">
+                                            <img :src="getPhotoUrl(rightMeasurement.id, 'side_left')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'side_left'))">
+                                        </div>
+                                    </template>
+                                    <template x-if="!rightMeasurement || !rightMeasurement.photo_side_left">
+                                        <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
+                                            <span class="text-sm">Sem foto</span>
+                                        </div>
+                                    </template>
+                                    <p class="text-center text-sm font-bold mt-2 text-gray-300" x-text="rightMeasurement ? formatDate(rightMeasurement.date) : '-'"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Back -->
+                        <div>
+                            <div class="flex items-center justify-center mb-4">
+                                <span class="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm font-bold">Vista Costas</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
+                                    <template x-if="leftMeasurement && leftMeasurement.photo_back">
+                                        <div class="aspect-w-3 aspect-h-4">
+                                            <img :src="getPhotoUrl(leftMeasurement.id, 'back')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'back'))">
+                                        </div>
+                                    </template>
+                                    <template x-if="!leftMeasurement || !leftMeasurement.photo_back">
+                                        <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
+                                            <span class="text-sm">Sem foto</span>
+                                        </div>
+                                    </template>
+                                    <p class="text-center text-sm font-bold mt-2 text-gray-300" x-text="leftMeasurement ? formatDate(leftMeasurement.date) : '-'"></p>
+                                </div>
+                                <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
+                                    <template x-if="rightMeasurement && rightMeasurement.photo_back">
+                                        <div class="aspect-w-3 aspect-h-4">
+                                            <img :src="getPhotoUrl(rightMeasurement.id, 'back')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'back'))">
+                                        </div>
+                                    </template>
+                                    <template x-if="!rightMeasurement || !rightMeasurement.photo_back">
+                                        <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
+                                            <span class="text-sm">Sem foto</span>
+                                        </div>
+                                    </template>
+                                    <p class="text-center text-sm font-bold mt-2 text-gray-300" x-text="rightMeasurement ? formatDate(rightMeasurement.date) : '-'"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+
     </div>
+
+    <!-- Image Modal (Reutilizado do Alpine acima, mas precisa estar fora do x-data de tabs para funcionar em tudo ou duplicado) -->
+    <!-- Vamos usar um modal global ou específico para a aba de comparação -->
+    <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-95 p-4" x-cloak @click="modalOpen = false" x-data="{ modalOpen: false, modalImage: '' }" @open-comparison-modal.window="modalOpen = true; modalImage = $event.detail">
+        <div class="relative max-w-4xl w-full h-full flex items-center justify-center">
+             <button @click="modalOpen = false" class="absolute top-0 right-0 m-4 text-white text-4xl font-light">&times;</button>
+             <img :src="modalImage" class="max-w-full max-h-full rounded shadow-2xl">
+        </div>
+    </div>
+
+    <script>
+        function photoComparison() {
+            return {
+                measurements: @json($measurements->sortBy('date')->values()),
+                leftId: null,
+                rightId: null,
+                photoRouteTemplate: "{{ route('measurement.photo', ['measurementId' => 999999, 'type' => 'placeholder_type']) }}",
+                
+                init() {
+                    if (this.measurements.length > 0) {
+                        this.leftId = this.measurements[0].id;
+                        this.rightId = this.measurements[this.measurements.length - 1].id;
+                    }
+                },
+
+                getPhotoUrl(id, type) {
+                    const url = this.photoRouteTemplate.replace('999999', id).replace('placeholder_type', type);
+                    return `${url}?t=${new Date().getTime()}`;
+                },
+
+                get leftMeasurement() {
+                    return this.measurements.find(m => m.id == this.leftId) || null;
+                },
+                get rightMeasurement() {
+                    return this.measurements.find(m => m.id == this.rightId) || null;
+                },
+                
+                formatDate(dateString) {
+                    if(!dateString) return '-';
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' }); 
+                },
+                
+                openModal(imageUrl) {
+                    window.dispatchEvent(new CustomEvent('open-comparison-modal', { detail: imageUrl }));
+                }
+            }
+        }
+    </script>
 
     <!-- Modal de Detalhes da Avaliação -->
     <div x-data="{ open: false, data: {} }" 
