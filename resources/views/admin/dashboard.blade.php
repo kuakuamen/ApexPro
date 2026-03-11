@@ -72,6 +72,74 @@
             </div>
         </div>
     </div>
+
+    <!-- Total Nutritionists -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Total de Nutricionistas</p>
+                        <h2 class="stat-value" style="color: #ec4899;">{{ $stats['total_nutritionists'] }}</h2>
+                    </div>
+                    <div class="stat-icon" style="color: #ec4899;">
+                        <i class="fas fa-apple-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Assessments -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Avaliações Realizadas</p>
+                        <h2 class="stat-value" style="color: #3b82f6;">{{ $stats['total_assessments'] }}</h2>
+                    </div>
+                    <div class="stat-icon" style="color: #3b82f6;">
+                        <i class="fas fa-ruler-combined"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Workouts -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Planos de Treino</p>
+                        <h2 class="stat-value" style="color: #f43f5e;">{{ $stats['total_workouts'] }}</h2>
+                    </div>
+                    <div class="stat-icon" style="color: #f43f5e;">
+                        <i class="fas fa-dumbbell"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Diets -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Planos Alimentares</p>
+                        <h2 class="stat-value" style="color: #14b8a6;">{{ $stats['total_diets'] }}</h2>
+                    </div>
+                    <div class="stat-icon" style="color: #14b8a6;">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Quick Actions -->

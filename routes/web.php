@@ -12,7 +12,22 @@ use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\AiAssessmentController; // Importar o novo controller
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\SubscriptionController;
 use Illuminate\Support\Facades\Auth;
+
+// Rotas de Assinatura (Públicas)
+Route::get('/planos', [SubscriptionController::class, 'index'])->name('plans.index');
+Route::get('/planos/{plan}/checkout', [SubscriptionController::class, 'checkout'])->name('plans.checkout');
+Route::post('/planos/{plan}/process', [SubscriptionController::class, 'processPayment'])->name('plans.process');
+Route::get('/assinatura/cadastro', [SubscriptionController::class, 'showRegisterForm'])->name('subscription.register');
+Route::post('/assinatura/cadastro', [SubscriptionController::class, 'storePersonal'])->name('subscription.store');
+
+// Rotas de Renovação (Autenticadas, mas acessíveis mesmo expirado)
+Route::middleware('auth')->group(function () {
+    Route::get('/assinatura/renovar', [SubscriptionController::class, 'showRenew'])->name('subscription.renew');
+    Route::get('/assinatura/renovar/{plan}/checkout', [SubscriptionController::class, 'renewCheckout'])->name('subscription.renew.checkout');
+    Route::post('/assinatura/renovar/{plan}', [SubscriptionController::class, 'processRenew'])->name('subscription.renew.process');
+});
 
 // Rotas de Autenticação
 Route::middleware('guest')->group(function () {
@@ -28,7 +43,7 @@ Route::middleware('auth')->get('/measurement/{measurementId}/{type}', [PhotoCont
 Route::middleware('auth')->get('/measurement/{measurementId}/extra/{index}', [PhotoController::class, 'showMeasurementExtra'])->whereNumber('index')->name('measurement.photo.extra');
 
 // Rotas do Personal (Área Administrativa)
-Route::middleware(['auth', 'role:personal'])->prefix('personal')->name('personal.')->group(function () {
+Route::middleware(['auth', 'role:personal', 'subscription'])->prefix('personal')->name('personal.')->group(function () {
     Route::get('/dashboard', [PersonalController::class, 'dashboard'])->name('dashboard');
     
     // Alunos
@@ -94,7 +109,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 });
 
 // Rotas de Funcionalidades (Acessíveis a usuários logados)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'subscription'])->group(function () {
     // Rotas de Treino
     Route::get('/treinos', [WorkoutPlanController::class, 'index'])->name('workouts.index');
     Route::get('/treinos/novo', [WorkoutPlanController::class, 'create'])->name('workouts.create');
@@ -145,6 +160,10 @@ Route::get('/', function () {
     if ($user->role === 'admin') {
         return redirect()->route('admin.dashboard');
     } elseif ($user->role === 'personal') {
+        // Verificar se a assinatura expirou
+        if ($user->subscription_expires_at && $user->subscription_expires_at->isPast()) {
+            return redirect()->route('subscription.renew');
+        }
         return redirect()->route('personal.dashboard');
     } elseif ($user->role === 'nutri') {
         return redirect()->route('diets.index');

@@ -6,105 +6,176 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+                background-color: #111827 !important; /* bg-gray-900 */
+                color: #ffffff !important;
+            }
             .no-print { display: none; }
+            .page-break { page-break-before: always; }
+        }
+        body {
+            font-family: 'Inter', sans-serif;
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-white text-gray-900 p-8 max-w-4xl mx-auto">
+<body class="bg-gray-900 text-gray-100 p-8 max-w-4xl mx-auto min-h-screen">
     
     <!-- Cabeçalho -->
-    <div class="border-b-2 border-gray-800 pb-4 mb-8 flex justify-between items-end">
+    <div class="border-b border-gray-700 pb-6 mb-10 flex justify-between items-end">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Laudo Postural & Prescrição</h1>
-            <p class="text-sm text-gray-500 mt-1">Gerado por Inteligência Artificial - ApexPro</p>
+            <div class="flex items-center gap-3 mb-2">
+                <!-- Logo Simulado -->
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">ApexPro <span class="text-indigo-400 font-light">AI</span></h1>
+            </div>
+            <p class="text-sm text-gray-400">Laudo de Avaliação Física & Prescrição Inteligente</p>
         </div>
         <div class="text-right">
-            <p class="font-bold">{{ $student->name }}</p>
-            <p class="text-sm">{{ date('d/m/Y') }}</p>
+            <p class="font-bold text-white text-lg">{{ $student->name }}</p>
+            <p class="text-sm text-gray-400">Gerado em {{ date('d/m/Y') }}</p>
         </div>
     </div>
 
     <!-- Análise Postural -->
-    <div class="mb-8">
-        <h2 class="text-xl font-bold text-indigo-700 mb-4 border-l-4 border-indigo-700 pl-3">1. Análise Postural</h2>
+    <div class="mb-10">
+        <h2 class="text-xl font-bold text-indigo-400 mb-6 flex items-center">
+            <div class="w-1.5 h-6 bg-indigo-500 rounded-full mr-3"></div>
+            1. Análise Postural
+        </h2>
         
-        <div class="grid grid-cols-2 gap-8 bg-gray-50 p-6 rounded-lg">
-            <div>
-                <h3 class="font-bold text-gray-700 mb-2">Desvios Identificados</h3>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    <li><strong>Lordose:</strong> {{ $analysisResult['posture_analysis']['lordosis'] ?? '-' }}</li>
-                    <li><strong>Escoliose:</strong> {{ $analysisResult['posture_analysis']['scoliosis'] ?? '-' }}</li>
-                    <li><strong>Ombros:</strong> {{ $analysisResult['posture_analysis']['shoulders'] ?? '-' }}</li>
-                    <li><strong>Cabeça:</strong> {{ $analysisResult['posture_analysis']['head_position'] ?? '-' }}</li>
-                    <li><strong>Joelhos:</strong> {{ $analysisResult['posture_analysis']['knees'] ?? '-' }}</li>
+        <div class="grid grid-cols-2 gap-8">
+            <!-- Desvios -->
+            <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl">
+                <h3 class="font-bold text-red-400 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    Desvios Identificados
+                </h3>
+                <ul class="space-y-3">
+                    <li class="text-sm border-b border-gray-700/50 pb-2 last:border-0">
+                        <strong class="text-red-300 block mb-1">Lordose:</strong> 
+                        <span class="text-gray-300">{{ $analysisResult['posture_analysis']['lordosis'] ?? '-' }}</span>
+                    </li>
+                    <li class="text-sm border-b border-gray-700/50 pb-2 last:border-0">
+                        <strong class="text-red-300 block mb-1">Escoliose:</strong> 
+                        <span class="text-gray-300">{{ $analysisResult['posture_analysis']['scoliosis'] ?? '-' }}</span>
+                    </li>
+                    <li class="text-sm border-b border-gray-700/50 pb-2 last:border-0">
+                        <strong class="text-red-300 block mb-1">Ombros:</strong> 
+                        <span class="text-gray-300">{{ $analysisResult['posture_analysis']['shoulders'] ?? '-' }}</span>
+                    </li>
+                    <li class="text-sm border-b border-gray-700/50 pb-2 last:border-0">
+                        <strong class="text-red-300 block mb-1">Cabeça:</strong> 
+                        <span class="text-gray-300">{{ $analysisResult['posture_analysis']['head_position'] ?? '-' }}</span>
+                    </li>
+                    <li class="text-sm border-b border-gray-700/50 pb-2 last:border-0">
+                        <strong class="text-red-300 block mb-1">Joelhos:</strong> 
+                        <span class="text-gray-300">{{ $analysisResult['posture_analysis']['knees'] ?? '-' }}</span>
+                    </li>
                 </ul>
             </div>
-            <div>
-                <h3 class="font-bold text-gray-700 mb-2">Estratégia Corretiva</h3>
-                <div class="mb-3">
-                    <span class="text-xs font-bold uppercase bg-green-100 text-green-800 px-2 py-1 rounded">Fortalecer</span>
-                    <p class="text-sm mt-1">{{ implode(', ', $analysisResult['suggested_focus']['strengthen'] ?? []) }}</p>
+
+            <!-- Estratégia -->
+            <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl">
+                <h3 class="font-bold text-teal-400 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Estratégia Corretiva
+                </h3>
+                <div class="mb-6">
+                    <span class="inline-block text-xs font-bold uppercase tracking-wider text-white bg-teal-600 px-2 py-1 rounded border border-teal-500 mb-2 shadow-sm">Fortalecer</span>
+                    <p class="text-sm text-gray-300 leading-relaxed">{{ implode(', ', $analysisResult['suggested_focus']['strengthen'] ?? []) }}</p>
                 </div>
                 <div>
-                    <span class="text-xs font-bold uppercase bg-blue-100 text-blue-800 px-2 py-1 rounded">Alongar</span>
-                    <p class="text-sm mt-1">{{ implode(', ', $analysisResult['suggested_focus']['stretch'] ?? []) }}</p>
+                    <span class="inline-block text-xs font-bold uppercase tracking-wider text-white bg-blue-600 px-2 py-1 rounded border border-blue-500 mb-2 shadow-sm">Alongar</span>
+                    <p class="text-sm text-gray-300 leading-relaxed">{{ implode(', ', $analysisResult['suggested_focus']['stretch'] ?? []) }}</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Fotos (Opcional - Layout Grid) -->
-    <div class="mb-8">
-        <h2 class="text-xl font-bold text-indigo-700 mb-4 border-l-4 border-indigo-700 pl-3">2. Evidências Visuais</h2>
+    <!-- Fotos -->
+    <div class="mb-10 break-inside-avoid">
+        <h2 class="text-xl font-bold text-indigo-400 mb-6 flex items-center">
+            <div class="w-1.5 h-6 bg-indigo-500 rounded-full mr-3"></div>
+            2. Evidências Visuais
+        </h2>
         <div class="grid grid-cols-3 gap-4">
             @if($frontPath) 
-                <div class="aspect-w-3 aspect-h-4 bg-gray-200 rounded overflow-hidden">
-                    <img src="data:image/png;base64,{{ base64_encode(Storage::disk('private')->get($frontPath)) }}" class="object-cover w-full h-full">
-                </div> 
+                <div class="bg-gray-800 p-2 rounded-lg border border-gray-700 shadow-sm">
+                    <div class="aspect-w-3 aspect-h-4 rounded overflow-hidden">
+                        <img src="data:image/jpeg;base64,{{ base64_encode(file_get_contents(storage_path('app/private/'.$frontPath))) }}" class="object-cover w-full h-full rounded">
+                    </div> 
+                    <p class="text-center text-xs text-gray-500 mt-2 font-medium">Frontal</p>
+                </div>
             @endif
             @if($sidePath) 
-                <div class="aspect-w-3 aspect-h-4 bg-gray-200 rounded overflow-hidden">
-                    <img src="data:image/png;base64,{{ base64_encode(Storage::disk('private')->get($sidePath)) }}" class="object-cover w-full h-full">
-                </div> 
+                <div class="bg-gray-800 p-2 rounded-lg border border-gray-700 shadow-sm">
+                    <div class="aspect-w-3 aspect-h-4 rounded overflow-hidden">
+                        <img src="data:image/jpeg;base64,{{ base64_encode(file_get_contents(storage_path('app/private/'.$sidePath))) }}" class="object-cover w-full h-full rounded">
+                    </div> 
+                    <p class="text-center text-xs text-gray-500 mt-2 font-medium">Lateral</p>
+                </div>
             @endif
             @if($backPath) 
-                <div class="aspect-w-3 aspect-h-4 bg-gray-200 rounded overflow-hidden">
-                    <img src="data:image/png;base64,{{ base64_encode(Storage::disk('private')->get($backPath)) }}" class="object-cover w-full h-full">
-                </div> 
+                <div class="bg-gray-800 p-2 rounded-lg border border-gray-700 shadow-sm">
+                    <div class="aspect-w-3 aspect-h-4 rounded overflow-hidden">
+                        <img src="data:image/jpeg;base64,{{ base64_encode(file_get_contents(storage_path('app/private/'.$backPath))) }}" class="object-cover w-full h-full rounded">
+                    </div> 
+                    <p class="text-center text-xs text-gray-500 mt-2 font-medium">Posterior</p>
+                </div>
             @endif
         </div>
     </div>
 
     <!-- Treino Prescrito -->
+    <div class="page-break"></div> <!-- Quebra de página forçada para o treino -->
+    
     <div class="mb-8">
-        <h2 class="text-xl font-bold text-indigo-700 mb-4 border-l-4 border-indigo-700 pl-3">3. Prescrição de Treino</h2>
-        <p class="mb-4 text-sm"><strong>Objetivo:</strong> {{ $request->goal }} | <strong>Foco:</strong> {{ $analysisResult['workout_recommendation']['priority'] ?? 'Geral' }}</p>
+        <h2 class="text-xl font-bold text-indigo-400 mb-6 flex items-center">
+            <div class="w-1.5 h-6 bg-indigo-500 rounded-full mr-3"></div>
+            3. Prescrição de Treino
+        </h2>
+        
+        <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 mb-6 flex justify-between items-center shadow-sm">
+            <div>
+                <span class="text-xs text-gray-500 uppercase tracking-wider font-bold">Objetivo</span>
+                <p class="text-white font-medium">{{ $request->goal }}</p>
+            </div>
+            <div class="text-right">
+                <span class="text-xs text-gray-500 uppercase tracking-wider font-bold">Foco Principal</span>
+                <p class="text-indigo-400 font-medium">{{ $analysisResult['workout_recommendation']['priority'] ?? 'Geral' }}</p>
+            </div>
+        </div>
 
         <div class="space-y-6">
             @if(isset($request->days))
                 @foreach($request->days as $day)
-                    <div class="border border-gray-200 rounded-lg overflow-hidden break-inside-avoid">
-                        <div class="bg-gray-100 px-4 py-2 font-bold text-gray-800 border-b border-gray-200">
-                            {{ $day['name'] }}
+                    <div class="border border-gray-700 rounded-xl overflow-hidden shadow-sm break-inside-avoid bg-gray-800/50">
+                        <div class="bg-gray-800 px-5 py-3 border-b border-gray-700 flex items-center">
+                            <div class="w-2 h-2 rounded-full bg-indigo-500 mr-3"></div>
+                            <h3 class="font-bold text-white text-lg">{{ $day['name'] }}</h3>
                         </div>
-                        <table class="w-full text-sm">
-                            <thead class="bg-white">
-                                <tr class="text-left text-gray-500 border-b">
-                                    <th class="px-4 py-2">Exercício</th>
-                                    <th class="px-4 py-2 w-16">Séries</th>
-                                    <th class="px-4 py-2 w-20">Reps</th>
-                                    <th class="px-4 py-2">Notas</th>
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-900/50 text-gray-400 uppercase text-xs">
+                                <tr>
+                                    <th class="px-5 py-3 font-medium tracking-wider">Exercício</th>
+                                    <th class="px-5 py-3 font-medium tracking-wider w-20 text-center">Séries</th>
+                                    <th class="px-5 py-3 font-medium tracking-wider w-24 text-center">Reps</th>
+                                    <th class="px-5 py-3 font-medium tracking-wider">Notas</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100">
+                            <tbody class="divide-y divide-gray-700/50">
                                 @if(isset($day['exercises']))
                                     @foreach($day['exercises'] as $exercise)
-                                        <tr>
-                                            <td class="px-4 py-2 font-medium">{{ $exercise['name'] }}</td>
-                                            <td class="px-4 py-2">{{ $exercise['sets'] }}</td>
-                                            <td class="px-4 py-2">{{ $exercise['reps'] }}</td>
-                                            <td class="px-4 py-2 text-gray-500 italic">{{ $exercise['notes'] ?? '-' }}</td>
+                                        <tr class="hover:bg-gray-700/20 transition-colors">
+                                            <td class="px-5 py-3 font-medium text-gray-200">{{ $exercise['name'] }}</td>
+                                            <td class="px-5 py-3 text-center text-indigo-300 font-bold">{{ $exercise['sets'] }}</td>
+                                            <td class="px-5 py-3 text-center text-gray-300">{{ $exercise['reps'] }}</td>
+                                            <td class="px-5 py-3 text-gray-500 italic">{{ $exercise['notes'] ?? '-' }}</td>
                                         </tr>
                                     @endforeach
                                 @endif
@@ -117,16 +188,17 @@
     </div>
 
     <!-- Footer -->
-    <div class="mt-12 text-center text-xs text-gray-400 border-t pt-4">
-        <p>Este documento é uma sugestão baseada em análise de inteligência artificial e deve ser validado por um profissional de Educação Física.</p>
-        <p>Gerado em {{ date('d/m/Y H:i') }} via ApexPro System.</p>
+    <div class="mt-16 text-center border-t border-gray-700 pt-6 pb-8">
+        <p class="text-xs text-gray-500 mb-1">Este documento foi gerado automaticamente pelo sistema FitManager AI.</p>
+        <p class="text-xs text-gray-600">© {{ date('Y') }} FitManager - Todos os direitos reservados.</p>
     </div>
 
     <script>
         window.onload = function() {
+            // Pequeno delay para garantir carregamento das imagens e estilos
             setTimeout(() => {
                 window.print();
-            }, 500);
+            }, 800);
         }
     </script>
 </body>

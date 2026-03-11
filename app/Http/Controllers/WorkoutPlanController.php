@@ -17,6 +17,7 @@ class WorkoutPlanController extends Controller
     public function toggleExercise(Request $request, $exerciseId)
     {
         try {
+            /** @var User $user */
             $user = Auth::user();
             
             // Validar se usuário está autenticado
@@ -67,6 +68,7 @@ class WorkoutPlanController extends Controller
      */
     public function index()
     {
+        /** @var User $user */
         $user = Auth::user();
         
         if ($user->role === 'personal') {
@@ -93,12 +95,15 @@ class WorkoutPlanController extends Controller
      */
     public function create(Request $request)
     {
-        if (Auth::user()->role !== 'personal') {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal') {
             abort(403, 'Apenas personal trainers podem criar treinos.');
         }
 
         // Busca apenas os alunos vinculados a este personal
-        $students = Auth::user()->students()->get();
+        $students = $user->students()->get();
         
         // Se vier student_id na URL, pré-seleciona
         $selectedStudentId = $request->query('student_id');
@@ -111,12 +116,15 @@ class WorkoutPlanController extends Controller
      */
     public function store(Request $request)
     {
-        if (Auth::user()->role !== 'personal') {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal') {
             abort(403);
         }
 
         // Validar que student_id existe E pertence ao personal autenticado
-        $personalId = Auth::id();
+        $personalId = $user->id;
         $studentId = $request->input('student_id');
         $studentBelongsToPersonal = ProfessionalStudent::where('professional_id', $personalId)
             ->where('student_id', $studentId)
@@ -175,12 +183,15 @@ class WorkoutPlanController extends Controller
      */
     public function edit(WorkoutPlan $workout)
     {
-        if (Auth::user()->role !== 'personal' || Auth::id() !== $workout->personal_id) {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal' || Auth::id() !== $workout->personal_id) {
             abort(403);
         }
 
         $workout->load('days.exercises');
-        $students = Auth::user()->students()->get();
+        $students = $user->students()->get();
 
         return view('workouts.edit', compact('workout', 'students'));
     }
@@ -190,7 +201,10 @@ class WorkoutPlanController extends Controller
      */
     public function update(Request $request, WorkoutPlan $workout)
     {
-        if (Auth::user()->role !== 'personal' || Auth::id() !== $workout->personal_id) {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal' || $user->id !== $workout->personal_id) {
             abort(403);
         }
 

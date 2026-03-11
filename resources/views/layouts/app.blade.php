@@ -13,7 +13,6 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            background-color: {{ auth()->check() ? '#0f1115' : '#f5f5f4' }};
         }
         [x-cloak] { display: none !important; }
         .bg-personal-dark {
@@ -170,17 +169,6 @@
                         <div class="mb-6 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-sm" role="alert">
                             <p class="font-bold">Sucesso!</p>
                             <p>{{ session('success') }}</p>
-                        </div>
-                    @endif
-
-                    @if ($errors->any())
-                        <div class="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm" role="alert">
-                            <p class="font-bold">Atenção!</p>
-                            <ul class="list-disc list-inside mt-1">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
                         </div>
                     @endif
 

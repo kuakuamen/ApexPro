@@ -15,6 +15,7 @@ class DietPlanController extends Controller
      */
     public function index()
     {
+        /** @var User $user */
         $user = Auth::user();
         
         if ($user->role === 'nutri') {
@@ -41,12 +42,15 @@ class DietPlanController extends Controller
      */
     public function create()
     {
-        if (Auth::user()->role !== 'nutri') {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'nutri') {
             abort(403, 'Apenas nutricionistas podem criar dietas.');
         }
 
         // Busca apenas os alunos vinculados a este nutri
-        $students = Auth::user()->students()->get();
+        $students = $user->students()->get();
 
         return view('diets.create', compact('students'));
     }
@@ -56,12 +60,15 @@ class DietPlanController extends Controller
      */
     public function store(Request $request)
     {
-        if (Auth::user()->role !== 'nutri') {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'nutri') {
             abort(403);
         }
 
         // Validar que student_id existe E pertence ao nutricionista autenticado
-        $nutritionistId = Auth::id();
+        $nutritionistId = $user->id;
         $studentId = $request->input('student_id');
         $studentBelongsToNutritionist = ProfessionalStudent::where('professional_id', $nutritionistId)
             ->where('student_id', $studentId)

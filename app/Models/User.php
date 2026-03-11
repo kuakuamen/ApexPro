@@ -32,6 +32,10 @@ class User extends Authenticatable
         'license_expires_at',
         'license_active',
         'admin_notes',
+        'cref',
+        'max_students',
+        'subscription_expires_at',
+        'plan_name',
         // 'injuries', 'medications', 'surgeries', 'availability_time', 'frequency' // Removidos conforme solicitado
     ];
 // ... (resto do arquivo igual)
@@ -59,6 +63,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'license_active' => 'boolean',
             'license_expires_at' => 'date',
+            'subscription_expires_at' => 'datetime',
         ];
     }
     

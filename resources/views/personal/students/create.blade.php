@@ -18,36 +18,42 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-300 mb-2">Nome Completo</label>
-                    <input type="text" name="name" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                    <input type="text" name="name" value="{{ old('name') }}" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                    @error('name') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-300 mb-2">Email</label>
-                    <input type="email" name="email" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                    <input type="email" name="email" value="{{ old('email') }}" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                    @error('email') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-300 mb-2">Telefone (WhatsApp)</label>
-                    <input type="text" name="phone" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="(00) 00000-0000">
+                    <input type="text" name="phone" id="phone" value="{{ old('phone') }}" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="(00) 00000-0000">
+                    @error('phone') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-300 mb-2">Data de Nascimento <span class="text-red-400">*</span></label>
-                    <input type="date" name="birth_date" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                    <input type="date" name="birth_date" value="{{ old('birth_date') }}" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                    @error('birth_date') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-300 mb-2">CPF <span class="text-red-400">*</span></label>
-                    <input type="text" name="cpf" id="cpf_input" maxlength="14" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="000.000.000-00" required>
+                    <input type="text" name="cpf" id="cpf_input" value="{{ old('cpf') }}" maxlength="14" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="000.000.000-00" required>
+                    @error('cpf') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-300 mb-2">Endereço</label>
-                    <input type="text" name="address" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Rua, Número, Bairro...">
+                    <input type="text" name="address" value="{{ old('address') }}" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Rua, Número, Bairro...">
+                    @error('address') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
             </div>
 
@@ -56,15 +62,17 @@
                     <label class="block text-sm font-medium text-gray-300 mb-2">Gênero <span class="text-red-400">*</span></label>
                     <select name="gender" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
                         <option value="" class="bg-gray-700">Selecione...</option>
-                        <option value="M" class="bg-gray-700">Masculino</option>
-                        <option value="F" class="bg-gray-700">Feminino</option>
-                        <option value="O" class="bg-gray-700">Outro</option>
+                        <option value="M" class="bg-gray-700" {{ old('gender') == 'M' ? 'selected' : '' }}>Masculino</option>
+                        <option value="F" class="bg-gray-700" {{ old('gender') == 'F' ? 'selected' : '' }}>Feminino</option>
+                        <option value="O" class="bg-gray-700" {{ old('gender') == 'O' ? 'selected' : '' }}>Outro</option>
                     </select>
+                    @error('gender') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-300 mb-2">Senha Inicial <span class="text-red-400">*</span></label>
                     <input type="password" name="password" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required minlength="6">
+                    @error('password') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
             </div>
             

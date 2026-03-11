@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 use App\Rules\Cpf;
 
 class PersonalController extends Controller
@@ -34,8 +35,11 @@ class PersonalController extends Controller
      */
     public function dashboard()
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Carrega APENAS os alunos vinculados a este personal
-        $students = Auth::user()->students()
+        $students = $user->students()
             ->with(['measurements' => function ($query) {
                 $query->latest('date');
             }])
@@ -101,7 +105,10 @@ class PersonalController extends Controller
      */
     public function studentsIndex()
     {
-        $students = Auth::user()->students()
+        /** @var User $user */
+        $user = Auth::user();
+
+        $students = $user->students()
             ->with(['measurements' => function($query) {
                 $query->latest('date');
             }])
@@ -124,6 +131,12 @@ class PersonalController extends Controller
      */
     public function storeStudent(Request $request)
     {
+        // Limpa CPF e Telefone antes da validação para garantir unicidade correta
+        $request->merge([
+            'cpf' => preg_replace('/[^0-9]/', '', $request->cpf),
+            'phone' => preg_replace('/[^0-9]/', '', $request->phone),
+        ]);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -142,7 +155,7 @@ class PersonalController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
-                'cpf' => preg_replace('/[^0-9]/', '', $request->cpf), // Salva apenas números
+                'cpf' => $request->cpf, // Já está limpo pelo merge acima
                 'address' => $request->address,
                 'birth_date' => $request->birth_date,
                 'gender' => $request->gender,
@@ -284,7 +297,7 @@ class PersonalController extends Controller
         unset($data['skip_skinfold_protocol']);
         
         // DEBUG: Log TODOS os valores de dobras
-        \Log::info('DEBUG COMPLETO: Valores de dobras recebidos', [
+        Log::info('DEBUG COMPLETO: Valores de dobras recebidos', [
             'subescapular' => $data['subescapular'] ?? 'null',
             'tricipital' => $data['tricipital'] ?? 'null',
             'bicipital' => $data['bicipital'] ?? 'null',
@@ -730,7 +743,7 @@ class PersonalController extends Controller
             $data['pollock7_fat_mass'] = null;
             $data['pollock7_lean_mass'] = null;
 
-            \Log::warning('Cálculo Pollock ignorado: gênero do aluno não informado.', [
+            Log::warning('Cálculo Pollock ignorado: gênero do aluno não informado.', [
                 'student_id' => $student->id,
                 'student_name' => $student->name,
             ]);

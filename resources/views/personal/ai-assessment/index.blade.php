@@ -325,6 +325,43 @@
     </div>
 </div>
 
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+    <div class="text-center max-w-md mx-auto p-6">
+        <!-- Spinner -->
+        <div class="relative w-24 h-24 mx-auto mb-8">
+            <div class="absolute inset-0 border-t-4 border-indigo-500 border-solid rounded-full animate-spin"></div>
+            <div class="absolute inset-2 border-t-4 border-purple-500 border-solid rounded-full animate-spin-reverse"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <svg class="w-8 h-8 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Status Text -->
+        <h3 class="text-2xl font-bold text-white mb-2 animate-pulse">Analisando com IA...</h3>
+        <p id="loading-message" class="text-gray-300 text-lg transition-all duration-300">Iniciando processamento das imagens...</p>
+        
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-700 rounded-full h-2.5 mt-6 overflow-hidden">
+            <div id="loading-progress" class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+        
+        <p class="text-sm text-gray-500 mt-4">Por favor, não feche esta janela.</p>
+    </div>
+</div>
+
+<style>
+    @keyframes spin-reverse {
+        from { transform: rotate(360deg); }
+        to { transform: rotate(0deg); }
+    }
+    .animate-spin-reverse {
+        animation: spin-reverse 1.5s linear infinite;
+    }
+</style>
+
 <script>
     // Sistema de abas
     function switchTab(tabName) {
@@ -345,21 +382,94 @@
         // Marcar botão como ativo
         const btnId = 'btn-' + tabName;
         const activeBtn = document.getElementById(btnId);
-        activeBtn.classList.add('active', 'border-gray-400', 'text-white');
-        activeBtn.classList.remove('border-transparent', 'text-gray-400');
+        if(activeBtn) {
+            activeBtn.classList.add('active', 'border-gray-400', 'text-white');
+            activeBtn.classList.remove('border-transparent', 'text-gray-400');
+        }
     }
+
+    // Loading System
+    function initLoadingSystem() {
+        const forms = document.querySelectorAll('form');
+        const overlay = document.getElementById('loading-overlay');
+        const messageEl = document.getElementById('loading-message');
+        const progressEl = document.getElementById('loading-progress');
+        
+        const messages = [
+            "Analisando simetria corporal...",
+            "Identificando desvios posturais...",
+            "Calculando proporções musculares...",
+            "Gerando recomendações de exercícios...",
+            "Finalizando relatório detalhado..."
+        ];
+
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // Show overlay
+                overlay.classList.remove('hidden');
+                // Force reflow
+                void overlay.offsetWidth; 
+                overlay.classList.remove('opacity-0');
+                
+                let progress = 0;
+                let messageIndex = 0;
+                
+                // Progress simulation loop
+                const interval = setInterval(() => {
+                    progress += Math.random() * 5;
+                    if (progress > 95) progress = 95;
+                    
+                    progressEl.style.width = `${progress}%`;
+                    
+                    // Change message every 20% progress approx
+                    const newIndex = Math.floor(progress / 20);
+                    if (newIndex !== messageIndex && newIndex < messages.length) {
+                        messageIndex = newIndex;
+                        messageEl.style.opacity = '0';
+                        setTimeout(() => {
+                            messageEl.textContent = messages[messageIndex];
+                            messageEl.style.opacity = '1';
+                        }, 300);
+                    }
+                }, 500);
+
+                // Timeout safety (30 seconds)
+                setTimeout(() => {
+                    clearInterval(interval);
+                    if (!document.hidden) { // Only show error if tab is visible
+                        messageEl.textContent = "O processamento está demorando mais que o esperado...";
+                        messageEl.classList.add('text-yellow-400');
+                    }
+                }, 30000);
+            });
+        });
+    }
+
+    // Initialize all systems
+    document.addEventListener('DOMContentLoaded', () => {
+        initLoadingSystem();
+        setupPhotoIndicators();
+        setupExtraPhotosPreview();
+        
+        // Ensure first tab is active by default logic if needed, 
+        // though HTML structure handles initial state.
+    });
 
     // Funções para abrir câmera ou galeria
     function openCamera(inputId) {
         const input = document.getElementById(inputId);
-        input.setAttribute('capture', 'environment');
-        input.click();
+        if (input) {
+            input.setAttribute('capture', 'environment');
+            input.click();
+        }
     }
 
     function openGallery(inputId) {
         const input = document.getElementById(inputId);
-        input.removeAttribute('capture');
-        input.click();
+        if (input) {
+            input.removeAttribute('capture');
+            input.click();
+        }
     }
 
     // Miniatura + borda visual para fotos principais
@@ -382,7 +492,7 @@
             }
 
             const updateStatus = () => {
-                if (input.files.length > 0) {
+                if (input.files && input.files.length > 0) {
                     container.classList.remove('border-gray-600', 'hover:border-indigo-400');
                     container.classList.add('border-green-500', 'hover:border-green-400');
 
@@ -450,8 +560,5 @@
             grid.classList.remove('hidden');
         });
     }
-
-    setupPhotoIndicators();
-    setupExtraPhotosPreview();
 </script>
 @endsection

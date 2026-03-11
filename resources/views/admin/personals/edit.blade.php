@@ -36,6 +36,51 @@
                         @enderror
                     </div>
 
+                    <!-- CPF -->
+                    <div class="form-group mb-3">
+                        <label for="cpf">CPF <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control @error('cpf') is-invalid @enderror" 
+                               id="cpf" name="cpf" value="{{ old('cpf', $user->cpf) }}" required placeholder="000.000.000-00">
+                        @error('cpf')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Data de Nascimento -->
+                    <div class="form-group mb-3">
+                        <label for="birth_date">Data de Nascimento <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control @error('birth_date') is-invalid @enderror" 
+                               id="birth_date" name="birth_date" 
+                               value="{{ old('birth_date', $user->birth_date ? $user->birth_date->format('Y-m-d') : '') }}" required>
+                        @error('birth_date')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Gênero -->
+                    <div class="form-group mb-3">
+                        <label for="gender">Gênero <span class="text-danger">*</span></label>
+                        <select class="form-control @error('gender') is-invalid @enderror" id="gender" name="gender" required>
+                            <option value="">Selecione</option>
+                            <option value="Masculino" {{ old('gender', $user->gender) == 'Masculino' ? 'selected' : '' }}>Masculino</option>
+                            <option value="Feminino" {{ old('gender', $user->gender) == 'Feminino' ? 'selected' : '' }}>Feminino</option>
+                            <option value="Outro" {{ old('gender', $user->gender) == 'Outro' ? 'selected' : '' }}>Outro</option>
+                        </select>
+                        @error('gender')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Endereço -->
+                    <div class="form-group mb-3">
+                        <label for="address">Endereço</label>
+                        <input type="text" class="form-control @error('address') is-invalid @enderror" 
+                               id="address" name="address" value="{{ old('address', $user->address) }}" placeholder="Rua, número, bairro...">
+                        @error('address')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     <!-- Telefone -->
                     <div class="form-group mb-3">
                         <label for="phone">Telefone</label>

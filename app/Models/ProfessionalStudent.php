@@ -13,4 +13,14 @@ class ProfessionalStudent extends Model
         'professional_id',
         'type',
     ];
+
+    public function professional()
+    {
+        return $this->belongsTo(User::class, 'professional_id');
+    }
+
+    public function student()
+    {
+        return $this->belongsTo(User::class, 'student_id');
+    }
 }

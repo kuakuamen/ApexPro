@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\BodyMeasurement;
+use App\Models\ProfessionalStudent;
 
 class StudentController extends Controller
 {
@@ -13,6 +14,13 @@ class StudentController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         
+        // Buscar o profissional vinculado ao aluno
+        $professionalStudent = ProfessionalStudent::where('student_id', $user->id)
+            ->with('professional')
+            ->first();
+
+        $professional = $professionalStudent ? $professionalStudent->professional : null;
+
         // Último treino ativo
         $activeWorkout = $user->workoutPlans()
             ->where('is_active', true)
@@ -32,7 +40,7 @@ class StudentController extends Controller
             ->take(5)
             ->get();
 
-        return view('student.dashboard', compact('activeWorkout', 'activeDiet', 'weightHistory'));
+        return view('student.dashboard', compact('user', 'professional', 'activeWorkout', 'activeDiet', 'weightHistory'));
     }
 
     /**

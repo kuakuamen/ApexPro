@@ -7,7 +7,6 @@ use App\Models\Exercise;
 use App\Models\ProfessionalStudent;
 use App\Services\AiAnalysisService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,13 +24,16 @@ class AiAssessmentController extends Controller
      */
     public function index()
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
         // Se não for personal, redirecionar
-        if (Auth::user()->role !== 'personal') {
+        if ($user->role !== 'personal') {
             abort(403, 'Apenas personal trainers podem acessar essa funcionalidade.');
         }
         
         // Busca apenas alunos do personal logado
-        $students = Auth::user()->students()->orderBy('name')->get();
+        $students = $user->students()->orderBy('name')->get();
         
         return view('personal.ai-assessment.index', compact('students'));
     }
@@ -41,12 +43,15 @@ class AiAssessmentController extends Controller
      */
     public function analyze(Request $request)
     {
-        if (Auth::user()->role !== 'personal') {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal') {
             abort(403, 'Apenas personal trainers podem fazer an\u00e1lises.');
         }
 
         // Validar que student_id existe E pertence ao personal autenticado
-        $personalId = Auth::id();
+        $personalId = $user->id;
         $studentId = $request->input('student_id');
         $studentBelongsToPersonal = ProfessionalStudent::where('professional_id', $personalId)
             ->where('student_id', $studentId)
@@ -243,12 +248,15 @@ class AiAssessmentController extends Controller
      */
     public function store(Request $request)
     {
-        if (Auth::user()->role !== 'personal') {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal') {
             abort(403, 'Apenas personal trainers podem salvar treinos.');
         }
 
         // Validar que student_id existe E pertence ao personal autenticado
-        $personalId = Auth::id();
+        $personalId = $user->id;
         $studentId = $request->input('student_id');
         $studentBelongsToPersonal = ProfessionalStudent::where('professional_id', $personalId)
             ->where('student_id', $studentId)
@@ -266,12 +274,12 @@ class AiAssessmentController extends Controller
             // Validação dos dias e exercícios seria mais complexa, vamos confiar no form por enquanto
         ]);
 
-        DB::transaction(function () use ($request) {
+        DB::transaction(function () use ($request, $user) {
             $student = User::find($request->student_id);
 
             // 0. Salvar a Avaliação na Tabela Assessments
             $student->assessments()->create([
-                'personal_id' => auth()->id(),
+                'personal_id' => $user->id,
                 'front_image_path' => session('last_front_path'), // Pega da sessão pois o form não reenvia arquivo
                 'side_image_path' => session('last_side_path'),
                 'back_image_path' => session('last_back_path'),
@@ -288,7 +296,7 @@ class AiAssessmentController extends Controller
                 'start_date' => now(),
                 'end_date' => now()->addWeeks(8), // Padrão 8 semanas
                 'is_active' => true,
-                'personal_id' => auth()->id(),
+                'personal_id' => $user->id,
             ]);
 
             // Desativar planos anteriores?
@@ -296,7 +304,7 @@ class AiAssessmentController extends Controller
 
             // 2. Criar os Dias e Exercícios
             if ($request->has('days')) {
-                foreach ($request->days as $dayIndex => $dayData) {
+                foreach ($request->days as $dayData) {
                     if (empty($dayData['name'])) continue;
 
                     $workoutDay = $plan->days()->create([
@@ -332,7 +340,10 @@ class AiAssessmentController extends Controller
      */
     public function analyzeNoImages(Request $request)
     {
-        if (Auth::user()->role !== 'personal') {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal') {
             abort(403, 'Apenas personal trainers podem acessar essa funcionalidade.');
         }
         // Se for GET, redireciona para o formulário
@@ -349,7 +360,7 @@ class AiAssessmentController extends Controller
         ]);
 
         // Validar que student_id pertence ao personal autenticado
-        $personalId = Auth::id();
+        $personalId = $user->id;
         $studentId = $request->input('student_id');
         $studentBelongsToPersonal = ProfessionalStudent::where('professional_id', $personalId)
             ->where('student_id', $studentId)

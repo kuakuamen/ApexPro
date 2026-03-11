@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Assessment;
+use App\Models\WorkoutPlan;
+use App\Models\DietPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rules;
+use App\Rules\Cpf;
 
 class AdminController extends Controller
 {
@@ -20,6 +24,9 @@ class AdminController extends Controller
             'inactive_personals' => User::where('role', 'personal')->where('is_active', false)->count(),
             'total_students' => User::where('role', 'aluno')->count(),
             'total_nutritionists' => User::where('role', 'nutri')->count(),
+            'total_assessments' => Assessment::count(),
+            'total_workouts' => WorkoutPlan::count(),
+            'total_diets' => DietPlan::count(),
         ];
 
         return view('admin.dashboard', compact('stats'));
@@ -101,11 +108,18 @@ class AdminController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'cpf' => ['required', 'string', 'unique:users,cpf,' . $user->id, new Cpf],
+            'birth_date' => ['required', 'date'],
+            'gender' => ['required', 'string', 'in:Masculino,Feminino,Outro'],
             'phone' => ['nullable', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:255'],
             'profession' => ['nullable', 'string', 'max:255'],
             'license_expires_at' => ['nullable', 'date'],
             'admin_notes' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        // Limpar CPF
+        $validated['cpf'] = preg_replace('/[^0-9]/', '', $validated['cpf']);
 
         $user->update($validated);
 
@@ -129,13 +143,18 @@ class AdminController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'cpf' => ['required', 'string', 'unique:users,cpf', new Cpf],
+            'birth_date' => ['required', 'date'],
+            'gender' => ['required', 'string', 'in:Masculino,Feminino,Outro'],
             'phone' => ['nullable', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'profession' => ['nullable', 'string', 'max:255'],
             'license_expires_at' => ['nullable', 'date'],
             'admin_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $validated['cpf'] = preg_replace('/[^0-9]/', '', $validated['cpf']);
         $validated['password'] = bcrypt($validated['password']);
         $validated['role'] = 'personal';
         $validated['is_active'] = true;

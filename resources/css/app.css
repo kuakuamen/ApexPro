@@ -1,11 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@source '../views/**/*.blade.php';
+@source '../js/**/*.js';
+
+/* Define variables in standard CSS :root for global availability */
+:root {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* System Colors */
+    --color-primary-400: #2dd4bf; /* Teal 400 */
+    --color-primary-500: #14b8a6; /* Teal 500 */
+    --color-primary-600: #0d9488; /* Teal 600 */
+    
+    --color-secondary-400: #60a5fa; /* Blue 400 */
+    --color-secondary-500: #3b82f6; /* Blue 500 */
+
+    --color-background-main: #09090b; /* Zinc 950 */
+    --color-background-card: #18181b; /* Zinc 900 */
+    --color-background-elevated: #27272a; /* Zinc 800 */
+
+    --color-text-primary: #fafafa; /* Zinc 50 */
+    --color-text-secondary: #d4d4d8; /* Zinc 300 */
+    --color-text-tertiary: #a1a1aa; /* Zinc 400 */
+
+    --color-status-success: #10b981; /* Emerald 500 */
+    --color-status-error: #ef4444; /* Red 500 */
+    --color-status-warning: #f59e0b; /* Amber 500 */
+}
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* Map Tailwind theme tokens to CSS variables */
+    --color-background-main: var(--color-background-main);
+    --color-background-card: var(--color-background-card);
+    --color-background-elevated: var(--color-background-elevated);
+    
+    --color-text-primary: var(--color-text-primary);
+    --color-text-secondary: var(--color-text-secondary);
+    --color-text-tertiary: var(--color-text-tertiary);
+    
+    --color-primary-400: var(--color-primary-400);
+    --color-primary-500: var(--color-primary-500);
+    --color-primary-600: var(--color-primary-600);
+    
+    --color-status-error: var(--color-status-error);
+    
+    --font-sans: var(--font-sans);
+}
+
+/* Explicit utilities to ensure classes work even if theme mapping fails */
+@layer utilities {
+    .bg-background-main { background-color: var(--color-background-main); }
+    .bg-background-card { background-color: var(--color-background-card); }
+    
+    .text-text-primary { color: var(--color-text-primary); }
+    .text-text-secondary { color: var(--color-text-secondary); }
+    .text-text-tertiary { color: var(--color-text-tertiary); }
+    
+    .bg-primary-500 { background-color: var(--color-primary-500); }
+    .text-primary-400 { color: var(--color-primary-400); }
+    .ring-primary-500 { --tw-ring-color: var(--color-primary-500); }
+    
+    .text-status-error { color: var(--color-status-error); }
+    .bg-status-error { background-color: var(--color-status-error); }
+    .border-status-error { border-color: var(--color-status-error); }
 }
