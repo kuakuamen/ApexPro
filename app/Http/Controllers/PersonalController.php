@@ -212,6 +212,7 @@ class PersonalController extends Controller
             'address' => 'nullable|string|max:255',
             'birth_date' => 'required|date',
             'gender' => 'required|string',
+            'assessment_frequency' => 'required|integer|in:15,30,60,90',
             // 'profession' => 'required|string|max:255', // Removido
             'password' => 'required|min:6',
         ]);
@@ -226,6 +227,7 @@ class PersonalController extends Controller
                 'address' => $request->address,
                 'birth_date' => $request->birth_date,
                 'gender' => $request->gender,
+                'assessment_frequency' => $request->assessment_frequency,
                 // 'profession' => $request->profession, // Removido
                 'password' => Hash::make($request->password),
                 'role' => 'aluno',

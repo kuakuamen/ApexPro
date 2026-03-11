@@ -75,6 +75,18 @@
                     @error('password') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
             </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Recorrência da Avaliação Física <span class="text-red-400">*</span></label>
+                <select name="assessment_frequency" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                    <option value="15" class="bg-gray-700" {{ old('assessment_frequency') == 15 ? 'selected' : '' }}>A cada 15 dias</option>
+                    <option value="30" class="bg-gray-700" {{ old('assessment_frequency', 30) == 30 ? 'selected' : '' }}>A cada 30 dias (Padrão)</option>
+                    <option value="60" class="bg-gray-700" {{ old('assessment_frequency') == 60 ? 'selected' : '' }}>A cada 60 dias</option>
+                    <option value="90" class="bg-gray-700" {{ old('assessment_frequency') == 90 ? 'selected' : '' }}>A cada 90 dias</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Define quando o sistema alertará sobre avaliação atrasada.</p>
+                @error('assessment_frequency') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
+            </div>
             
             <div class="flex justify-end space-x-4 pt-6 border-t border-gray-700">
                 <a href="{{ route('personal.dashboard') }}" class="inline-flex items-center px-6 py-3 border border-gray-600 rounded-lg text-sm font-medium text-gray-300 bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-colors">
