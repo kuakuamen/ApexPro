@@ -204,32 +204,44 @@ class PersonalController extends Controller
             'phone' => preg_replace('/[^0-9]/', '', $request->phone),
         ]);
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:20',
             'cpf' => ['required', 'string', 'unique:users,cpf', new Cpf],
-            'address' => 'nullable|string|max:255',
             'birth_date' => 'required|date',
             'gender' => 'required|string',
             'assessment_frequency' => 'required|integer|in:15,30,60,90',
-            // 'profession' => 'required|string|max:255', // Removido
             'password' => 'required|min:6',
+            'address_cep' => ['required', 'regex:/^\d{5}-\d{3}$/'],
+            'address_state' => 'required|string|size:2',
+            'address_city' => 'required|string|max:255',
+            'address_street' => 'required|string|max:255',
+            'address_neighborhood' => 'required|string|max:255',
+            'address_number' => 'required|string|max:30',
         ]);
 
-        DB::transaction(function () use ($request) {
+        $validated['address_state'] = mb_strtoupper($validated['address_state']);
+        $validated['address'] = "{$validated['address_street']}, {$validated['address_number']} - {$validated['address_neighborhood']}, {$validated['address_city']}/{$validated['address_state']} - CEP {$validated['address_cep']}";
+
+        DB::transaction(function () use ($validated) {
             // 1. Criar Usuário
             $student = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'phone' => $request->phone,
-                'cpf' => $request->cpf, // Já está limpo pelo merge acima
-                'address' => $request->address,
-                'birth_date' => $request->birth_date,
-                'gender' => $request->gender,
-                'assessment_frequency' => $request->assessment_frequency,
-                // 'profession' => $request->profession, // Removido
-                'password' => Hash::make($request->password),
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'cpf' => $validated['cpf'],
+                'address' => $validated['address'],
+                'address_cep' => $validated['address_cep'],
+                'address_state' => $validated['address_state'],
+                'address_city' => $validated['address_city'],
+                'address_street' => $validated['address_street'],
+                'address_neighborhood' => $validated['address_neighborhood'],
+                'address_number' => $validated['address_number'],
+                'birth_date' => $validated['birth_date'],
+                'gender' => $validated['gender'],
+                'assessment_frequency' => $validated['assessment_frequency'],
+                'password' => Hash::make($validated['password']),
                 'role' => 'aluno',
             ]);
 
@@ -271,11 +283,19 @@ class PersonalController extends Controller
             'email' => 'required|email|unique:users,email,' . $student->id,
             'phone' => 'nullable|string|max:20',
             'cpf' => ['required', 'string', new Cpf, 'unique:users,cpf,' . $student->id],
-            'address' => 'nullable|string|max:255',
             'birth_date' => 'required|date',
             'gender' => 'required|string',
             'assessment_frequency' => 'required|integer|in:15,30,60,90',
+            'address_cep' => ['required', 'regex:/^\d{5}-\d{3}$/'],
+            'address_state' => 'required|string|size:2',
+            'address_city' => 'required|string|max:255',
+            'address_street' => 'required|string|max:255',
+            'address_neighborhood' => 'required|string|max:255',
+            'address_number' => 'required|string|max:30',
         ]);
+
+        $validated['address_state'] = mb_strtoupper($validated['address_state']);
+        $validated['address'] = "{$validated['address_street']}, {$validated['address_number']} - {$validated['address_neighborhood']}, {$validated['address_city']}/{$validated['address_state']} - CEP {$validated['address_cep']}";
 
         $student->update($validated);
 
