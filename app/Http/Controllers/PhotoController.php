@@ -77,6 +77,11 @@ class PhotoController extends Controller
         $isProfessional = $this->hasProfessionalAccess($user, $measurement->student_id);
 
         if (!$isStudent && !$isProfessional) {
+            \Illuminate\Support\Facades\Log::warning('Acesso negado à imagem de medição', [
+                'user_id' => $user->id,
+                'measurement_id' => $measurementId,
+                'student_id' => $measurement->student_id
+            ]);
             abort(403, 'Você não tem permissão para acessar esta imagem');
         }
 
@@ -91,6 +96,10 @@ class PhotoController extends Controller
         };
 
         if (!$path || !Storage::disk('private')->exists($path)) {
+            \Illuminate\Support\Facades\Log::error('Arquivo de imagem não encontrado no disco', [
+                'path' => $path,
+                'disk_root' => Storage::disk('private')->path(''),
+            ]);
             abort(404, 'Foto não encontrada');
         }
 

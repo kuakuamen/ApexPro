@@ -170,19 +170,70 @@
                         </div>
                     </div>
                     
-                    <!-- Side -->
+                    <!-- Side Right -->
                     <div>
                         <div class="flex items-center justify-center mb-4">
-                            <span class="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm font-bold">Vista Lateral (Perfil)</span>
+                            <span class="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm font-bold">Lado D (Direito)</span>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
-                                <template x-if="leftMeasurement && leftMeasurement.photo_side">
+                                <template x-if="leftMeasurement && leftMeasurement.photo_side_right">
                                     <div class="aspect-w-3 aspect-h-4">
-                                        <img :src="getPhotoUrl(leftMeasurement.id, 'side')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'side'))">
+                                        <img :src="getPhotoUrl(leftMeasurement.id, 'side_right')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'side_right'))">
                                     </div>
                                 </template>
-                                <template x-if="!leftMeasurement || !leftMeasurement.photo_side">
+                                <template x-if="!leftMeasurement || !leftMeasurement.photo_side_right">
+                                    <!-- Fallback for old single side photo if needed, or just show empty -->
+                                    <template x-if="leftMeasurement && leftMeasurement.photo_side">
+                                        <div class="aspect-w-3 aspect-h-4">
+                                            <img :src="getPhotoUrl(leftMeasurement.id, 'side')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'side'))">
+                                        </div>
+                                    </template>
+                                    <template x-if="!leftMeasurement || (!leftMeasurement.photo_side_right && !leftMeasurement.photo_side)">
+                                        <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
+                                            <span class="text-sm">Sem foto</span>
+                                        </div>
+                                    </template>
+                                </template>
+                                <p class="text-center text-sm font-bold mt-2 text-gray-300" x-text="leftMeasurement ? formatDate(leftMeasurement.date) : '-'"></p>
+                            </div>
+                            <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
+                                <template x-if="rightMeasurement && rightMeasurement.photo_side_right">
+                                    <div class="aspect-w-3 aspect-h-4">
+                                        <img :src="getPhotoUrl(rightMeasurement.id, 'side_right')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'side_right'))">
+                                    </div>
+                                </template>
+                                <template x-if="!rightMeasurement || !rightMeasurement.photo_side_right">
+                                    <!-- Fallback -->
+                                    <template x-if="rightMeasurement && rightMeasurement.photo_side">
+                                        <div class="aspect-w-3 aspect-h-4">
+                                            <img :src="getPhotoUrl(rightMeasurement.id, 'side')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'side'))">
+                                        </div>
+                                    </template>
+                                    <template x-if="!rightMeasurement || (!rightMeasurement.photo_side_right && !rightMeasurement.photo_side)">
+                                        <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
+                                            <span class="text-sm">Sem foto</span>
+                                        </div>
+                                    </template>
+                                </template>
+                                <p class="text-center text-sm font-bold mt-2 text-gray-300" x-text="rightMeasurement ? formatDate(rightMeasurement.date) : '-'"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Side Left -->
+                    <div>
+                        <div class="flex items-center justify-center mb-4">
+                            <span class="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm font-bold">Lado E (Esquerdo)</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
+                                <template x-if="leftMeasurement && leftMeasurement.photo_side_left">
+                                    <div class="aspect-w-3 aspect-h-4">
+                                        <img :src="getPhotoUrl(leftMeasurement.id, 'side_left')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'side_left'))">
+                                    </div>
+                                </template>
+                                <template x-if="!leftMeasurement || !leftMeasurement.photo_side_left">
                                     <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
                                         <span class="text-sm">Sem foto</span>
                                     </div>
@@ -190,12 +241,12 @@
                                 <p class="text-center text-sm font-bold mt-2 text-gray-300" x-text="leftMeasurement ? formatDate(leftMeasurement.date) : '-'"></p>
                             </div>
                             <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
-                                <template x-if="rightMeasurement && rightMeasurement.photo_side">
+                                <template x-if="rightMeasurement && rightMeasurement.photo_side_left">
                                     <div class="aspect-w-3 aspect-h-4">
-                                        <img :src="getPhotoUrl(rightMeasurement.id, 'side')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'side'))">
+                                        <img :src="getPhotoUrl(rightMeasurement.id, 'side_left')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'side_left'))">
                                     </div>
                                 </template>
-                                <template x-if="!rightMeasurement || !rightMeasurement.photo_side">
+                                <template x-if="!rightMeasurement || !rightMeasurement.photo_side_left">
                                     <div class="flex items-center justify-center h-64 bg-gray-600 text-gray-400 rounded">
                                         <span class="text-sm">Sem foto</span>
                                     </div>
@@ -262,6 +313,8 @@
             rightId: null,
             modalOpen: false,
             modalImage: '',
+            // Usamos IDs fictícios para garantir que a rota seja gerada corretamente e depois substituímos via JS
+            photoRouteTemplate: "{{ route('measurement.photo', ['measurementId' => 999999, 'type' => 'placeholder_type']) }}",
             
             init() {
                 if (this.measurements.length > 0) {
@@ -271,7 +324,8 @@
             },
 
             getPhotoUrl(id, type) {
-                return `/measurement/${id}/${type}`;
+                const url = this.photoRouteTemplate.replace('999999', id).replace('placeholder_type', type);
+                return `${url}?t=${new Date().getTime()}`;
             },
 
             get leftMeasurement() {
