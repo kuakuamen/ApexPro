@@ -144,7 +144,7 @@
                             <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                 <template x-if="leftMeasurement && leftMeasurement.photo_front">
                                     <div class="aspect-w-3 aspect-h-4">
-                                        <img :src="storageUrl + '/' + leftMeasurement.photo_front" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(storageUrl + '/' + leftMeasurement.photo_front)">
+                                        <img :src="getPhotoUrl(leftMeasurement.id, 'front')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'front'))">
                                     </div>
                                 </template>
                                 <template x-if="!leftMeasurement || !leftMeasurement.photo_front">
@@ -157,7 +157,7 @@
                             <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                 <template x-if="rightMeasurement && rightMeasurement.photo_front">
                                     <div class="aspect-w-3 aspect-h-4">
-                                        <img :src="storageUrl + '/' + rightMeasurement.photo_front" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(storageUrl + '/' + rightMeasurement.photo_front)">
+                                        <img :src="getPhotoUrl(rightMeasurement.id, 'front')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'front'))">
                                     </div>
                                 </template>
                                 <template x-if="!rightMeasurement || !rightMeasurement.photo_front">
@@ -179,7 +179,7 @@
                             <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                 <template x-if="leftMeasurement && leftMeasurement.photo_side">
                                     <div class="aspect-w-3 aspect-h-4">
-                                        <img :src="storageUrl + '/' + leftMeasurement.photo_side" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(storageUrl + '/' + leftMeasurement.photo_side)">
+                                        <img :src="getPhotoUrl(leftMeasurement.id, 'side')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'side'))">
                                     </div>
                                 </template>
                                 <template x-if="!leftMeasurement || !leftMeasurement.photo_side">
@@ -192,7 +192,7 @@
                             <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                 <template x-if="rightMeasurement && rightMeasurement.photo_side">
                                     <div class="aspect-w-3 aspect-h-4">
-                                        <img :src="storageUrl + '/' + rightMeasurement.photo_side" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(storageUrl + '/' + rightMeasurement.photo_side)">
+                                        <img :src="getPhotoUrl(rightMeasurement.id, 'side')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'side'))">
                                     </div>
                                 </template>
                                 <template x-if="!rightMeasurement || !rightMeasurement.photo_side">
@@ -214,7 +214,7 @@
                             <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                 <template x-if="leftMeasurement && leftMeasurement.photo_back">
                                     <div class="aspect-w-3 aspect-h-4">
-                                        <img :src="storageUrl + '/' + leftMeasurement.photo_back" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(storageUrl + '/' + leftMeasurement.photo_back)">
+                                        <img :src="getPhotoUrl(leftMeasurement.id, 'back')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'back'))">
                                     </div>
                                 </template>
                                 <template x-if="!leftMeasurement || !leftMeasurement.photo_back">
@@ -227,7 +227,7 @@
                             <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                 <template x-if="rightMeasurement && rightMeasurement.photo_back">
                                     <div class="aspect-w-3 aspect-h-4">
-                                        <img :src="storageUrl + '/' + rightMeasurement.photo_back" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(storageUrl + '/' + rightMeasurement.photo_back)">
+                                        <img :src="getPhotoUrl(rightMeasurement.id, 'back')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'back'))">
                                     </div>
                                 </template>
                                 <template x-if="!rightMeasurement || !rightMeasurement.photo_back">
@@ -262,18 +262,16 @@
             rightId: null,
             modalOpen: false,
             modalImage: '',
-            storageUrl: "{{ Storage::url('') }}", // Base URL for storage
             
             init() {
-                // Remove trailing slash if present to avoid double slashes
-                if (this.storageUrl.endsWith('/')) {
-                    this.storageUrl = this.storageUrl.slice(0, -1);
-                }
-                
                 if (this.measurements.length > 0) {
                     this.leftId = this.measurements[0].id;
                     this.rightId = this.measurements[this.measurements.length - 1].id;
                 }
+            },
+
+            getPhotoUrl(id, type) {
+                return `/measurement/${id}/${type}`;
             },
 
             get leftMeasurement() {
