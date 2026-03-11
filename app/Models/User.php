@@ -36,6 +36,7 @@ class User extends Authenticatable
         'max_students',
         'subscription_expires_at',
         'plan_name',
+        'assessment_frequency',
         // 'injuries', 'medications', 'surgeries', 'availability_time', 'frequency' // Removidos conforme solicitado
     ];
 // ... (resto do arquivo igual)

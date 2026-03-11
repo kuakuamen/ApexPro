@@ -51,6 +51,8 @@ Route::middleware(['auth', 'role:personal', 'subscription'])->prefix('personal')
     Route::get('/alunos/novo', [PersonalController::class, 'createStudent'])->name('students.create');
     Route::post('/alunos', [PersonalController::class, 'storeStudent'])->name('students.store');
     Route::get('/alunos/{student}', [PersonalController::class, 'showStudent'])->name('students.show');
+    Route::get('/alunos/{student}/editar', [PersonalController::class, 'editStudent'])->name('students.edit'); // Nova rota de edição
+    Route::put('/alunos/{student}', [PersonalController::class, 'updateStudent'])->name('students.update'); // Nova rota de atualização
     Route::patch('/alunos/{student}/toggle-status', [PersonalController::class, 'toggleStatus'])->name('students.toggle-status');
     Route::patch('/alunos/{student}/reset-password', [PersonalController::class, 'resetStudentPassword'])->name('students.reset-password');
     

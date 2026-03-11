@@ -243,6 +243,45 @@ class PersonalController extends Controller
     }
 
     /**
+     * Tela de edição de perfil do aluno.
+     */
+    public function editStudent(User $student)
+    {
+        $this->validateStudentBelongsToPersonal($student);
+        return view('personal.students.edit', compact('student'));
+    }
+
+    /**
+     * Atualiza dados do aluno.
+     */
+    public function updateStudent(Request $request, User $student)
+    {
+        $this->validateStudentBelongsToPersonal($student);
+
+        // Limpa CPF e Telefone antes da validação
+        $request->merge([
+            'cpf' => preg_replace('/[^0-9]/', '', $request->cpf),
+            'phone' => preg_replace('/[^0-9]/', '', $request->phone),
+        ]);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $student->id,
+            'phone' => 'nullable|string|max:20',
+            'cpf' => ['required', 'string', new Cpf, 'unique:users,cpf,' . $student->id],
+            'address' => 'nullable|string|max:255',
+            'birth_date' => 'required|date',
+            'gender' => 'required|string',
+            'assessment_frequency' => 'required|integer|in:15,30,60,90',
+        ]);
+
+        $student->update($validated);
+
+        return redirect()->route('personal.students.show', $student)
+            ->with('success', 'Perfil do aluno atualizado com sucesso!');
+    }
+
+    /**
      * Perfil do Aluno (Visão do Personal).
      */
     public function showStudent(User $student)
