@@ -6,7 +6,7 @@
 <div x-data="{ activeTab: 'overview', showResetPassword: false }">
     
     <!-- Cabeçalho do Perfil -->
-    <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl mb-8 relative z-30">
+    <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl mb-8 relative z-50">
         <div class="p-6 sm:p-8 md:flex md:items-start md:justify-between gap-6">
             <div class="flex items-center gap-6">
                 <!-- Avatar -->
@@ -59,7 +59,7 @@
                 </a>
 
                 <!-- Dropdown Menu -->
-                <div class="relative flex-shrink-0">
+                <div class="relative flex-shrink-0 z-50">
                     <button @click="openActions = !openActions" @click.away="openActions = false" class="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-gray-600 hover:border-gray-500 text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-700/50 transition-all">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
                     </button>
@@ -155,7 +155,7 @@
     </div>
 
     <!-- Conteúdo das Abas -->
-    <div class="mt-6 relative z-10">
+    <div class="mt-6 relative z-0">
         
         <!-- Aba: Visão Geral -->
         <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-200">
