@@ -6,26 +6,26 @@
 <div x-data="{ activeTab: 'overview', showResetPassword: false }">
     
     <!-- Cabeçalho do Perfil -->
-    <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl mb-8 overflow-hidden">
-        <div class="p-8 md:flex md:items-start md:justify-between gap-6">
+    <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl mb-8 relative z-30">
+        <div class="p-6 sm:p-8 md:flex md:items-start md:justify-between gap-6">
             <div class="flex items-center gap-6">
                 <!-- Avatar -->
                 <div class="relative flex-shrink-0">
-                    <div class="h-24 w-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-4xl shadow-2xl ring-4 ring-gray-800/50">
+                    <div class="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl sm:text-4xl shadow-2xl ring-4 ring-gray-800/50">
                         {{ substr($student->name, 0, 1) }}
                     </div>
                     <div class="absolute bottom-1 right-1">
-                        <span class="flex h-5 w-5 relative">
+                        <span class="flex h-4 w-4 sm:h-5 sm:w-5 relative">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 {{ $student->is_active ? 'bg-green-400' : 'bg-red-400' }}"></span>
-                            <span class="relative inline-flex rounded-full h-5 w-5 border-2 border-gray-800 {{ $student->is_active ? 'bg-green-500' : 'bg-red-500' }}"></span>
+                            <span class="relative inline-flex rounded-full h-full w-full border-2 border-gray-800 {{ $student->is_active ? 'bg-green-500' : 'bg-red-500' }}"></span>
                         </span>
                     </div>
                 </div>
                 
                 <!-- Info -->
                 <div>
-                    <h1 class="text-3xl font-bold text-white tracking-tight">{{ $student->name }}</h1>
-                    <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-3 text-sm text-gray-400">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">{{ $student->name }}</h1>
+                    <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-sm text-gray-400">
                         <span class="flex items-center gap-1.5">
                             <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                             {{ $student->email }}
@@ -47,19 +47,19 @@
             </div>
 
             <!-- Botões de Ação -->
-            <div class="mt-8 md:mt-0 flex flex-wrap items-center gap-3" x-data="{ openActions: false }">
-                <a href="{{ route('personal.measurements.create', $student) }}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5">
+            <div class="mt-8 md:mt-0 flex flex-wrap items-center gap-3 w-full md:w-auto" x-data="{ openActions: false }">
+                <a href="{{ route('personal.measurements.create', $student) }}" class="w-full sm:w-auto justify-center inline-flex items-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold shadow-lg shadow-indigo-500/20 transition-all hover:-translate-y-0.5">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                     Nova Avaliação
                 </a>
                 
-                <a href="{{ route('workouts.create') }}?student_id={{ $student->id }}" class="inline-flex items-center px-4 py-2.5 rounded-xl border border-gray-600 hover:border-indigo-500 text-gray-300 hover:text-white bg-gray-800/50 hover:bg-gray-700/50 text-sm font-medium transition-all">
+                <a href="{{ route('workouts.create') }}?student_id={{ $student->id }}" class="flex-1 sm:flex-none justify-center inline-flex items-center px-4 py-2.5 rounded-xl border border-gray-600 hover:border-indigo-500 text-gray-300 hover:text-white bg-gray-800/50 hover:bg-gray-700/50 text-sm font-medium transition-all">
                     <svg class="mr-2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     Criar Treino
                 </a>
 
                 <!-- Dropdown Menu -->
-                <div class="relative">
+                <div class="relative flex-shrink-0">
                     <button @click="openActions = !openActions" @click.away="openActions = false" class="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-gray-600 hover:border-gray-500 text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-700/50 transition-all">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
                     </button>
@@ -95,7 +95,7 @@
             </div>
         </div>
         <!-- Navegação de Abas -->
-        <div class="bg-gray-800/30 border-t border-gray-700/50 px-6 sm:px-8">
+        <div class="bg-gray-800/30 border-t border-gray-700/50 px-6 sm:px-8 rounded-b-2xl">
             <nav class="-mb-px flex gap-6 sm:gap-8 overflow-x-auto hide-scrollbar" aria-label="Tabs">
                 <button @click="activeTab = 'overview'" 
                         :class="activeTab === 'overview' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'"
@@ -155,7 +155,7 @@
     </div>
 
     <!-- Conteúdo das Abas -->
-    <div class="mt-6">
+    <div class="mt-6 relative z-10">
         
         <!-- Aba: Visão Geral -->
         <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-200">
