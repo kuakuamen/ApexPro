@@ -69,6 +69,9 @@ Route::middleware(['auth', 'role:personal', 'subscription'])->prefix('personal')
     Route::post('/avaliacao-ia/pdf', [AiAssessmentController::class, 'generatePdf'])->name('ai-assessment.pdf');
     Route::post('/avaliacao-ia/refinar', [AiAssessmentController::class, 'refine'])->name('ai-assessment.refine');
     
+    // NOVA ROTA: Avaliações Pendentes (Atrasadas / Sem Avaliação)
+    Route::get('/avaliacoes/pendentes', [PersonalController::class, 'pendingAssessments'])->name('assessments.pending');
+
     // Rota de Teste Gemini (CURL DIRETO)
     Route::get('/test-gemini', function() {
         $apiKey = env('GEMINI_API_KEY');

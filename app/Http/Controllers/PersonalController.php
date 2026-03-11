@@ -119,6 +119,73 @@ class PersonalController extends Controller
     }
 
     /**
+     * Listagem de alunos com pendências de avaliação (atrasada ou inexistente).
+     */
+    public function pendingAssessments(Request $request)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $type = $request->query('type', 'all'); // 'overdue', 'missing', or 'all'
+        $search = $request->query('search');
+
+        $query = $user->students()
+            ->with(['measurements' => function($q) {
+                $q->latest('date');
+            }])
+            ->where('is_active', true);
+
+        // Filtro por nome (busca)
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $allStudents = $query->orderBy('name')->get();
+
+        // Filtrar na coleção (PHP) pois a lógica de data é complexa para SQL puro sem subqueries pesadas
+        $students = $allStudents->filter(function ($student) use ($type) {
+            $lastAssessment = $student->measurements->first();
+            
+            // Caso 1: Sem avaliação
+            if ($student->measurements->isEmpty()) {
+                return $type === 'missing' || $type === 'all';
+            }
+
+            // Caso 2: Avaliação atrasada (> 30 dias)
+            if ($lastAssessment && $lastAssessment->date && $lastAssessment->date->diffInDays(now()) > 30) {
+                return $type === 'overdue' || $type === 'all';
+            }
+
+            return false;
+        });
+
+        // Adicionar metadados para a view
+        $students->transform(function ($student) {
+            $lastAssessment = $student->measurements->first();
+            $student->last_assessment_date = $lastAssessment?->date;
+            $student->days_without_assessment = $lastAssessment?->date 
+                ? $lastAssessment->date->diffInDays(now()) 
+                : null;
+            
+            if ($student->measurements->isEmpty()) {
+                $student->status_label = 'Sem Avaliação';
+                $student->status_color = 'red';
+            } else {
+                $student->status_label = 'Atrasada (' . intval($student->days_without_assessment) . ' dias)';
+                $student->status_color = 'orange';
+            }
+            
+            return $student;
+        });
+
+        // Ordenação: Prioridade para quem nunca avaliou, depois os mais atrasados
+        $students = $students->sortByDesc(function ($student) {
+            return $student->measurements->isEmpty() ? 999999 : $student->days_without_assessment;
+        })->values(); // Resetar chaves para paginação manual se necessário, ou apenas limpar
+
+        return view('personal.assessments.pending', compact('students', 'type', 'search'));
+    }
+
+    /**
      * Formulário para cadastrar novo aluno.
      */
     public function createStudent()

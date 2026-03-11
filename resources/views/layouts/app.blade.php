@@ -104,8 +104,18 @@
                         </a>
                         <p class="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">IA</p>
                         <a href="{{ route('personal.ai-assessment.index') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('personal.ai-assessment.*') ? 'bg-teal-500/10 text-teal-100 border-l-2 border-teal-400 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
-                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('personal.ai-assessment.*') ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('personal.ai-assessment.*') ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             Avaliação com IA
+                        </a>
+
+                        <p class="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Pendências</p>
+                        <a href="{{ route('personal.assessments.pending', ['type' => 'overdue']) }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'overdue'])) ? 'bg-teal-500/10 text-teal-100 border-l-2 border-teal-400 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'overdue'])) ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Avaliação Atrasada
+                        </a>
+                        <a href="{{ route('personal.assessments.pending', ['type' => 'missing']) }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'missing'])) ? 'bg-teal-500/10 text-teal-100 border-l-2 border-teal-400 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'missing'])) ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            Sem Avaliação
                         </a>
                     @endif
 

@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('content')
 <style>
@@ -85,80 +85,7 @@
             </a>
         </section>
     @else
-        <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
-            <div class="xl:col-span-2 space-y-6">
-                <section class="rounded-2xl border bg-gray-800 shadow-lg" style="border-color:#334155;">
-                    <div class="flex items-center justify-between border-b px-5 py-4" style="border-color:#334155;">
-                        <h2 class="text-lg font-semibold" style="color:#ffffff;">Alunos com Avaliação Atrasada</h2>
-                        <span class="rounded-full border px-3 py-1 text-xs font-semibold" style="{{ $pendingAssessmentsCount === 0 ? 'border-color:#10b981;background:linear-gradient(180deg,#065f46,#064e3b);color:#d1fae5;box-shadow:inset 0 0 0 1px rgba(16,185,129,.25);' : 'border-color:#f59e0b;background:linear-gradient(180deg,#92400e,#78350f);color:#ffedd5;box-shadow:inset 0 0 0 1px rgba(245,158,11,.28);' }}">
-                            {{ $pendingAssessmentsCount === 0 ? 'Sem pendências' : $pendingAssessmentsCount . ' pendência(s)' }}
-                        </span>
-                    </div>
-
-                    <div class="p-3 sm:p-4">
-                        @if($pendingAssessmentsList->isEmpty())
-                            <div class="rounded-xl border p-4 text-sm" style="border-color:#10b981;background:#064e3b;color:#d1fae5;">
-                                Sem pendências no momento. Todas as avaliações estão em dia.
-                            </div>
-                        @else
-                            <div class="space-y-2">
-                                @foreach($pendingAssessmentsList as $item)
-                                    <a href="{{ route('personal.students.show', $item['student']) }}" class="group flex items-center justify-between rounded-xl border bg-gray-900 px-4 py-3 transition" style="border-color:#334155;">
-                                        <div class="min-w-0">
-                                            <p class="truncate text-sm font-semibold" style="color:#ffffff;">{{ $item['student']->name }}</p>
-                                            <p class="mt-1 text-xs" style="color:#d1d5db;">
-                                                Última avaliação:
-                                                {{ $item['last_assessment_date'] ? $item['last_assessment_date']->format('d/m/Y') : 'não registrada' }}
-                                            </p>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <span class="rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#78350f;color:#fef3c7;">
-                                                {{ $item['days_without_assessment'] }} dias
-                                            </span>
-                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" style="stroke:#9ca3af;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                        </div>
-                                    </a>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-                </section>
-
-                <section class="rounded-2xl border bg-gray-800 shadow-lg" style="border-color:#334155;">
-                    <div class="flex items-center justify-between border-b px-5 py-4" style="border-color:#334155;">
-                        <h2 class="text-lg font-semibold" style="color:#ffffff;">Alunos sem Primeira Avaliação</h2>
-                        <span class="rounded-full border px-3 py-1 text-xs font-semibold" style="{{ $studentsWithoutAssessmentCount === 0 ? 'border-color:#10b981;background:linear-gradient(180deg,#065f46,#064e3b);color:#d1fae5;box-shadow:inset 0 0 0 1px rgba(16,185,129,.25);' : 'border-color:#818cf8;background:linear-gradient(180deg,#3730a3,#312e81);color:#e0e7ff;box-shadow:inset 0 0 0 1px rgba(129,140,248,.28);' }}">
-                            {{ $studentsWithoutAssessmentCount === 0 ? 'Todos avaliados' : $studentsWithoutAssessmentCount . ' sem avaliação' }}
-                        </span>
-                    </div>
-
-                    <div class="p-3 sm:p-4">
-                        @if($studentsWithoutFirstAssessmentList->isEmpty())
-                            <div class="rounded-xl border p-4 text-sm" style="border-color:#10b981;background:#064e3b;color:#d1fae5;">
-                                Todos os alunos já têm ao menos uma avaliação registrada.
-                            </div>
-                        @else
-                            <div class="space-y-2">
-                                @foreach($studentsWithoutFirstAssessmentList as $student)
-                                    <a href="{{ route('personal.students.show', $student) }}" class="group flex items-center justify-between rounded-xl border bg-gray-900 px-4 py-3 transition" style="border-color:#334155;">
-                                        <div class="min-w-0">
-                                            <p class="truncate text-sm font-semibold" style="color:#ffffff;">{{ $student->name }}</p>
-                                            <p class="mt-1 text-xs" style="color:#d1d5db;">Aguardando primeira medição</p>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <span class="rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#312e81;color:#e0e7ff;">
-                                                Sem avaliação
-                                            </span>
-                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" style="stroke:#9ca3af;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                        </div>
-                                    </a>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-                </section>
-            </div>
-
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-1">
             <section class="rounded-2xl border bg-gray-800 shadow-lg" style="border-color:#334155;">
                 <div class="flex items-center justify-between border-b px-5 py-4" style="border-color:#334155;">
                     <h2 class="text-lg font-semibold" style="color:#ffffff;">Últimos Alunos</h2>
