@@ -53,8 +53,8 @@
 
                     <div class="flex-grow space-y-3 text-sm">
                         <!-- Status Badge -->
-                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $student->status_color }}-900/50 text-{{ $student->status_color }}-200 border border-{{ $student->status_color }}-700/50">
-                            <svg class="mr-1.5 h-2 w-2 text-{{ $student->status_color }}-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
+                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $student->status_color === 'red' ? 'bg-red-900/50 text-red-200 border border-red-700/50' : 'bg-orange-900/50 text-orange-200 border border-orange-700/50' }}">
+                            <svg class="mr-1.5 h-2 w-2 {{ $student->status_color === 'red' ? 'text-red-400' : 'text-orange-400' }}" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
                             {{ $student->status_label }}
                         </div>
 
@@ -72,7 +72,7 @@
                         <a href="{{ route('personal.students.show', $student) }}" class="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
                             Ver Perfil
                         </a>
-                        <a href="{{ route('measurements.create', $student) }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm">
+                        <a href="{{ route('personal.measurements.create', $student) }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm">
                             <svg class="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             Nova Avaliação
                         </a>
