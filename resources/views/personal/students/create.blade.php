@@ -101,7 +101,7 @@
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-300 mb-2">CEP <span class="text-red-400">*</span></label>
                             <div class="relative">
-                                <input type="text" name="address_cep" id="address_cep" value="{{ old('address_cep') }}" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required pattern="\\d{5}-\\d{3}">
+                                <input type="text" name="address_cep" id="address_cep" value="{{ old('address_cep') }}" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required pattern="\d{5}-\d{3}">
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <div id="cep_loading" class="hidden h-4 w-4 border-2 border-gray-300/30 border-t-gray-200 rounded-full animate-spin"></div>
                                 </div>

@@ -548,7 +548,7 @@
                         <!-- Select Left -->
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-2">Avaliação 1 (Esquerda)</label>
-                            <select x-model="leftId" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-600 bg-gray-700 text-white focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-lg">
+                            <select x-model.number="leftId" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-600 bg-gray-700 text-white focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-lg">
                                 <template x-for="m in measurements" :key="m.id">
                                     <option :value="m.id" x-text="formatDate(m.date) + ' - ' + m.weight + 'kg'"></option>
                                 </template>
@@ -557,7 +557,7 @@
                         <!-- Select Right -->
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-2">Avaliação 2 (Direita)</label>
-                            <select x-model="rightId" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-600 bg-gray-700 text-white focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-lg">
+                            <select x-model.number="rightId" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-600 bg-gray-700 text-white focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-lg">
                                 <template x-for="m in measurements" :key="m.id">
                                     <option :value="m.id" x-text="formatDate(m.date) + ' - ' + m.weight + 'kg'"></option>
                                 </template>
@@ -747,10 +747,23 @@
                 photoRouteTemplate: "{{ route('measurement.photo', ['measurementId' => 999999, 'type' => 'placeholder_type']) }}",
                 
                 init() {
-                    if (this.measurements.length > 0) {
-                        this.leftId = this.measurements[0].id;
-                        this.rightId = this.measurements[this.measurements.length - 1].id;
-                    }
+                    // Ordena novamente por data (ascendente) para garantir a ordem correta
+                    this.measurements.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                    // Usa $nextTick para garantir que o x-for já renderizou as opções do select antes de definir o valor
+                    this.$nextTick(() => {
+                        if (this.measurements.length > 0) {
+                            // Se tiver pelo menos 2 avaliações, seleciona a penúltima na esquerda e a última na direita
+                            if (this.measurements.length >= 2) {
+                                this.leftId = this.measurements[this.measurements.length - 2].id;
+                                this.rightId = this.measurements[this.measurements.length - 1].id;
+                            } else {
+                                // Se tiver apenas 1, seleciona ela em ambos
+                                this.leftId = this.measurements[0].id;
+                                this.rightId = this.measurements[0].id;
+                            }
+                        }
+                    });
                 },
 
                 getPhotoUrl(id, type) {
