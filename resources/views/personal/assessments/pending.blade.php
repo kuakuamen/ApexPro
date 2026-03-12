@@ -13,7 +13,7 @@
             </h1>
             <p class="mt-1 text-lg text-gray-400">
                 @if($type === 'missing') Lista de alunos que nunca realizaram uma avaliação física.
-                @elseif($type === 'overdue') Alunos cuja última avaliação foi há mais de 30 dias.
+                @elseif($type === 'overdue') Alunos cuja última avaliação está vencida.
                 @else Gerencie alunos com pendências de avaliação física.
                 @endif
             </p>

@@ -58,7 +58,9 @@ class PersonalController extends Controller
             }
 
             $lastAssessment = $student->measurements->first();
-            return $lastAssessment->date && $lastAssessment->date->diffInDays(now()) > 30;
+            $frequency = $student->assessment_frequency ?? 30;
+            
+            return $lastAssessment->date && $lastAssessment->date->diffInDays(now()) > $frequency;
         })->values();
 
         $pendingAssessmentsCount = $studentsWithOldAssessments->count();
@@ -150,8 +152,10 @@ class PersonalController extends Controller
                 return $type === 'missing' || $type === 'all';
             }
 
-            // Caso 2: Avaliação atrasada (> 30 dias)
-            if ($lastAssessment && $lastAssessment->date && $lastAssessment->date->diffInDays(now()) > 30) {
+            // Caso 2: Avaliação atrasada (> frequência do aluno)
+            $frequency = $student->assessment_frequency ?? 30;
+            
+            if ($lastAssessment && $lastAssessment->date && $lastAssessment->date->diffInDays(now()) > $frequency) {
                 return $type === 'overdue' || $type === 'all';
             }
 

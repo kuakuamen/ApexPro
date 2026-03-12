@@ -64,7 +64,7 @@
                 </div>
             </div>
             <p class="mt-4 text-3xl font-bold text-yellow-400">{{ $pendingAssessmentsCount }}</p>
-            <p class="mt-1 text-xs text-gray-500">Mais de 30 dias sem atualização</p>
+            <p class="mt-1 text-xs text-gray-500">Avaliações vencidas</p>
         </div>
 
         <!-- Sem Avaliação -->

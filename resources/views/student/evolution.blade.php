@@ -3,6 +3,93 @@
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Side-by-Side Modal Template -->
+    <template x-teleport="body">
+        <div x-data="{ open: false, leftImage: null, rightImage: null, view: 'front' }"
+             @open-sbs-modal.window="open = true; leftImage = $event.detail.leftImage; rightImage = $event.detail.rightImage; view = $event.detail.view"
+             x-on:switch-sbs-view.window="view = $event.detail; $dispatch('update-sbs-images', view)"
+             x-show="open" 
+             style="display: none;"
+             class="fixed inset-0 z-[99999] overflow-hidden"
+             aria-labelledby="modal-title" 
+             role="dialog" 
+             aria-modal="true">
+            
+            <!-- Overlay Backdrop -->
+            <div x-show="open" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-gray-950/90 backdrop-blur-md transition-opacity" 
+                 aria-hidden="true"></div>
+
+            <!-- Fullscreen Container -->
+            <div class="fixed inset-0 flex flex-col w-full h-full z-[100000]">
+                
+                <!-- Toolbar -->
+                <div class="bg-gray-900 px-4 py-3 flex justify-between items-center border-b border-gray-700 shadow-xl z-50 shrink-0">
+                    <h3 class="text-lg leading-6 font-bold text-white tracking-wide" id="modal-title">
+                        Comparação Lado a Lado
+                    </h3>
+                    <div class="flex items-center space-x-4">
+                        <!-- View Switcher -->
+                        <div class="flex bg-gray-800 rounded-lg p-1 border border-gray-700">
+                            <button @click="$dispatch('switch-sbs-view', 'front')" :class="{'bg-indigo-600 text-white shadow': view === 'front', 'text-gray-400 hover:text-white hover:bg-gray-700': view !== 'front'}" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">Frontal</button>
+                            <button @click="$dispatch('switch-sbs-view', 'side_right')" :class="{'bg-indigo-600 text-white shadow': view === 'side_right', 'text-gray-400 hover:text-white hover:bg-gray-700': view !== 'side_right'}" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">Lado D</button>
+                            <button @click="$dispatch('switch-sbs-view', 'side_left')" :class="{'bg-indigo-600 text-white shadow': view === 'side_left', 'text-gray-400 hover:text-white hover:bg-gray-700': view !== 'side_left'}" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">Lado E</button>
+                            <button @click="$dispatch('switch-sbs-view', 'back')" :class="{'bg-indigo-600 text-white shadow': view === 'back', 'text-gray-400 hover:text-white hover:bg-gray-700': view !== 'back'}" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">Costas</button>
+                        </div>
+                        
+                        <!-- Close Button -->
+                        <button @click="open = false" class="bg-gray-800 hover:bg-red-600 text-gray-400 hover:text-white p-2 rounded-full transition-colors border border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Images Container -->
+                <div class="flex-1 bg-black flex items-center justify-center overflow-hidden relative w-full h-full">
+                    <div class="flex w-full h-full">
+                        <!-- Left Image -->
+                        <div class="w-1/2 h-full border-r border-gray-800 relative overflow-hidden flex items-center justify-center bg-black">
+                            <template x-if="leftImage">
+                                <img :src="leftImage" class="max-w-full max-h-full object-contain" alt="Esquerda">
+                            </template>
+                            <template x-if="!leftImage">
+                                <div class="text-gray-600 flex flex-col items-center">
+                                    <svg class="w-16 h-16 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <span class="font-medium">Sem imagem disponível</span>
+                                </div>
+                            </template>
+                            <div class="absolute bottom-4 left-4 bg-black/80 backdrop-blur text-white px-3 py-1.5 rounded-md text-sm font-semibold border border-white/10 shadow-lg">Avaliação 1</div>
+                        </div>
+                        
+                        <!-- Right Image -->
+                        <div class="w-1/2 h-full relative overflow-hidden flex items-center justify-center bg-black">
+                            <template x-if="rightImage">
+                                <img :src="rightImage" class="max-w-full max-h-full object-contain" alt="Direita">
+                            </template>
+                            <template x-if="!rightImage">
+                                <div class="text-gray-600 flex flex-col items-center">
+                                    <svg class="w-16 h-16 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <span class="font-medium">Sem imagem disponível</span>
+                                </div>
+                            </template>
+                            <div class="absolute bottom-4 right-4 bg-black/80 backdrop-blur text-white px-3 py-1.5 rounded-md text-sm font-semibold border border-white/10 shadow-lg">Avaliação 2</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <script>
+
 <div class="space-y-8" x-data="evolutionData()">
     <!-- Header -->
     <div class="flex justify-between items-center">
@@ -131,6 +218,14 @@
                             </template>
                         </select>
                     </div>
+                </div>
+
+                <!-- Side-by-Side Button -->
+                <div class="flex justify-center mb-8">
+                    <button @click="openSideBySide('front')" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                        Visualização Lado a Lado
+                    </button>
                 </div>
 
                 <!-- Comparison Display -->
@@ -644,6 +739,25 @@
             openModal(imageUrl) {
                     this.modalImage = imageUrl;
                     this.modalOpen = true;
+                },
+
+                // Side-by-Side Logic
+                sbsOpen: false,
+                sbsView: 'front', // front, side_right, side_left, back
+                sbsLeftImage: null,
+                sbsRightImage: null,
+
+                openSideBySide(view) {
+                    this.sbsView = view;
+                    this.updateSbsImages();
+                    this.sbsOpen = true;
+                },
+
+                updateSbsImages() {
+                    if (!this.leftMeasurement || !this.rightMeasurement) return;
+                    
+                    this.sbsLeftImage = this.getPhotoUrl(this.leftMeasurement.id, this.sbsView);
+                    this.sbsRightImage = this.getPhotoUrl(this.rightMeasurement.id, this.sbsView);
                 }
             }
         }
