@@ -575,8 +575,40 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                     <template x-if="leftMeasurement && leftMeasurement.photo_front">
-                                        <div class="aspect-w-3 aspect-h-4">
-                                            <img :src="getPhotoUrl(leftMeasurement.id, 'front')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'front'))">
+                                        <div class="aspect-w-3 aspect-h-4 relative overflow-hidden rounded-lg bg-gray-900" 
+                                             x-data="imageZoom()" 
+                                             @mouseleave="stopDrag" 
+                                             @mouseup="stopDrag" 
+                                             @touchend="stopDrag">
+                                            
+                                            <div class="absolute top-2 right-2 z-10 flex gap-1 transition-opacity duration-200" 
+                                                 :class="{'opacity-100': scale > 1, 'opacity-0 hover:opacity-100': scale === 1}">
+                                                <button @click.stop="reset()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Resetar">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                </button>
+                                                <button @click.stop="zoomOut()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom Out">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                                </button>
+                                                <span class="bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center" x-text="Math.round(scale * 100) + '%'"></span>
+                                                <button @click.stop="zoomIn()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom In">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                </button>
+                                                <button @click.stop="openModal(getPhotoUrl(leftMeasurement.id, 'front'))" class="bg-black/50 text-white p-1 rounded hover:bg-black/70 ml-1" title="Expandir">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                                </button>
+                                            </div>
+
+                                            <div class="w-full h-full cursor-grab active:cursor-grabbing"
+                                                 :class="{'cursor-grab': scale > 1 && !panning, 'cursor-grabbing': panning}"
+                                                 @mousedown="startDrag" 
+                                                 @touchstart="startDrag"
+                                                 @mousemove="onDrag"
+                                                 @touchmove="onDrag"
+                                                 @wheel="onWheel">
+                                                <img :src="getPhotoUrl(leftMeasurement.id, 'front')" 
+                                                     class="w-full h-full object-cover transition-transform duration-200 ease-out origin-center"
+                                                     :style="`transform: scale(${scale}) translate(${pointX / scale}px, ${pointY / scale}px)`">
+                                            </div>
                                         </div>
                                     </template>
                                     <template x-if="!leftMeasurement || !leftMeasurement.photo_front">
@@ -588,8 +620,40 @@
                                 </div>
                                 <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                     <template x-if="rightMeasurement && rightMeasurement.photo_front">
-                                        <div class="aspect-w-3 aspect-h-4">
-                                            <img :src="getPhotoUrl(rightMeasurement.id, 'front')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'front'))">
+                                        <div class="aspect-w-3 aspect-h-4 relative overflow-hidden rounded-lg bg-gray-900" 
+                                             x-data="imageZoom()" 
+                                             @mouseleave="stopDrag" 
+                                             @mouseup="stopDrag" 
+                                             @touchend="stopDrag">
+                                            
+                                            <div class="absolute top-2 right-2 z-10 flex gap-1 transition-opacity duration-200" 
+                                                 :class="{'opacity-100': scale > 1, 'opacity-0 hover:opacity-100': scale === 1}">
+                                                <button @click.stop="reset()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Resetar">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                </button>
+                                                <button @click.stop="zoomOut()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom Out">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                                </button>
+                                                <span class="bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center" x-text="Math.round(scale * 100) + '%'"></span>
+                                                <button @click.stop="zoomIn()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom In">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                </button>
+                                                <button @click.stop="openModal(getPhotoUrl(rightMeasurement.id, 'front'))" class="bg-black/50 text-white p-1 rounded hover:bg-black/70 ml-1" title="Expandir">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                                </button>
+                                            </div>
+
+                                            <div class="w-full h-full cursor-grab active:cursor-grabbing"
+                                                 :class="{'cursor-grab': scale > 1 && !panning, 'cursor-grabbing': panning}"
+                                                 @mousedown="startDrag" 
+                                                 @touchstart="startDrag"
+                                                 @mousemove="onDrag"
+                                                 @touchmove="onDrag"
+                                                 @wheel="onWheel">
+                                                <img :src="getPhotoUrl(rightMeasurement.id, 'front')" 
+                                                     class="w-full h-full object-cover transition-transform duration-200 ease-out origin-center"
+                                                     :style="`transform: scale(${scale}) translate(${pointX / scale}px, ${pointY / scale}px)`">
+                                            </div>
                                         </div>
                                     </template>
                                     <template x-if="!rightMeasurement || !rightMeasurement.photo_front">
@@ -610,15 +674,77 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                     <template x-if="leftMeasurement && leftMeasurement.photo_side_right">
-                                        <div class="aspect-w-3 aspect-h-4">
-                                            <img :src="getPhotoUrl(leftMeasurement.id, 'side_right')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'side_right'))">
+                                        <div class="aspect-w-3 aspect-h-4 relative overflow-hidden rounded-lg bg-gray-900" 
+                                             x-data="imageZoom()" 
+                                             @mouseleave="stopDrag" 
+                                             @mouseup="stopDrag" 
+                                             @touchend="stopDrag">
+                                            
+                                            <div class="absolute top-2 right-2 z-10 flex gap-1 transition-opacity duration-200" 
+                                                 :class="{'opacity-100': scale > 1, 'opacity-0 hover:opacity-100': scale === 1}">
+                                                <button @click.stop="reset()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Resetar">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                </button>
+                                                <button @click.stop="zoomOut()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom Out">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                                </button>
+                                                <span class="bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center" x-text="Math.round(scale * 100) + '%'"></span>
+                                                <button @click.stop="zoomIn()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom In">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                </button>
+                                                <button @click.stop="openModal(getPhotoUrl(leftMeasurement.id, 'side_right'))" class="bg-black/50 text-white p-1 rounded hover:bg-black/70 ml-1" title="Expandir">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                                </button>
+                                            </div>
+
+                                            <div class="w-full h-full cursor-grab active:cursor-grabbing"
+                                                 :class="{'cursor-grab': scale > 1 && !panning, 'cursor-grabbing': panning}"
+                                                 @mousedown="startDrag" 
+                                                 @touchstart="startDrag"
+                                                 @mousemove="onDrag"
+                                                 @touchmove="onDrag"
+                                                 @wheel="onWheel">
+                                                <img :src="getPhotoUrl(leftMeasurement.id, 'side_right')" 
+                                                     class="w-full h-full object-cover transition-transform duration-200 ease-out origin-center"
+                                                     :style="`transform: scale(${scale}) translate(${pointX / scale}px, ${pointY / scale}px)`">
+                                            </div>
                                         </div>
                                     </template>
                                     <template x-if="!leftMeasurement || !leftMeasurement.photo_side_right">
                                         <!-- Fallback -->
                                         <template x-if="leftMeasurement && leftMeasurement.photo_side">
-                                            <div class="aspect-w-3 aspect-h-4">
-                                                <img :src="getPhotoUrl(leftMeasurement.id, 'side')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'side'))">
+                                            <div class="aspect-w-3 aspect-h-4 relative overflow-hidden rounded-lg bg-gray-900" 
+                                                 x-data="imageZoom()" 
+                                                 @mouseleave="stopDrag" 
+                                                 @mouseup="stopDrag" 
+                                                 @touchend="stopDrag"
+                                                 @click.outside="reset()">
+                                                
+                                                <div class="absolute top-2 right-2 z-10 flex gap-1 transition-opacity duration-200" 
+                                                     :class="{'opacity-100': scale > 1, 'opacity-0 hover:opacity-100': scale === 1}">
+                                                    <button @click.stop="zoomOut()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom Out">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                                    </button>
+                                                    <span class="bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center" x-text="Math.round(scale * 100) + '%'"></span>
+                                                    <button @click.stop="zoomIn()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom In">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                    </button>
+                                                    <button @click.stop="openModal(getPhotoUrl(leftMeasurement.id, 'side'))" class="bg-black/50 text-white p-1 rounded hover:bg-black/70 ml-1" title="Expandir">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                                    </button>
+                                                </div>
+
+                                                <div class="w-full h-full cursor-grab active:cursor-grabbing"
+                                                     :class="{'cursor-grab': scale > 1 && !panning, 'cursor-grabbing': panning}"
+                                                     @mousedown="startDrag" 
+                                                     @touchstart="startDrag"
+                                                     @mousemove="onDrag"
+                                                     @touchmove="onDrag"
+                                                     @wheel="onWheel">
+                                                    <img :src="getPhotoUrl(leftMeasurement.id, 'side')" 
+                                                         class="w-full h-full object-cover transition-transform duration-200 ease-out origin-center"
+                                                         :style="`transform: scale(${scale}) translate(${pointX / scale}px, ${pointY / scale}px)`">
+                                                </div>
                                             </div>
                                         </template>
                                         <template x-if="!leftMeasurement || (!leftMeasurement.photo_side_right && !leftMeasurement.photo_side)">
@@ -631,15 +757,77 @@
                                 </div>
                                 <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                     <template x-if="rightMeasurement && rightMeasurement.photo_side_right">
-                                        <div class="aspect-w-3 aspect-h-4">
-                                            <img :src="getPhotoUrl(rightMeasurement.id, 'side_right')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'side_right'))">
+                                        <div class="aspect-w-3 aspect-h-4 relative overflow-hidden rounded-lg bg-gray-900" 
+                                             x-data="imageZoom()" 
+                                             @mouseleave="stopDrag" 
+                                             @mouseup="stopDrag" 
+                                             @touchend="stopDrag">
+                                            
+                                            <div class="absolute top-2 right-2 z-10 flex gap-1 transition-opacity duration-200" 
+                                                 :class="{'opacity-100': scale > 1, 'opacity-0 hover:opacity-100': scale === 1}">
+                                                <button @click.stop="reset()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Resetar">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                </button>
+                                                <button @click.stop="zoomOut()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom Out">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                                </button>
+                                                <span class="bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center" x-text="Math.round(scale * 100) + '%'"></span>
+                                                <button @click.stop="zoomIn()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom In">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                </button>
+                                                <button @click.stop="openModal(getPhotoUrl(rightMeasurement.id, 'side_right'))" class="bg-black/50 text-white p-1 rounded hover:bg-black/70 ml-1" title="Expandir">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                                </button>
+                                            </div>
+
+                                            <div class="w-full h-full cursor-grab active:cursor-grabbing"
+                                                 :class="{'cursor-grab': scale > 1 && !panning, 'cursor-grabbing': panning}"
+                                                 @mousedown="startDrag" 
+                                                 @touchstart="startDrag"
+                                                 @mousemove="onDrag"
+                                                 @touchmove="onDrag"
+                                                 @wheel="onWheel">
+                                                <img :src="getPhotoUrl(rightMeasurement.id, 'side_right')" 
+                                                     class="w-full h-full object-cover transition-transform duration-200 ease-out origin-center"
+                                                     :style="`transform: scale(${scale}) translate(${pointX / scale}px, ${pointY / scale}px)`">
+                                            </div>
                                         </div>
                                     </template>
                                     <template x-if="!rightMeasurement || !rightMeasurement.photo_side_right">
                                         <!-- Fallback -->
                                         <template x-if="rightMeasurement && rightMeasurement.photo_side">
-                                            <div class="aspect-w-3 aspect-h-4">
-                                                <img :src="getPhotoUrl(rightMeasurement.id, 'side')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'side'))">
+                                            <div class="aspect-w-3 aspect-h-4 relative overflow-hidden rounded-lg bg-gray-900" 
+                                                 x-data="imageZoom()" 
+                                                 @mouseleave="stopDrag" 
+                                                 @mouseup="stopDrag" 
+                                                 @touchend="stopDrag"
+                                                 @click.outside="reset()">
+                                                
+                                                <div class="absolute top-2 right-2 z-10 flex gap-1 transition-opacity duration-200" 
+                                                     :class="{'opacity-100': scale > 1, 'opacity-0 hover:opacity-100': scale === 1}">
+                                                    <button @click.stop="zoomOut()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom Out">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                                    </button>
+                                                    <span class="bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center" x-text="Math.round(scale * 100) + '%'"></span>
+                                                    <button @click.stop="zoomIn()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom In">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                    </button>
+                                                    <button @click.stop="openModal(getPhotoUrl(rightMeasurement.id, 'side'))" class="bg-black/50 text-white p-1 rounded hover:bg-black/70 ml-1" title="Expandir">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                                    </button>
+                                                </div>
+
+                                                <div class="w-full h-full cursor-grab active:cursor-grabbing"
+                                                     :class="{'cursor-grab': scale > 1 && !panning, 'cursor-grabbing': panning}"
+                                                     @mousedown="startDrag" 
+                                                     @touchstart="startDrag"
+                                                     @mousemove="onDrag"
+                                                     @touchmove="onDrag"
+                                                     @wheel="onWheel">
+                                                    <img :src="getPhotoUrl(rightMeasurement.id, 'side')" 
+                                                         class="w-full h-full object-cover transition-transform duration-200 ease-out origin-center"
+                                                         :style="`transform: scale(${scale}) translate(${pointX / scale}px, ${pointY / scale}px)`">
+                                                </div>
                                             </div>
                                         </template>
                                         <template x-if="!rightMeasurement || (!rightMeasurement.photo_side_right && !rightMeasurement.photo_side)">
@@ -661,8 +849,40 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                     <template x-if="leftMeasurement && leftMeasurement.photo_side_left">
-                                        <div class="aspect-w-3 aspect-h-4">
-                                            <img :src="getPhotoUrl(leftMeasurement.id, 'side_left')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'side_left'))">
+                                        <div class="aspect-w-3 aspect-h-4 relative overflow-hidden rounded-lg bg-gray-900" 
+                                             x-data="imageZoom()" 
+                                             @mouseleave="stopDrag" 
+                                             @mouseup="stopDrag" 
+                                             @touchend="stopDrag">
+                                            
+                                            <div class="absolute top-2 right-2 z-10 flex gap-1 transition-opacity duration-200" 
+                                                 :class="{'opacity-100': scale > 1, 'opacity-0 hover:opacity-100': scale === 1}">
+                                                <button @click.stop="reset()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Resetar">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                </button>
+                                                <button @click.stop="zoomOut()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom Out">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                                </button>
+                                                <span class="bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center" x-text="Math.round(scale * 100) + '%'"></span>
+                                                <button @click.stop="zoomIn()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom In">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                </button>
+                                                <button @click.stop="openModal(getPhotoUrl(leftMeasurement.id, 'side_left'))" class="bg-black/50 text-white p-1 rounded hover:bg-black/70 ml-1" title="Expandir">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                                </button>
+                                            </div>
+
+                                            <div class="w-full h-full cursor-grab active:cursor-grabbing"
+                                                 :class="{'cursor-grab': scale > 1 && !panning, 'cursor-grabbing': panning}"
+                                                 @mousedown="startDrag" 
+                                                 @touchstart="startDrag"
+                                                 @mousemove="onDrag"
+                                                 @touchmove="onDrag"
+                                                 @wheel="onWheel">
+                                                <img :src="getPhotoUrl(leftMeasurement.id, 'side_left')" 
+                                                     class="w-full h-full object-cover transition-transform duration-200 ease-out origin-center"
+                                                     :style="`transform: scale(${scale}) translate(${pointX / scale}px, ${pointY / scale}px)`">
+                                            </div>
                                         </div>
                                     </template>
                                     <template x-if="!leftMeasurement || !leftMeasurement.photo_side_left">
@@ -674,8 +894,40 @@
                                 </div>
                                 <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                     <template x-if="rightMeasurement && rightMeasurement.photo_side_left">
-                                        <div class="aspect-w-3 aspect-h-4">
-                                            <img :src="getPhotoUrl(rightMeasurement.id, 'side_left')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'side_left'))">
+                                        <div class="aspect-w-3 aspect-h-4 relative overflow-hidden rounded-lg bg-gray-900" 
+                                             x-data="imageZoom()" 
+                                             @mouseleave="stopDrag" 
+                                             @mouseup="stopDrag" 
+                                             @touchend="stopDrag">
+                                            
+                                            <div class="absolute top-2 right-2 z-10 flex gap-1 transition-opacity duration-200" 
+                                                 :class="{'opacity-100': scale > 1, 'opacity-0 hover:opacity-100': scale === 1}">
+                                                <button @click.stop="reset()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Resetar">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                </button>
+                                                <button @click.stop="zoomOut()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom Out">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                                </button>
+                                                <span class="bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center" x-text="Math.round(scale * 100) + '%'"></span>
+                                                <button @click.stop="zoomIn()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom In">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                </button>
+                                                <button @click.stop="openModal(getPhotoUrl(rightMeasurement.id, 'side_left'))" class="bg-black/50 text-white p-1 rounded hover:bg-black/70 ml-1" title="Expandir">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                                </button>
+                                            </div>
+
+                                            <div class="w-full h-full cursor-grab active:cursor-grabbing"
+                                                 :class="{'cursor-grab': scale > 1 && !panning, 'cursor-grabbing': panning}"
+                                                 @mousedown="startDrag" 
+                                                 @touchstart="startDrag"
+                                                 @mousemove="onDrag"
+                                                 @touchmove="onDrag"
+                                                 @wheel="onWheel">
+                                                <img :src="getPhotoUrl(rightMeasurement.id, 'side_left')" 
+                                                     class="w-full h-full object-cover transition-transform duration-200 ease-out origin-center"
+                                                     :style="`transform: scale(${scale}) translate(${pointX / scale}px, ${pointY / scale}px)`">
+                                            </div>
                                         </div>
                                     </template>
                                     <template x-if="!rightMeasurement || !rightMeasurement.photo_side_left">
@@ -696,8 +948,40 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                     <template x-if="leftMeasurement && leftMeasurement.photo_back">
-                                        <div class="aspect-w-3 aspect-h-4">
-                                            <img :src="getPhotoUrl(leftMeasurement.id, 'back')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(leftMeasurement.id, 'back'))">
+                                        <div class="aspect-w-3 aspect-h-4 relative overflow-hidden rounded-lg bg-gray-900" 
+                                             x-data="imageZoom()" 
+                                             @mouseleave="stopDrag" 
+                                             @mouseup="stopDrag" 
+                                             @touchend="stopDrag">
+                                            
+                                            <div class="absolute top-2 right-2 z-10 flex gap-1 transition-opacity duration-200" 
+                                                 :class="{'opacity-100': scale > 1, 'opacity-0 hover:opacity-100': scale === 1}">
+                                                <button @click.stop="reset()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Resetar">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                </button>
+                                                <button @click.stop="zoomOut()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom Out">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                                </button>
+                                                <span class="bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center" x-text="Math.round(scale * 100) + '%'"></span>
+                                                <button @click.stop="zoomIn()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom In">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                </button>
+                                                <button @click.stop="openModal(getPhotoUrl(leftMeasurement.id, 'back'))" class="bg-black/50 text-white p-1 rounded hover:bg-black/70 ml-1" title="Expandir">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                                </button>
+                                            </div>
+
+                                            <div class="w-full h-full cursor-grab active:cursor-grabbing"
+                                                 :class="{'cursor-grab': scale > 1 && !panning, 'cursor-grabbing': panning}"
+                                                 @mousedown="startDrag" 
+                                                 @touchstart="startDrag"
+                                                 @mousemove="onDrag"
+                                                 @touchmove="onDrag"
+                                                 @wheel="onWheel">
+                                                <img :src="getPhotoUrl(leftMeasurement.id, 'back')" 
+                                                     class="w-full h-full object-cover transition-transform duration-200 ease-out origin-center"
+                                                     :style="`transform: scale(${scale}) translate(${pointX / scale}px, ${pointY / scale}px)`">
+                                            </div>
                                         </div>
                                     </template>
                                     <template x-if="!leftMeasurement || !leftMeasurement.photo_back">
@@ -709,8 +993,40 @@
                                 </div>
                                 <div class="bg-gray-700/50 p-2 rounded-lg shadow-sm border border-gray-600">
                                     <template x-if="rightMeasurement && rightMeasurement.photo_back">
-                                        <div class="aspect-w-3 aspect-h-4">
-                                            <img :src="getPhotoUrl(rightMeasurement.id, 'back')" class="w-full h-full object-cover rounded shadow cursor-pointer hover:opacity-90 transition" @click="openModal(getPhotoUrl(rightMeasurement.id, 'back'))">
+                                        <div class="aspect-w-3 aspect-h-4 relative overflow-hidden rounded-lg bg-gray-900" 
+                                             x-data="imageZoom()" 
+                                             @mouseleave="stopDrag" 
+                                             @mouseup="stopDrag" 
+                                             @touchend="stopDrag">
+                                            
+                                            <div class="absolute top-2 right-2 z-10 flex gap-1 transition-opacity duration-200" 
+                                                 :class="{'opacity-100': scale > 1, 'opacity-0 hover:opacity-100': scale === 1}">
+                                                <button @click.stop="reset()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Resetar">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                </button>
+                                                <button @click.stop="zoomOut()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom Out">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                                </button>
+                                                <span class="bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center" x-text="Math.round(scale * 100) + '%'"></span>
+                                                <button @click.stop="zoomIn()" class="bg-black/50 text-white p-1 rounded hover:bg-black/70" title="Zoom In">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                </button>
+                                                <button @click.stop="openModal(getPhotoUrl(rightMeasurement.id, 'back'))" class="bg-black/50 text-white p-1 rounded hover:bg-black/70 ml-1" title="Expandir">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                                </button>
+                                            </div>
+
+                                            <div class="w-full h-full cursor-grab active:cursor-grabbing"
+                                                 :class="{'cursor-grab': scale > 1 && !panning, 'cursor-grabbing': panning}"
+                                                 @mousedown="startDrag" 
+                                                 @touchstart="startDrag"
+                                                 @mousemove="onDrag" 
+                                                 @touchmove="onDrag"
+                                                 @wheel="onWheel">
+                                                <img :src="getPhotoUrl(rightMeasurement.id, 'back')" 
+                                                     class="w-full h-full object-cover transition-transform duration-200 ease-out origin-center"
+                                                     :style="`transform: scale(${scale}) translate(${pointX / scale}px, ${pointY / scale}px)`">
+                                            </div>
                                         </div>
                                     </template>
                                     <template x-if="!rightMeasurement || !rightMeasurement.photo_back">
@@ -786,6 +1102,68 @@
                 
                 openModal(imageUrl) {
                     window.dispatchEvent(new CustomEvent('open-comparison-modal', { detail: imageUrl }));
+                }
+            }
+        }
+
+        function imageZoom() {
+            return {
+                scale: 1,
+                panning: false,
+                pointX: 0,
+                pointY: 0,
+                startX: 0,
+                startY: 0,
+
+                zoomIn() {
+                    if (this.scale < 3) this.scale = Math.min(this.scale + 0.5, 3);
+                },
+                
+                zoomOut() {
+                    if (this.scale > 1) this.scale = Math.max(this.scale - 0.5, 1);
+                    if (this.scale === 1) this.reset();
+                },
+                
+                reset() {
+                    this.scale = 1;
+                    this.pointX = 0;
+                    this.pointY = 0;
+                    this.panning = false;
+                },
+
+                startDrag(e) {
+                    if (this.scale <= 1) return;
+                    e.preventDefault();
+                    this.panning = true;
+                    this.startX = e.clientX || e.touches[0].clientX;
+                    this.startY = e.clientY || e.touches[0].clientY;
+                },
+
+                onDrag(e) {
+                    if (!this.panning || this.scale <= 1) return;
+                    e.preventDefault();
+                    
+                    const clientX = e.clientX || e.touches[0].clientX;
+                    const clientY = e.clientY || e.touches[0].clientY;
+                    
+                    const deltaX = clientX - this.startX;
+                    const deltaY = clientY - this.startY;
+                    
+                    this.pointX += deltaX;
+                    this.pointY += deltaY;
+                    
+                    this.startX = clientX;
+                    this.startY = clientY;
+                },
+
+                stopDrag() {
+                    this.panning = false;
+                },
+                
+                onWheel(e) {
+                    e.preventDefault();
+                    if (e.deltaY < 0) this.zoomIn();
+                    else this.zoomOut();
                 }
             }
         }
