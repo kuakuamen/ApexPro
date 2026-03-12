@@ -68,15 +68,18 @@ class PersonalController extends Controller
         $pendingAssessmentsList = $studentsWithOldAssessments
             ->map(function ($student) {
                 $lastAssessment = $student->measurements->first();
+                $frequency = $student->assessment_frequency ?? 30;
+                $daysSince = $lastAssessment?->date ? $lastAssessment->date->diffInDays(now()) : 0;
+                $overdue = max(0, $daysSince - $frequency);
+
                 return [
                     'student' => $student,
                     'last_assessment_date' => $lastAssessment?->date,
-                    'days_without_assessment' => $lastAssessment?->date
-                        ? $lastAssessment->date->diffInDays(now())
-                        : null,
+                    'days_without_assessment' => $daysSince,
+                    'days_overdue' => $overdue,
                 ];
             })
-            ->sortByDesc('days_without_assessment')
+            ->sortByDesc('days_overdue')
             ->take(5)
             ->values();
 
@@ -166,15 +169,19 @@ class PersonalController extends Controller
         $students->transform(function ($student) {
             $lastAssessment = $student->measurements->first();
             $student->last_assessment_date = $lastAssessment?->date;
-            $student->days_without_assessment = $lastAssessment?->date 
-                ? $lastAssessment->date->diffInDays(now()) 
-                : null;
             
+            $daysSince = $lastAssessment?->date ? $lastAssessment->date->diffInDays(now()) : 0;
+            $frequency = $student->assessment_frequency ?? 30;
+            $overdue = max(0, $daysSince - $frequency);
+
+            $student->days_without_assessment = $daysSince;
+            $student->days_overdue = $overdue;
+
             if ($student->measurements->isEmpty()) {
                 $student->status_label = 'Sem Avaliação';
                 $student->status_color = 'red';
             } else {
-                $student->status_label = 'Atrasada (' . intval($student->days_without_assessment) . ' dias)';
+                $student->status_label = 'Atrasada (' . intval($overdue) . ' dias)';
                 $student->status_color = 'orange';
             }
             
@@ -183,7 +190,7 @@ class PersonalController extends Controller
 
         // Ordenação: Prioridade para quem nunca avaliou, depois os mais atrasados
         $students = $students->sortByDesc(function ($student) {
-            return $student->measurements->isEmpty() ? 999999 : $student->days_without_assessment;
+            return $student->measurements->isEmpty() ? 999999 : $student->days_overdue;
         })->values(); // Resetar chaves para paginação manual se necessário, ou apenas limpar
 
         return view('personal.assessments.pending', compact('students', 'type', 'search'));
