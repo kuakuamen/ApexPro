@@ -6,7 +6,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>ApexPro</title>
-    <link rel="icon" type="image/png" href="{{ asset('storage/photos/Gemini_Generated_Image_.png') }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/favicons/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/favicons/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('img/favicons/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    <meta name="theme-color" content="#06b6d4">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         html, body {
@@ -16,7 +21,7 @@
         }
         [x-cloak] { display: none !important; }
         .bg-personal-dark {
-            background: linear-gradient(180deg, #18181b 0%, #0f172a 55%, #042f2e 100%);
+            background: linear-gradient(180deg, #111827 0%, #1f2937 55%, #111827 100%);
         }
         .hide-scrollbar {
             -ms-overflow-style: none;
@@ -63,8 +68,10 @@
             <!-- Logo Area -->
             <div class="flex items-center justify-center h-20 border-b bg-[#0b1220] px-4" style="border-bottom-color: rgba(51, 65, 85, 0.65);">
                 <a href="{{ $logoRoute }}" class="group flex items-center gap-3">
-                    <img src="{{ asset('storage/photos/Gemini_Generated_Image_.png') }}" alt="ApexPro Logo" class="w-10 h-10 object-contain group-hover:scale-110 transition-transform duration-300">
-                    <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-stone-100 to-teal-300">ApexPro</span>
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform duration-300">
+                        <span class="font-bold text-white text-lg">A</span>
+                    </div>
+                    <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500">ApexPro</span>
                 </a>
             </div>
 
@@ -81,40 +88,40 @@
                         elseif(auth()->user()->role === 'nutri') $homeRoute = route('diets.index');
                     @endphp
                     <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Principal</p>
-                    <a href="{{ $homeRoute }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('*.dashboard') ? 'bg-teal-500/10 text-teal-100 border-l-2 border-teal-400 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
-                        <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('*.dashboard') ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <a href="{{ $homeRoute }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('*.dashboard') ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                        <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('*.dashboard') ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                         Tela Inicial
                     </a>
 
                     <!-- Links Específicos do Personal -->
                     @if(auth()->user()->role === 'personal')
                         <p class="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Gestão</p>
-                        <a href="{{ route('personal.students.index') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('personal.students.index') || request()->routeIs('personal.students.show') ? 'bg-teal-500/10 text-teal-100 border-l-2 border-teal-400 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
-                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('personal.students.index') || request()->routeIs('personal.students.show') ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <a href="{{ route('personal.students.index') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('personal.students.index') || request()->routeIs('personal.students.show') ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('personal.students.index') || request()->routeIs('personal.students.show') ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                             Alunos
                         </a>
 
-                        <a href="{{ route('personal.students.create') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('personal.students.create') ? 'bg-teal-500/10 text-teal-100 border-l-2 border-teal-400 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
-                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('personal.students.create') ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                        <a href="{{ route('personal.students.create') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('personal.students.create') ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('personal.students.create') ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
                             Novo Aluno
                         </a>
-                        <a href="{{ route('workouts.create') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('workouts.create') ? 'bg-teal-500/10 text-teal-100 border-l-2 border-teal-400 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
-                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('workouts.create') ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        <a href="{{ route('workouts.create') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('workouts.create') ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('workouts.create') ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                             Criar Treino
                         </a>
                         <p class="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">IA</p>
-                        <a href="{{ route('personal.ai-assessment.index') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('personal.ai-assessment.*') ? 'bg-teal-500/10 text-teal-100 border-l-2 border-teal-400 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
-                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('personal.ai-assessment.*') ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <a href="{{ route('personal.ai-assessment.index') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('personal.ai-assessment.*') ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('personal.ai-assessment.*') ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             Avaliação com IA
                         </a>
 
                         <p class="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Pendências</p>
-                        <a href="{{ route('personal.assessments.pending', ['type' => 'overdue']) }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'overdue'])) ? 'bg-teal-500/10 text-teal-100 border-l-2 border-teal-400 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
-                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'overdue'])) ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <a href="{{ route('personal.assessments.pending', ['type' => 'overdue']) }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'overdue'])) ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'overdue'])) ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             Avaliação Atrasada
                         </a>
-                        <a href="{{ route('personal.assessments.pending', ['type' => 'missing']) }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'missing'])) ? 'bg-teal-500/10 text-teal-100 border-l-2 border-teal-400 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
-                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'missing'])) ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <a href="{{ route('personal.assessments.pending', ['type' => 'missing']) }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'missing'])) ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'missing'])) ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                             Sem Avaliação
                         </a>
                     @endif
@@ -122,15 +129,15 @@
                     <!-- Links Específicos do Aluno -->
                     @if(auth()->user()->role === 'aluno')
                         <p class="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Aluno</p>
-                        <a href="{{ route('student.evolution') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('student.evolution') ? 'bg-teal-500/10 text-teal-100 border-l-2 border-teal-400 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
-                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('student.evolution') ? 'text-teal-300' : 'text-slate-500 group-hover:text-teal-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                        <a href="{{ route('student.evolution') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('student.evolution') ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('student.evolution') ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
                             Minha Evolução
                         </a>
                     @endif
 
                 @else
                     <a href="/login" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 text-slate-300 hover:bg-slate-800/80 hover:text-slate-100">
-                        <svg class="w-5 h-5 mr-3 text-slate-500 group-hover:text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                        <svg class="w-5 h-5 mr-3 text-slate-500 group-hover:text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
                         Fazer Login
                     </a>
                 @endif
@@ -141,7 +148,7 @@
             <div class="border-t bg-[#0b1220] p-4" style="border-top-color: rgba(51, 65, 85, 0.65);">
                 <div class="flex items-center gap-3">
                     <div class="flex-shrink-0">
-                        <div class="h-10 w-10 rounded-full bg-teal-500/15 flex items-center justify-center text-teal-200 font-semibold text-base border border-teal-400/30">
+                        <div class="h-10 w-10 rounded-full bg-cyan-500/15 flex items-center justify-center text-cyan-200 font-semibold text-base border border-cyan-400/30">
                             {{ substr(auth()->user()->name, 0, 1) }}
                         </div>
                     </div>
@@ -149,7 +156,7 @@
                         <p class="text-sm font-medium text-slate-100 truncate">{{ auth()->user()->name }}</p>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="text-xs font-medium text-slate-400 hover:text-teal-300 transition-colors flex items-center gap-1 mt-0.5">
+                            <button type="submit" class="text-xs font-medium text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1 mt-0.5">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
                                 Sair do Sistema
                             </button>
@@ -166,7 +173,7 @@
 
             <!-- Top Bar -->
             <header class="h-14 shrink-0 flex items-center border-b bg-zinc-950/85 backdrop-blur-sm px-3 md:px-4" style="border-bottom-color: rgba(51, 65, 85, 0.65);">
-                <button x-show="!sidebarOpen" x-cloak @click.stop="sidebarOpen = !sidebarOpen" class="w-10 h-10 flex items-center justify-center rounded-md text-stone-100 bg-zinc-900/70 hover:bg-teal-950/60 focus:outline-none">
+                <button x-show="!sidebarOpen" x-cloak @click.stop="sidebarOpen = !sidebarOpen" class="w-10 h-10 flex items-center justify-center rounded-md text-stone-100 bg-zinc-900/70 hover:bg-cyan-950/60 focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
             </header>
