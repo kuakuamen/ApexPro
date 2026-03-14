@@ -75,6 +75,10 @@ Route::middleware(['auth', 'role:personal', 'subscription'])->prefix('personal')
     Route::post('/avaliacao-ia/pdf', [AiAssessmentController::class, 'generatePdf'])->name('ai-assessment.pdf');
     Route::post('/avaliacao-ia/refinar', [AiAssessmentController::class, 'refine'])->name('ai-assessment.refine');
     
+    // Evolução de Alunos
+    Route::get('/evolucao', [PersonalController::class, 'evolutionIndex'])->name('evolution.index');
+    Route::get('/evolucao/dados/{student}', [PersonalController::class, 'evolutionData'])->name('evolution.data');
+
     // NOVA ROTA: Avaliações Pendentes (Atrasadas / Sem Avaliação)
     Route::get('/avaliacoes/pendentes', [PersonalController::class, 'pendingAssessments'])->name('assessments.pending');
 

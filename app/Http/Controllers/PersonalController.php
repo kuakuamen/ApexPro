@@ -921,4 +921,65 @@ class PersonalController extends Controller
             $data['pollock7_lean_mass'] = $pollock7Result['lean_mass'];
         }
     }
+
+    public function evolutionIndex()
+    {
+        $user = Auth::user();
+        $students = $user->students()->orderBy('users.name')->get(['users.id', 'users.name']);
+        return view('personal.evolution.index', compact('students'));
+    }
+
+    public function evolutionData(User $student)
+    {
+        $this->validateStudentBelongsToPersonal($student);
+
+        $measurements = BodyMeasurement::where('student_id', $student->id)
+            ->orderBy('date')
+            ->get(['date', 'weight', 'muscle_mass', 'body_fat', 'height', 'waist']);
+
+        $dates    = $measurements->pluck('date')->map(fn($d) => \Carbon\Carbon::parse($d)->format('d/m/Y'))->values();
+        $weights  = $measurements->pluck('weight')->values();
+        $muscles  = $measurements->pluck('muscle_mass')->values();
+        $bodyFats = $measurements->pluck('body_fat')->values();
+
+        $first    = $measurements->first();
+        $last     = $measurements->last();
+        $previous = $measurements->count() >= 2 ? $measurements->slice(-2, 1)->first() : null;
+
+        $weightDiff = ($previous && $previous->weight    && $last->weight)      ? round($last->weight      - $previous->weight,      1) : null;
+        $muscleDiff = ($previous && $previous->muscle_mass && $last->muscle_mass) ? round($last->muscle_mass - $previous->muscle_mass,  1) : null;
+        $fatDiff    = ($previous && $previous->body_fat  && $last->body_fat)    ? round($last->body_fat    - $previous->body_fat,      2) : null;
+
+        $summary = null;
+        if ($first && $last && $measurements->count() >= 2) {
+            $summary = [
+                'total'        => $measurements->count(),
+                'weight'       => ['value' => $last->weight,       'diff' => $weightDiff],
+                'muscle_mass'  => ['value' => $last->muscle_mass,  'diff' => $muscleDiff],
+                'body_fat'     => ['value' => $last->body_fat,     'diff' => $fatDiff],
+            ];
+        }
+
+        $history = $measurements->reverse()->map(function ($m) {
+            $imc = ($m->weight && $m->height) ? round($m->weight / (($m->height / 100) ** 2), 1) : null;
+            return [
+                'date'        => $m->date ? \Carbon\Carbon::parse($m->date)->format('d/m/Y') : null,
+                'weight'      => $m->weight      ? number_format($m->weight,      1, ',', '.') : null,
+                'muscle_mass' => $m->muscle_mass ? number_format($m->muscle_mass, 1, ',', '.') : null,
+                'body_fat'    => $m->body_fat    ? number_format($m->body_fat,    1, ',', '.') : null,
+                'imc'         => $imc            ? number_format($imc,            1, ',', '.') : null,
+                'waist'       => $m->waist       ? number_format($m->waist,       1, ',', '.') : null,
+            ];
+        })->values();
+
+        return response()->json([
+            'student'  => ['id' => $student->id, 'name' => $student->name],
+            'dates'    => $dates,
+            'weights'  => $weights,
+            'muscles'  => $muscles,
+            'bodyFats' => $bodyFats,
+            'summary'  => $summary,
+            'history'  => $history,
+        ]);
+    }
 }

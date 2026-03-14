@@ -115,6 +115,12 @@
                             Avaliação com IA
                         </a>
 
+                        <p class="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Análise</p>
+                        <a href="{{ route('personal.evolution.index') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('personal.evolution.*') ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('personal.evolution.*') ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                            Evolução
+                        </a>
+
                         <p class="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Pendências</p>
                         <a href="{{ route('personal.assessments.pending', ['type' => 'overdue']) }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'overdue'])) ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
                             <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->fullUrlIs(route('personal.assessments.pending', ['type' => 'overdue'])) ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
