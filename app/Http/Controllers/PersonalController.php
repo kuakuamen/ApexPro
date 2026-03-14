@@ -327,7 +327,19 @@ class PersonalController extends Controller
         $workouts = $student->workoutPlans()->latest()->get();
         $diets = $student->dietPlans()->latest()->get();
 
-        return view('personal.students.show', compact('student', 'measurements', 'workouts', 'diets'));
+        // Dados para os gráficos de evolução (ordem cronológica)
+        $measurementsChronological = BodyMeasurement::where('student_id', $student->id)
+            ->orderBy('date')
+            ->get();
+        $evolutionDates       = $measurementsChronological->pluck('date')->map(fn($d) => $d ? $d->format('d/m/Y') : null)->filter()->values()->toArray();
+        $evolutionWeights     = $measurementsChronological->pluck('weight')->toArray();
+        $evolutionMuscleMasses = $measurementsChronological->pluck('muscle_mass')->toArray();
+        $evolutionBodyFats    = $measurementsChronological->pluck('body_fat')->toArray();
+
+        return view('personal.students.show', compact(
+            'student', 'measurements', 'workouts', 'diets',
+            'measurementsChronological', 'evolutionDates', 'evolutionWeights', 'evolutionMuscleMasses', 'evolutionBodyFats'
+        ));
     }
 
     /**

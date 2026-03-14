@@ -88,8 +88,6 @@
         </div>
     </template>
     
-    <script>
-
 <div class="space-y-8" x-data="evolutionData()">
     <!-- Header -->
     <div class="flex justify-between items-center">

@@ -39,6 +39,16 @@
                 <form action="{{ route('personal.ai-assessment.analyze') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                     @csrf
                     
+                    <!-- Hidden inputs para reutilização de imagens -->
+                    <input type="hidden" name="reuse_source_type" id="reuse_source_type" value="">
+                    <input type="hidden" name="reuse_source_id"   id="reuse_source_id"   value="">
+                    <input type="hidden" name="reuse_front"       id="reuse_front"       value="">
+                    <input type="hidden" name="reuse_side_right"  id="reuse_side_right"  value="">
+                    <input type="hidden" name="reuse_side_left"   id="reuse_side_left"   value="">
+                    <input type="hidden" name="reuse_back"        id="reuse_back"        value="">
+                    <input type="hidden" name="reuse_extras"      id="reuse_extras"      value="">
+                    <div id="reuse_extra_indices_container"></div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Seleção de Aluno -->
                         <div>
@@ -72,6 +82,27 @@
                                 <option value="Avançado" class="bg-gray-700">Avançado (Treina sério há anos)</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- Banner: Reutilizar imagens da última avaliação -->
+                    <div id="reuse-banner" class="hidden rounded-xl border border-indigo-500/50 bg-indigo-900/30 p-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-indigo-300">Imagens encontradas</p>
+                                <p id="reuse-banner-date" class="text-xs text-gray-400 mt-0.5"></p>
+                            </div>
+                            <div class="flex gap-2 shrink-0">
+                                <button type="button" id="btn-apply-reuse" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors" style="background:#3730a3;border:1px solid #6366f1;">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                    Utilizar imagens da última avaliação
+                                </button>
+                                <button type="button" id="btn-dismiss-reuse" class="flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-200 transition-colors border border-gray-600 hover:border-gray-400">
+                                    Ignorar
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Preview das imagens disponíveis -->
+                        <div id="reuse-preview-row" class="hidden mt-4 grid grid-cols-2 md:grid-cols-4 gap-3"></div>
                     </div>
 
                     <!-- Observações do Personal (Contexto Extra para este Treino) -->
@@ -192,7 +223,7 @@
                         <div class="mt-6">
                             <label class="block text-sm font-medium text-gray-300 mb-2">Fotos Extras (Opcional)</label>
                             <div id="photo_extra_container" class="mt-1 border-2 border-gray-600 border-dashed rounded-lg hover:border-indigo-400 transition-colors bg-gray-800/50 backdrop-blur-sm p-4">
-                                <div class="flex flex-col sm:flex-row gap-2 items-center justify-between">
+                                <div id="photo_extra_add_row" class="flex flex-col sm:flex-row gap-2 items-center justify-between">
                                     <p class="text-xs text-gray-400">Adicione até 6 fotos extras para a IA analisar melhor.</p>
                                     <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 font-medium py-2 px-4 rounded-lg transition-colors" style="background:#5b5fd6;border:1px solid #7c86ee;color:#f1f5f9;" onclick="openGallery('photo_extra')">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -363,38 +394,29 @@
 </style>
 
 <script>
-    // Sistema de abas
+    const LAST_IMAGES_URL = "{{ route('personal.ai-assessment.last-images', ['student' => '__ID__']) }}";
+
+    // ===================== ABA =====================
     function switchTab(tabName) {
-        // Ocultar todos os tabs
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.add('hidden');
-        });
-        
-        // Remover active de todos os botões
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('active', 'border-gray-400', 'text-white');
             btn.classList.add('border-transparent', 'text-gray-400');
         });
-        
-        // Mostrar tab selecionado
         document.getElementById(tabName).classList.remove('hidden');
-        
-        // Marcar botão como ativo
-        const btnId = 'btn-' + tabName;
-        const activeBtn = document.getElementById(btnId);
-        if(activeBtn) {
+        const activeBtn = document.getElementById('btn-' + tabName);
+        if (activeBtn) {
             activeBtn.classList.add('active', 'border-gray-400', 'text-white');
             activeBtn.classList.remove('border-transparent', 'text-gray-400');
         }
     }
 
-    // Loading System
+    // ===================== LOADING =====================
     function initLoadingSystem() {
         const forms = document.querySelectorAll('form');
         const overlay = document.getElementById('loading-overlay');
         const messageEl = document.getElementById('loading-message');
         const progressEl = document.getElementById('loading-progress');
-        
         const messages = [
             "Analisando simetria corporal...",
             "Identificando desvios posturais...",
@@ -402,41 +424,26 @@
             "Gerando recomendações de exercícios...",
             "Finalizando relatório detalhado..."
         ];
-
         forms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                // Show overlay
+            form.addEventListener('submit', function() {
                 overlay.classList.remove('hidden');
-                // Force reflow
-                void overlay.offsetWidth; 
+                void overlay.offsetWidth;
                 overlay.classList.remove('opacity-0');
-                
-                let progress = 0;
-                let messageIndex = 0;
-                
-                // Progress simulation loop
+                let progress = 0, messageIndex = 0;
                 const interval = setInterval(() => {
                     progress += Math.random() * 5;
                     if (progress > 95) progress = 95;
-                    
                     progressEl.style.width = `${progress}%`;
-                    
-                    // Change message every 20% progress approx
                     const newIndex = Math.floor(progress / 20);
                     if (newIndex !== messageIndex && newIndex < messages.length) {
                         messageIndex = newIndex;
                         messageEl.style.opacity = '0';
-                        setTimeout(() => {
-                            messageEl.textContent = messages[messageIndex];
-                            messageEl.style.opacity = '1';
-                        }, 300);
+                        setTimeout(() => { messageEl.textContent = messages[messageIndex]; messageEl.style.opacity = '1'; }, 300);
                     }
                 }, 500);
-
-                // Timeout safety (30 seconds)
                 setTimeout(() => {
                     clearInterval(interval);
-                    if (!document.hidden) { // Only show error if tab is visible
+                    if (!document.hidden) {
                         messageEl.textContent = "O processamento está demorando mais que o esperado...";
                         messageEl.classList.add('text-yellow-400');
                     }
@@ -445,120 +452,329 @@
         });
     }
 
-    // Initialize all systems
-    document.addEventListener('DOMContentLoaded', () => {
-        initLoadingSystem();
-        setupPhotoIndicators();
-        setupExtraPhotosPreview();
-        
-        // Ensure first tab is active by default logic if needed, 
-        // though HTML structure handles initial state.
-    });
-
-    // Funções para abrir câmera ou galeria
+    // ===================== CÂMERA / GALERIA =====================
     function openCamera(inputId) {
         const input = document.getElementById(inputId);
-        if (input) {
-            input.setAttribute('capture', 'environment');
-            input.click();
-        }
+        if (input) { input.setAttribute('capture', 'environment'); input.click(); }
     }
-
     function openGallery(inputId) {
         const input = document.getElementById(inputId);
-        if (input) {
-            input.removeAttribute('capture');
-            input.click();
-        }
+        if (input) { input.removeAttribute('capture'); input.click(); }
     }
 
-    // Miniatura + borda visual para fotos principais
+    // ===================== INDICADORES DE FOTO =====================
+    const PHOTO_SLOTS = [
+        { input: 'photo_front',      container: 'photo_front_container',      preview: 'photo_front_preview',      icon: 'photo_front_icon',      reuseKey: 'front' },
+        { input: 'photo_side_right', container: 'photo_side_right_container', preview: 'photo_side_right_preview', icon: 'photo_side_right_icon', reuseKey: 'side_right' },
+        { input: 'photo_side_left',  container: 'photo_side_left_container',  preview: 'photo_side_left_preview',  icon: 'photo_side_left_icon',  reuseKey: 'side_left' },
+        { input: 'photo_back',       container: 'photo_back_container',       preview: 'photo_back_preview',       icon: 'photo_back_icon',       reuseKey: 'back' },
+    ];
+
     function setupPhotoIndicators() {
-        const photos = [
-            { input: 'photo_front', container: 'photo_front_container', preview: 'photo_front_preview', icon: 'photo_front_icon' },
-            { input: 'photo_side_right', container: 'photo_side_right_container', preview: 'photo_side_right_preview', icon: 'photo_side_right_icon' },
-            { input: 'photo_side_left', container: 'photo_side_left_container', preview: 'photo_side_left_preview', icon: 'photo_side_left_icon' },
-            { input: 'photo_back', container: 'photo_back_container', preview: 'photo_back_preview', icon: 'photo_back_icon' }
-        ];
-
-        photos.forEach(photo => {
-            const input = document.getElementById(photo.input);
+        PHOTO_SLOTS.forEach(photo => {
+            const input     = document.getElementById(photo.input);
             const container = document.getElementById(photo.container);
-            const preview = document.getElementById(photo.preview);
-            const icon = document.getElementById(photo.icon);
+            const preview   = document.getElementById(photo.preview);
+            const icon      = document.getElementById(photo.icon);
+            if (!input || !container || !preview || !icon) return;
 
-            if (!input || !container || !preview || !icon) {
-                return;
-            }
-
-            const updateStatus = () => {
+            input.addEventListener('change', () => {
+                // Se o usuário fez upload manual, cancela reuse para esse slot
+                clearReuseSlot(photo.reuseKey);
                 if (input.files && input.files.length > 0) {
                     container.classList.remove('border-gray-600', 'hover:border-indigo-400');
                     container.classList.add('border-green-500', 'hover:border-green-400');
-
                     const file = input.files[0];
                     if (file && file.type.startsWith('image/')) {
                         preview.src = URL.createObjectURL(file);
                         preview.classList.remove('hidden');
                         icon.classList.add('hidden');
+                        removeReuseTag(photo.container);
                     }
                 } else {
-                    container.classList.add('border-gray-600', 'hover:border-indigo-400');
-                    container.classList.remove('border-green-500', 'hover:border-green-400');
-                    preview.classList.add('hidden');
-                    preview.removeAttribute('src');
-                    icon.classList.remove('hidden');
+                    resetSlotUI(photo);
                 }
-            };
-
-            input.addEventListener('change', updateStatus);
+            });
         });
     }
 
-    // Miniaturas para fotos extras
+    function resetSlotUI(photo) {
+        const container = document.getElementById(photo.container);
+        const preview   = document.getElementById(photo.preview);
+        const icon      = document.getElementById(photo.icon);
+        const input     = document.getElementById(photo.input);
+        if (!container) return;
+        container.classList.add('border-gray-600', 'hover:border-indigo-400');
+        container.classList.remove('border-green-500', 'hover:border-green-400', 'border-indigo-400', 'hover:border-indigo-300');
+        if (preview) { preview.classList.add('hidden'); preview.removeAttribute('src'); }
+        if (icon) icon.classList.remove('hidden');
+        // Restaurar botões de upload e required
+        const btnsDiv = container.querySelector('.flex.flex-col.gap-2');
+        if (btnsDiv) btnsDiv.classList.remove('hidden');
+        if (input) input.setAttribute('required', '');
+        removeReuseTag(photo.container);
+    }
+
+    function removeReuseTag(containerId) {
+        const tag = document.querySelector(`#${containerId} .reuse-tag`);
+        if (tag) tag.remove();
+    }
+
+    // ===================== EXTRA PHOTOS =====================
     function setupExtraPhotosPreview() {
         const input = document.getElementById('photo_extra');
-        const grid = document.getElementById('photo_extra_preview_grid');
+        const grid  = document.getElementById('photo_extra_preview_grid');
         if (!input || !grid) return;
-
         input.addEventListener('change', () => {
-            let files = Array.from(input.files || []).filter(file => file.type.startsWith('image/'));
-
+            let files = Array.from(input.files || []).filter(f => f.type.startsWith('image/'));
             if (files.length > 6) {
                 files = files.slice(0, 6);
                 const dt = new DataTransfer();
-                files.forEach(file => dt.items.add(file));
+                files.forEach(f => dt.items.add(f));
                 input.files = dt.files;
                 alert('Máximo de 6 fotos extras. Mantivemos as 6 primeiras.');
             }
-
             grid.innerHTML = '';
-            if (!files.length) {
-                grid.classList.add('hidden');
-                return;
-            }
-
+            if (!files.length) { grid.classList.add('hidden'); return; }
             files.forEach((file, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'relative border border-gray-600 rounded-md overflow-hidden bg-gray-900';
-
                 const label = document.createElement('div');
                 label.className = 'absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded';
                 label.textContent = `Extra ${index + 1}`;
-
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
                 img.alt = `Preview Extra ${index + 1}`;
                 img.className = 'w-full object-cover';
                 img.style.aspectRatio = '16 / 9';
-
                 wrapper.appendChild(img);
                 wrapper.appendChild(label);
                 grid.appendChild(wrapper);
             });
-
             grid.classList.remove('hidden');
         });
     }
+
+    // ===================== REUTILIZAÇÃO DE IMAGENS =====================
+    let _reuseData = null;
+
+    function clearReuseSlot(slot) {
+        document.getElementById('reuse_' + slot).value = '';
+    }
+
+    function clearAllReuse() {
+        ['reuse_source_type','reuse_source_id','reuse_front','reuse_side_right','reuse_side_left','reuse_back','reuse_extras'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('reuse_extra_indices_container').innerHTML = '';
+        _reuseData = null;
+        PHOTO_SLOTS.forEach(photo => resetSlotUI(photo));
+        // Restaurar botão de adicionar extras
+        const addRow = document.getElementById('photo_extra_add_row');
+        if (addRow) addRow.classList.remove('hidden');
+        // Limpar preview de extras reutilizadas
+        const grid = document.getElementById('photo_extra_preview_grid');
+        if (grid) { grid.innerHTML = ''; grid.classList.add('hidden'); }
+    }
+
+    function applyReuseImages(data) {
+        _reuseData = data;
+        document.getElementById('reuse_source_type').value = data.source;
+        document.getElementById('reuse_source_id').value   = data.source_id;
+
+        const slotMap = {
+            front:      { hiddenId: 'reuse_front',      inputId: 'photo_front',      previewId: 'photo_front_preview',      iconId: 'photo_front_icon',      containerId: 'photo_front_container',      label: 'Frontal' },
+            side_right: { hiddenId: 'reuse_side_right', inputId: 'photo_side_right', previewId: 'photo_side_right_preview', iconId: 'photo_side_right_icon', containerId: 'photo_side_right_container', label: 'Lat. D' },
+            side_left:  { hiddenId: 'reuse_side_left',  inputId: 'photo_side_left',  previewId: 'photo_side_left_preview',  iconId: 'photo_side_left_icon',  containerId: 'photo_side_left_container',  label: 'Lat. E' },
+            back:       { hiddenId: 'reuse_back',        inputId: 'photo_back',       previewId: 'photo_back_preview',       iconId: 'photo_back_icon',       containerId: 'photo_back_container',       label: 'Costas' },
+        };
+
+        Object.entries(slotMap).forEach(([slot, cfg]) => {
+            const url = data.images[slot];
+            if (!url) return;
+
+            document.getElementById(cfg.hiddenId).value = '1';
+
+            const container = document.getElementById(cfg.containerId);
+            const preview   = document.getElementById(cfg.previewId);
+            const icon      = document.getElementById(cfg.iconId);
+            const input     = document.getElementById(cfg.inputId);
+
+            // Remover required para não bloquear submit nativo do browser
+            if (input) input.removeAttribute('required');
+
+            if (preview) {
+                preview.src = url;
+                preview.classList.remove('hidden');
+            }
+            if (icon) icon.classList.add('hidden');
+            if (container) {
+                container.classList.remove('border-gray-600', 'hover:border-indigo-400');
+                container.classList.add('border-indigo-400', 'hover:border-indigo-300');
+                removeReuseTag(cfg.containerId);
+
+                // Ocultar botões Câmera/Galeria
+                const btnsDiv = container.querySelector('.flex.flex-col.gap-2');
+                if (btnsDiv) btnsDiv.classList.add('hidden');
+
+                // Adicionar tag "Reutilizada"
+                const tag = document.createElement('div');
+                tag.className = 'reuse-tag flex items-center justify-between gap-1 mt-1 px-2 py-1 rounded text-xs font-medium bg-indigo-900/60 border border-indigo-500/40 text-indigo-300';
+                tag.innerHTML = `<span>Reutilizada</span>
+                    <button type="button" class="hover:text-red-400 transition-colors ml-auto" title="Remover imagem reutilizada" onclick="removeReuseSlot('${slot}')">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>`;
+                container.querySelector('.space-y-3').appendChild(tag);
+            }
+        });
+
+        // Aplicar TODAS as extras reutilizadas (sem limite)
+        const extras = data.extras || [];
+        if (extras.length > 0) {
+            // Ocultar botão "Adicionar Fotos Extras"
+            const addRow = document.getElementById('photo_extra_add_row');
+            if (addRow) addRow.classList.add('hidden');
+
+            document.getElementById('reuse_extras').value = '1';
+            const container = document.getElementById('reuse_extra_indices_container');
+            container.innerHTML = '';
+            extras.forEach((url, index) => {
+                const inp = document.createElement('input');
+                inp.type  = 'hidden';
+                inp.name  = 'reuse_extra_indices[]';
+                inp.value = index;
+                container.appendChild(inp);
+            });
+            // Exibir previews das extras reutilizadas na grade
+            const grid = document.getElementById('photo_extra_preview_grid');
+            grid.innerHTML = '';
+            extras.forEach((url, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative border border-indigo-500/50 rounded-md overflow-hidden bg-gray-900';
+                const labelEl = document.createElement('div');
+                labelEl.className = 'absolute top-1 left-1 bg-indigo-900/80 text-indigo-300 text-[10px] px-1.5 py-0.5 rounded';
+                labelEl.textContent = `Extra ${index + 1}`;
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.title = 'Remover esta extra';
+                removeBtn.className = 'absolute top-1 right-1 bg-black/60 hover:bg-red-900/80 text-white hover:text-red-300 rounded p-0.5 transition-colors';
+                removeBtn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
+                removeBtn.addEventListener('click', () => removeReuseExtra(index, wrapper));
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = `Extra reutilizada ${index + 1}`;
+                img.className = 'w-full object-cover';
+                img.style.aspectRatio = '16 / 9';
+                wrapper.dataset.reuseIndex = index;
+                wrapper.appendChild(img);
+                wrapper.appendChild(labelEl);
+                wrapper.appendChild(removeBtn);
+                grid.appendChild(wrapper);
+            });
+            grid.classList.remove('hidden');
+        }
+    }
+
+    function removeReuseSlot(slot) {
+        clearReuseSlot(slot);
+        const photo = PHOTO_SLOTS.find(p => p.reuseKey === slot);
+        if (photo) resetSlotUI(photo);
+    }
+
+    function removeReuseExtra(index, wrapperEl) {
+        // Remove o hidden input do índice correspondente
+        const container = document.getElementById('reuse_extra_indices_container');
+        const inp = container.querySelector(`input[value="${index}"]`);
+        if (inp) inp.remove();
+        // Remove o card de preview
+        if (wrapperEl) wrapperEl.remove();
+        // Se não restam mais extras reutilizadas E não há novos uploads, ocultar grade
+        const grid = document.getElementById('photo_extra_preview_grid');
+        if (grid && grid.children.length === 0) {
+            grid.classList.add('hidden');
+            document.getElementById('reuse_extras').value = '';
+        }
+        // Renumerar labels visuais
+        if (grid) {
+            Array.from(grid.children).forEach((el, i) => {
+                const lbl = el.querySelector('.text-\\[10px\\]') || el.querySelector('[class*="text-[10px]"]');
+                if (lbl) lbl.textContent = `Extra ${i + 1}`;
+            });
+        }
+    }
+
+    function setupReuseSystem() {
+        const studentSelect = document.getElementById('student_id');
+        const banner        = document.getElementById('reuse-banner');
+        const bannerDate    = document.getElementById('reuse-banner-date');
+        const previewRow    = document.getElementById('reuse-preview-row');
+        const btnApply      = document.getElementById('btn-apply-reuse');
+        const btnDismiss    = document.getElementById('btn-dismiss-reuse');
+
+        studentSelect.addEventListener('change', function() {
+            const studentId = this.value;
+            banner.classList.add('hidden');
+            previewRow.innerHTML = '';
+            previewRow.classList.add('hidden');
+            clearAllReuse();
+
+            if (!studentId) return;
+
+            const url = LAST_IMAGES_URL.replace('__ID__', studentId);
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.has_images) return;
+                    _reuseData = data;
+
+                    const sourceLabel = data.source === 'assessment' ? 'avaliação com IA' : 'medição corporal';
+                    bannerDate.textContent = `Última ${sourceLabel} em ${data.date}`;
+                    banner.classList.remove('hidden');
+
+                    // Montar preview das imagens disponíveis no banner (principais + extras)
+                    const labels = { front: 'Frontal', side_right: 'Lat. D', side_left: 'Lat. E', back: 'Costas' };
+                    previewRow.innerHTML = '';
+                    let hasAny = false;
+                    Object.entries(data.images).forEach(([slot, imgUrl]) => {
+                        if (!imgUrl) return;
+                        hasAny = true;
+                        const div = document.createElement('div');
+                        div.className = 'relative rounded-lg overflow-hidden border border-gray-600';
+                        div.innerHTML = `<img src="${imgUrl}" alt="${labels[slot]}" class="w-full object-cover" style="aspect-ratio:16/9">
+                            <div class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-xs text-center py-1">${labels[slot]}</div>`;
+                        previewRow.appendChild(div);
+                    });
+                    (data.extras || []).forEach((imgUrl, i) => {
+                        hasAny = true;
+                        const div = document.createElement('div');
+                        div.className = 'relative rounded-lg overflow-hidden border border-gray-600';
+                        div.innerHTML = `<img src="${imgUrl}" alt="Extra ${i+1}" class="w-full object-cover" style="aspect-ratio:16/9">
+                            <div class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-xs text-center py-1">Extra ${i+1}</div>`;
+                        previewRow.appendChild(div);
+                    });
+                    if (hasAny) previewRow.classList.remove('hidden');
+                })
+                .catch(() => {});
+        });
+
+        btnApply.addEventListener('click', function() {
+            if (!_reuseData) return;
+            applyReuseImages(_reuseData);
+            banner.classList.add('hidden');
+        });
+
+        btnDismiss.addEventListener('click', function() {
+            banner.classList.add('hidden');
+            clearAllReuse();
+        });
+    }
+
+    // ===================== INIT =====================
+    document.addEventListener('DOMContentLoaded', () => {
+        initLoadingSystem();
+        setupPhotoIndicators();
+        setupExtraPhotosPreview();
+        setupReuseSystem();
+    });
 </script>
 @endsection

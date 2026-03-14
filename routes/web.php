@@ -68,6 +68,7 @@ Route::middleware(['auth', 'role:personal', 'subscription'])->prefix('personal')
 
     // NOVA ROTA: Avaliação com IA
     Route::get('/avaliacao-ia', [AiAssessmentController::class, 'index'])->name('ai-assessment.index');
+    Route::get('/avaliacao-ia/ultimas-imagens/{student}', [AiAssessmentController::class, 'getLastImages'])->name('ai-assessment.last-images');
     Route::post('/avaliacao-ia/analisar', [AiAssessmentController::class, 'analyze'])->name('ai-assessment.analyze');
     Route::match(['get', 'post'], '/avaliacao-ia/analisar-sem-imagens', [AiAssessmentController::class, 'analyzeNoImages'])->name('ai-assessment.analyze-no-images');
     Route::post('/avaliacao-ia/salvar', [AiAssessmentController::class, 'store'])->name('ai-assessment.store');

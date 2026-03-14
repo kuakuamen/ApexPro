@@ -122,6 +122,12 @@
                         class="whitespace-nowrap py-4 border-b-2 font-medium text-sm transition-all duration-200">
                     Comparativo
                 </button>
+                <button @click="activeTab = 'evolution'; $nextTick(() => initEvolutionCharts())"
+                        :class="activeTab === 'evolution' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'"
+                        class="whitespace-nowrap py-4 border-b-2 font-medium text-sm transition-all duration-200 flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                    Evolução
+                </button>
             </nav>
         </div>
     </div>
@@ -1053,6 +1059,131 @@
 
     </div>
 
+    <!-- ===== ABA EVOLUÇÃO ===== -->
+    <div x-show="activeTab === 'evolution'" x-cloak class="space-y-6">
+
+        @if($measurementsChronological->count() < 2)
+            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-10 text-center">
+                <svg class="w-14 h-14 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <p class="text-gray-400 font-medium">Dados insuficientes para gerar gráficos.</p>
+                <p class="text-gray-500 text-sm mt-1">Registre pelo menos 2 avaliações para visualizar a evolução.</p>
+            </div>
+        @else
+
+        {{-- ── Cards de resumo ── --}}
+        @php
+            $latest = $measurementsChronological->last();
+            $previous = $measurementsChronological->count() >= 2 ? $measurementsChronological->slice(-2, 1)->first() : null;
+            $weightDiff   = ($previous && $previous->weight   && $latest->weight)   ? round($latest->weight   - $previous->weight, 1)   : null;
+            $muscleDiff   = ($previous && $previous->muscle_mass && $latest->muscle_mass) ? round($latest->muscle_mass - $previous->muscle_mass, 1) : null;
+            $fatDiff      = ($previous && $previous->body_fat  && $latest->body_fat)  ? round($latest->body_fat  - $previous->body_fat, 2)  : null;
+        @endphp
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {{-- Peso --}}
+            <div class="bg-gray-800/60 border border-gray-700 rounded-xl p-4 text-center">
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Peso Atual</p>
+                <p class="text-2xl font-bold text-white">{{ $latest->weight ? number_format($latest->weight, 1) : '—' }} <span class="text-sm font-normal text-gray-400">kg</span></p>
+                @if($weightDiff !== null)
+                    <p class="text-xs mt-1 {{ $weightDiff > 0 ? 'text-red-400' : ($weightDiff < 0 ? 'text-green-400' : 'text-gray-500') }}">
+                        {{ $weightDiff > 0 ? '+' : '' }}{{ $weightDiff }} kg vs anterior
+                    </p>
+                @endif
+            </div>
+            {{-- Massa Muscular --}}
+            <div class="bg-gray-800/60 border border-gray-700 rounded-xl p-4 text-center">
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Massa Muscular</p>
+                <p class="text-2xl font-bold text-white">{{ $latest->muscle_mass ? number_format($latest->muscle_mass, 1) : '—' }} <span class="text-sm font-normal text-gray-400">kg</span></p>
+                @if($muscleDiff !== null)
+                    <p class="text-xs mt-1 {{ $muscleDiff >= 0 ? 'text-green-400' : 'text-red-400' }}">
+                        {{ $muscleDiff > 0 ? '+' : '' }}{{ $muscleDiff }} kg vs anterior
+                    </p>
+                @endif
+            </div>
+            {{-- Gordura % --}}
+            <div class="bg-gray-800/60 border border-gray-700 rounded-xl p-4 text-center">
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Gordura Corporal</p>
+                <p class="text-2xl font-bold text-white">{{ $latest->body_fat ? number_format($latest->body_fat, 1) : '—' }} <span class="text-sm font-normal text-gray-400">%</span></p>
+                @if($fatDiff !== null)
+                    <p class="text-xs mt-1 {{ $fatDiff <= 0 ? 'text-green-400' : 'text-red-400' }}">
+                        {{ $fatDiff > 0 ? '+' : '' }}{{ $fatDiff }}% vs anterior
+                    </p>
+                @endif
+            </div>
+            {{-- Total de avaliações --}}
+            <div class="bg-gray-800/60 border border-gray-700 rounded-xl p-4 text-center">
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Avaliações</p>
+                <p class="text-2xl font-bold text-indigo-400">{{ $measurementsChronological->count() }}</p>
+                <p class="text-xs text-gray-500 mt-1">registros</p>
+            </div>
+        </div>
+
+        {{-- ── Gráficos ── --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {{-- Peso + Massa Muscular --}}
+            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-5">
+                <h3 class="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                    Peso &amp; Massa Muscular
+                </h3>
+                <div class="relative" style="height:220px">
+                    <canvas id="evolutionBodyCompositionChart"></canvas>
+                </div>
+            </div>
+            {{-- Gordura % --}}
+            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-5">
+                <h3 class="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    % de Gordura Corporal
+                </h3>
+                <div class="relative" style="height:220px">
+                    <canvas id="evolutionBodyFatChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        {{-- ── Tabela histórico ── --}}
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-700">
+                <h3 class="text-sm font-semibold text-white">Histórico de Medições</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-800 text-xs text-gray-400 uppercase tracking-wider">
+                        <tr>
+                            <th class="px-4 py-3">Data</th>
+                            <th class="px-4 py-3">Peso (kg)</th>
+                            <th class="px-4 py-3">Musc. (kg)</th>
+                            <th class="px-4 py-3">Gordura (%)</th>
+                            <th class="px-4 py-3">IMC</th>
+                            <th class="px-4 py-3">Cintura (cm)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700/50">
+                        @foreach($measurementsChronological->reverse() as $m)
+                        <tr class="hover:bg-gray-700/30 transition-colors">
+                            <td class="px-4 py-3 text-gray-300 font-medium">{{ $m->date ? $m->date->format('d/m/Y') : '—' }}</td>
+                            <td class="px-4 py-3 text-white">{{ $m->weight ? number_format($m->weight, 1) : '—' }}</td>
+                            <td class="px-4 py-3 text-blue-400">{{ $m->muscle_mass ? number_format($m->muscle_mass, 1) : '—' }}</td>
+                            <td class="px-4 py-3 text-yellow-400">{{ $m->body_fat ? number_format($m->body_fat, 1) : '—' }}</td>
+                            <td class="px-4 py-3 text-gray-300">
+                                @if($m->weight && $m->height)
+                                    {{ number_format($m->weight / (($m->height/100) ** 2), 1) }}
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-gray-300">{{ $m->waist ? number_format($m->waist, 1) : '—' }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @endif
+    </div>
+
     <!-- Image Modal (Reutilizado do Alpine acima, mas precisa estar fora do x-data de tabs para funcionar em tudo ou duplicado) -->
     <!-- Vamos usar um modal global ou específico para a aba de comparação -->
     <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-95 p-4" x-cloak @click="modalOpen = false" x-data="{ modalOpen: false, modalImage: '' }" @open-comparison-modal.window="modalOpen = true; modalImage = $event.detail">
@@ -1601,5 +1732,101 @@
             }
         }
     </script>
+
+    @if($measurementsChronological->count() >= 2)
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script>
+        const _evoDates        = @json($evolutionDates);
+        const _evoWeights      = @json($evolutionWeights);
+        const _evoMuscleMasses = @json($evolutionMuscleMasses);
+        const _evoBodyFats     = @json($evolutionBodyFats);
+
+        let _evoChartsInited = false;
+
+        function initEvolutionCharts() {
+            if (_evoChartsInited) return;
+            _evoChartsInited = true;
+
+            const gridColor   = 'rgba(71,85,105,0.2)';
+            const tickColor   = '#94a3b8';
+            const commonScales = {
+                x: { grid: { color: gridColor }, ticks: { color: tickColor, maxRotation: 45 } },
+                y: { grid: { color: gridColor }, ticks: { color: tickColor } }
+            };
+            const commonPlugins = {
+                legend: { labels: { color: '#e2e8f0', boxWidth: 12 } },
+                tooltip: { mode: 'index', intersect: false }
+            };
+
+            // Gráfico 1: Peso + Massa Muscular
+            const ctx1 = document.getElementById('evolutionBodyCompositionChart');
+            if (ctx1) {
+                new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: _evoDates,
+                        datasets: [
+                            {
+                                label: 'Peso (kg)',
+                                data: _evoWeights,
+                                borderColor: '#818cf8',
+                                backgroundColor: 'rgba(129,140,248,0.15)',
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#818cf8',
+                                pointRadius: 4,
+                            },
+                            {
+                                label: 'Massa Muscular (kg)',
+                                data: _evoMuscleMasses,
+                                borderColor: '#34d399',
+                                backgroundColor: 'rgba(52,211,153,0.15)',
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#34d399',
+                                pointRadius: 4,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: commonScales,
+                        plugins: commonPlugins
+                    }
+                });
+            }
+
+            // Gráfico 2: Gordura %
+            const ctx2 = document.getElementById('evolutionBodyFatChart');
+            if (ctx2) {
+                new Chart(ctx2, {
+                    type: 'line',
+                    data: {
+                        labels: _evoDates,
+                        datasets: [
+                            {
+                                label: '% Gordura',
+                                data: _evoBodyFats,
+                                borderColor: '#fbbf24',
+                                backgroundColor: 'rgba(251,191,36,0.15)',
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#fbbf24',
+                                pointRadius: 4,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: commonScales,
+                        plugins: commonPlugins
+                    }
+                });
+            }
+        }
+    </script>
+    @endif
 </div>
 @endsection
