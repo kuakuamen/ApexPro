@@ -16,17 +16,6 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\FinancialController;
 use Illuminate\Support\Facades\Auth;
 
-// Rota raiz
-Route::get('/', function () {
-    if (auth()->check()) {
-        $role = auth()->user()->role;
-        if ($role === 'personal') return redirect()->route('personal.dashboard');
-        if ($role === 'aluno')    return redirect()->route('student.dashboard');
-        if ($role === 'nutri')    return redirect()->route('diets.index');
-        if ($role === 'admin')    return redirect()->route('admin.dashboard');
-    }
-    return redirect()->route('login');
-});
 
 // Rotas de Assinatura (Públicas)
 Route::get('/planos', [SubscriptionController::class, 'index'])->name('plans.index');
@@ -198,7 +187,7 @@ Route::middleware(['auth', 'subscription'])->group(function () {
 });
 
 // Rota raiz inteligente
-Route::get('/', function () {
+Route::match(['get', 'head'], '/', function () {
     if (!Auth::check()) {
         return redirect()->route('login');
     }
