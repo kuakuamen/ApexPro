@@ -13,7 +13,20 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\AiAssessmentController; // Importar o novo controller
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\FinancialController;
 use Illuminate\Support\Facades\Auth;
+
+// Rota raiz
+Route::get('/', function () {
+    if (auth()->check()) {
+        $role = auth()->user()->role;
+        if ($role === 'personal') return redirect()->route('personal.dashboard');
+        if ($role === 'aluno')    return redirect()->route('student.dashboard');
+        if ($role === 'nutri')    return redirect()->route('diets.index');
+        if ($role === 'admin')    return redirect()->route('admin.dashboard');
+    }
+    return redirect()->route('login');
+});
 
 // Rotas de Assinatura (Públicas)
 Route::get('/planos', [SubscriptionController::class, 'index'])->name('plans.index');
@@ -81,6 +94,28 @@ Route::middleware(['auth', 'role:personal', 'subscription'])->prefix('personal')
 
     // NOVA ROTA: Avaliações Pendentes (Atrasadas / Sem Avaliação)
     Route::get('/avaliacoes/pendentes', [PersonalController::class, 'pendingAssessments'])->name('assessments.pending');
+
+    // Módulo Financeiro
+    Route::prefix('financeiro')->name('financial.')->group(function () {
+        Route::get('/',                              [FinancialController::class, 'dashboard'])             ->name('dashboard');
+        Route::get('/planos',                        [FinancialController::class, 'plans'])                 ->name('plans');
+        Route::get('/planos/novo',                   [FinancialController::class, 'createPlan'])            ->name('plans.create');
+        Route::post('/planos',                       [FinancialController::class, 'storePlan'])             ->name('plans.store');
+        Route::get('/planos/{plan}/editar',          [FinancialController::class, 'editPlan'])              ->name('plans.edit');
+        Route::put('/planos/{plan}',                 [FinancialController::class, 'updatePlan'])            ->name('plans.update');
+        Route::delete('/planos/{plan}',              [FinancialController::class, 'destroyPlan'])           ->name('plans.destroy');
+        Route::get('/vinculos',                      [FinancialController::class, 'studentPlans'])          ->name('student-plans');
+        Route::get('/vinculos/novo',                 [FinancialController::class, 'assignPlan'])            ->name('student-plans.create');
+        Route::post('/vinculos',                     [FinancialController::class, 'storePlanAssignment'])   ->name('student-plans.store');
+        Route::get('/vinculos/{sp}/editar',          [FinancialController::class, 'editAssignment'])        ->name('student-plans.edit');
+        Route::put('/vinculos/{sp}',                 [FinancialController::class, 'updateAssignment'])      ->name('student-plans.update');
+        Route::patch('/vinculos/{sp}/toggle-acesso', [FinancialController::class, 'toggleStudentAccess'])   ->name('student-plans.toggle');
+        Route::get('/pagamentos',                    [FinancialController::class, 'payments'])              ->name('payments');
+        Route::post('/pagamentos',                   [FinancialController::class, 'storePayment'])          ->name('payments.store');
+        Route::patch('/pagamentos/{p}/pago',         [FinancialController::class, 'markPaid'])              ->name('payments.mark-paid');
+        Route::post('/gerar-cobrancas',              [FinancialController::class, 'generateMonthlyPayments'])->name('generate');
+        Route::get('/relatorios',                    [FinancialController::class, 'reports'])               ->name('reports');
+    });
 
     // Rota de Teste Gemini (CURL DIRETO)
     Route::get('/test-gemini', function() {

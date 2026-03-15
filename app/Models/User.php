@@ -111,4 +111,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(ProfessionalStudent::class, 'professional_id');
     }
+
+    public function financialPlans()
+    {
+        return $this->hasMany(FinancialPlan::class, 'personal_id');
+    }
+
+    public function studentPlan()
+    {
+        return $this->hasOne(StudentPlan::class, 'student_id');
+    }
 }
