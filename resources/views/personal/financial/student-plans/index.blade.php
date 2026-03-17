@@ -2,6 +2,7 @@
 
 @section('content')
 <div class="py-6 space-y-5">
+    @include('personal.financial._nav', ['activeTab' => 'vinculos'])
 
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">

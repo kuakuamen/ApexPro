@@ -320,47 +320,48 @@ class FinancialController extends Controller
 
     public function payments(Request $request)
     {
-        $query = Payment::with('student', 'studentPlan.financialPlan')
-            ->where('personal_id', Auth::id());
+        $pid  = Auth::id();
+        $now  = now()->startOfDay();
+        $tab  = in_array($request->tab, ['pending', 'overdue', 'paid']) ? $request->tab : 'pending';
 
-        if ($request->filled('status')) {
-            if ($request->status === 'pending') {
-                // Pendente = ainda dentro do prazo (due_date >= hoje) — exclui os já vencidos
-                $query->where('status', 'pending')
-                      ->where('due_date', '>=', now()->startOfDay());
-            } elseif ($request->status === 'overdue') {
-                // Vencido = overdue + pending que passaram do prazo (não foram atualizados)
-                $query->where(function ($q) {
-                    $q->where('status', 'overdue')
-                      ->orWhere(function ($q2) {
-                          $q2->where('status', 'pending')
-                             ->where('due_date', '<', now()->startOfDay());
-                      });
-                });
-            } else {
-                $query->where('status', $request->status);
-            }
+        $base = fn() => Payment::with('student', 'studentPlan.financialPlan')
+            ->where('personal_id', $pid);
+
+        // Contagens para os badges de cada aba
+        $countPending = (clone $base())
+            ->where('status', 'pending')->where('due_date', '>=', $now)->count();
+        $countOverdue = (clone $base())
+            ->where(fn($q) => $q->where('status', 'overdue')
+                ->orWhere(fn($q2) => $q2->where('status', 'pending')->where('due_date', '<', $now)))
+            ->count();
+        $countPaid = (clone $base())->where('status', 'paid')->count();
+
+        // Dados da aba ativa
+        $query = $base();
+        if ($tab === 'pending') {
+            $query->where('status', 'pending')->where('due_date', '>=', $now)->orderBy('due_date');
+        } elseif ($tab === 'overdue') {
+            $query->where(fn($q) => $q->where('status', 'overdue')
+                ->orWhere(fn($q2) => $q2->where('status', 'pending')->where('due_date', '<', $now)))
+                ->orderBy('due_date');
+        } else {
+            $query->where('status', 'paid')->orderByDesc('paid_at');
         }
+
         if ($request->filled('student_id')) {
             $query->where('student_id', $request->student_id);
         }
-        if ($request->filled('month')) {
-            $year  = (int) substr($request->month, 0, 4);
-            $month = (int) substr($request->month, 5, 2);
-            // Para pagamentos já pagos, filtra pela data real de entrada no caixa (paid_at)
-            // Para os demais status, filtra pela data de vencimento (due_date)
-            $dateCol = ($request->status === 'paid') ? 'paid_at' : 'due_date';
-            $query->whereYear($dateCol, $year)->whereMonth($dateCol, $month);
-        }
 
-        $payments = $query->orderBy('due_date', 'desc')->paginate(20)->withQueryString();
+        $payments = $query->paginate(20)->withQueryString();
 
         $students = $this->personal()->students()->orderBy('users.name')->get(['users.id', 'users.name']);
         $studentPlansActive = StudentPlan::with('financialPlan', 'student')
-            ->where('personal_id', Auth::id())
-            ->get();
+            ->where('personal_id', $pid)->get();
 
-        return view('personal.financial.payments.index', compact('payments', 'students', 'studentPlansActive'));
+        return view('personal.financial.payments.index', compact(
+            'payments', 'students', 'studentPlansActive', 'tab',
+            'countPending', 'countOverdue', 'countPaid'
+        ));
     }
 
     public function storePayment(Request $request)
@@ -386,13 +387,18 @@ class FinancialController extends Controller
             ->with('success', 'Pagamento registrado com sucesso!');
     }
 
-    public function markPaid(Payment $p)
+    public function markPaid(Request $request, Payment $p)
     {
         $this->validatePaymentOwnership($p);
 
+        $request->validate([
+            'payment_method' => 'required|in:pix,cartao,dinheiro,outro',
+        ]);
+
         $p->update([
-            'status'  => 'paid',
-            'paid_at' => Carbon::today(),
+            'status'         => 'paid',
+            'paid_at'        => Carbon::today(),
+            'payment_method' => $request->payment_method,
         ]);
 
         // Recalcular próximo vencimento no StudentPlan
@@ -405,18 +411,62 @@ class FinancialController extends Controller
                 'status'   => 'active',
             ]);
 
-            // Criar próxima cobrança
-            Payment::create([
-                'student_plan_id' => $sp->id,
-                'student_id'      => $sp->student_id,
-                'personal_id'     => Auth::id(),
-                'amount'          => $sp->financialPlan->price,
-                'due_date'        => $nextDue,
-                'status'          => 'pending',
+            // Criar próxima cobrança somente se não existir uma para esse vencimento
+            $exists = Payment::where('student_plan_id', $sp->id)
+                ->where('due_date', $nextDue)
+                ->where('status', 'pending')
+                ->exists();
+
+            if (!$exists) {
+                Payment::create([
+                    'student_plan_id' => $sp->id,
+                    'student_id'      => $sp->student_id,
+                    'personal_id'     => Auth::id(),
+                    'amount'          => $sp->financialPlan->price,
+                    'due_date'        => $nextDue,
+                    'status'          => 'pending',
+                ]);
+            }
+        }
+
+        return back()->with('success', 'Pagamento confirmado com sucesso!');
+    }
+
+    public function reversePayment(Payment $p)
+    {
+        $this->validatePaymentOwnership($p);
+
+        if ($p->status !== 'paid') {
+            return back()->with('error', 'Apenas pagamentos com status "Pago" podem ser estornados.');
+        }
+
+        $newStatus = $p->due_date->isPast() ? 'overdue' : 'pending';
+
+        $p->update([
+            'status'         => $newStatus,
+            'paid_at'        => null,
+            'payment_method' => null,
+        ]);
+
+        // Desfazer o que markPaid fez: deletar o próximo pagamento auto-gerado e resetar due_date
+        $sp = $p->studentPlan;
+        if ($sp) {
+            $nextDue = $sp->financialPlan->nextDueDate($p->due_date);
+
+            // Remover o pagamento futuro gerado automaticamente (somente se ainda pendente)
+            Payment::where('student_plan_id', $sp->id)
+                ->where('due_date', $nextDue)
+                ->where('status', 'pending')
+                ->delete();
+
+            // Resetar student_plan.due_date para o vencimento que foi estornado
+            $sp->update([
+                'due_date' => $p->due_date,
+                'status'   => $newStatus === 'overdue' ? 'overdue' : 'active',
             ]);
         }
 
-        return back()->with('success', 'Pagamento marcado como pago e próxima cobrança gerada!');
+        return back()->with('success', 'Pagamento estornado. Status revertido para ' . ($newStatus === 'overdue' ? 'Vencido' : 'Pendente') . '.');
     }
 
     public function generateMonthlyPayments()

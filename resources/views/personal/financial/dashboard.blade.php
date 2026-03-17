@@ -4,6 +4,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
 <div class="py-6 space-y-6">
+    @include('personal.financial._nav', ['activeTab' => 'dashboard'])
 
     {{-- Header --}}
     <div class="flex items-center justify-between">
@@ -95,24 +96,6 @@
             </div>
             @endif
         </div>
-    </div>
-
-    {{-- Navegação rápida --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        @php
-            $navItems = [
-                ['route' => 'personal.financial.plans',        'label' => 'Meus Planos',         'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
-                ['route' => 'personal.financial.student-plans','label' => 'Vínculos',             'icon' => 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1'],
-                ['route' => 'personal.financial.payments',     'label' => 'Pagamentos',           'icon' => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
-                ['route' => 'personal.financial.reports',      'label' => 'Relatórios',           'icon' => 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-            ];
-        @endphp
-        @foreach($navItems as $item)
-        <a href="{{ route($item['route']) }}" class="bg-[#0f1a2e]/80 border border-slate-700/50 hover:border-cyan-500/40 rounded-2xl p-4 flex items-center gap-3 text-slate-300 hover:text-cyan-300 transition-all group">
-            <svg class="w-5 h-5 text-slate-500 group-hover:text-cyan-400 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}"/></svg>
-            <span class="text-sm font-medium">{{ $item['label'] }}</span>
-        </a>
-        @endforeach
     </div>
 </div>
 

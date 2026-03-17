@@ -13,6 +13,7 @@ class Payment extends Model
         'amount',
         'due_date',
         'paid_at',
+        'payment_method',
         'status',
         'notes',
     ];

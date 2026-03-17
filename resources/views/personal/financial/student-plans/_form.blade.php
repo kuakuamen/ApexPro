@@ -7,8 +7,10 @@
 
 <div class="py-6 max-w-2xl mx-auto space-y-5">
 
+    @include('personal.financial._nav', ['activeTab' => 'vinculos'])
+
     <div class="flex items-center gap-3">
-        <a href="{{ route('personal.financial.student-plans') }}" class="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors">
+        <a href="{{ route('personal.financial.student-plans') }}" class="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors" title="Voltar para Vínculos">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </a>
         <h1 class="text-xl font-bold text-slate-100">{{ $isEdit ? 'Editar Vínculo' : 'Vincular Plano ao Aluno' }}</h1>

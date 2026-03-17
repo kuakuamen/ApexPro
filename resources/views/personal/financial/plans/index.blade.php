@@ -2,6 +2,7 @@
 
 @section('content')
 <div class="py-6 space-y-5">
+    @include('personal.financial._nav', ['activeTab' => 'plans'])
 
     <div class="flex items-center justify-between">
         <h1 class="text-xl font-bold text-slate-100">Meus Planos</h1>

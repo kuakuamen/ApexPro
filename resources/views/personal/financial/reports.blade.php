@@ -4,6 +4,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
 <div class="py-6 space-y-6">
+    @include('personal.financial._nav', ['activeTab' => 'reports'])
 
     <div class="flex items-center justify-between">
         <h1 class="text-xl font-bold text-slate-100">Relatórios Financeiros</h1>

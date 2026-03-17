@@ -102,6 +102,7 @@ Route::middleware(['auth', 'role:personal', 'subscription'])->prefix('personal')
         Route::get('/pagamentos',                    [FinancialController::class, 'payments'])              ->name('payments');
         Route::post('/pagamentos',                   [FinancialController::class, 'storePayment'])          ->name('payments.store');
         Route::patch('/pagamentos/{p}/pago',         [FinancialController::class, 'markPaid'])              ->name('payments.mark-paid');
+        Route::patch('/pagamentos/{p}/estornar',     [FinancialController::class, 'reversePayment'])        ->name('payments.reverse');
         Route::post('/gerar-cobrancas',              [FinancialController::class, 'generateMonthlyPayments'])->name('generate');
         Route::get('/relatorios',                    [FinancialController::class, 'reports'])               ->name('reports');
     });
