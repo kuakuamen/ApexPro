@@ -1,7 +1,31 @@
+{{-- tailwind-safelist: bg-indigo-500/15 border-indigo-500/30 text-indigo-300 bg-indigo-500/30 text-indigo-200 hover:bg-indigo-500/20 hover:border-indigo-500/50 --}}
 @extends('layouts.app')
 
 @section('content')
-<div class="py-6 space-y-5" x-data="{ showForm: false, confirmReverse: null, confirmPay: null, payMethod: '' }">
+<div class="py-6 space-y-5" x-data="{
+    showForm: false,
+    confirmReverse: null,
+    confirmPay: null,
+    payMethod: '',
+    discountType: 'value',
+    discountInput: '',
+    originalAmount: 0,
+    get discountAmount() {
+        const d = parseFloat(this.discountInput) || 0;
+        if (this.discountType === 'percent') return Math.min(d, 100) / 100 * this.originalAmount;
+        return Math.min(d, this.originalAmount);
+    },
+    get finalAmount() {
+        return Math.max(0, this.originalAmount - this.discountAmount);
+    },
+    openPayModal(id, amount) {
+        this.confirmPay = id;
+        this.payMethod = '';
+        this.discountInput = '';
+        this.discountType = 'value';
+        this.originalAmount = parseFloat(amount);
+    }
+}">
     @include('personal.financial._nav', ['activeTab' => 'payments'])
 
     {{-- Header --}}
@@ -72,43 +96,63 @@
         </form>
     </div>
 
-    {{-- Filtro por aluno --}}
-    <form method="GET" action="{{ route('personal.financial.payments') }}" class="flex flex-wrap items-center gap-3">
-        <input type="hidden" name="tab" value="{{ $tab }}">
-        <select name="student_id" class="bg-slate-800/60 border border-slate-700/50 rounded-xl px-3 py-2 text-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
-            <option value="">Todos os alunos</option>
-            @foreach($students as $s)
-                <option value="{{ $s->id }}" {{ request('student_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
-            @endforeach
-        </select>
-        <button type="submit" class="px-4 py-2 bg-cyan-600/20 border border-cyan-500/40 rounded-xl text-cyan-300 text-sm hover:bg-cyan-600/30 transition-all">Filtrar</button>
-        <a href="{{ route('personal.financial.payments', ['tab' => $tab]) }}" class="px-4 py-2 rounded-xl text-sm text-slate-400 hover:text-slate-200">Limpar</a>
-    </form>
+    {{-- Busca + Abas --}}
+    <div class="space-y-3">
+        {{-- Campo de busca por aluno --}}
+        <form method="GET" action="{{ route('personal.financial.payments') }}"
+              id="searchForm" x-data="{ q: '{{ request('search') }}' }">
+            <input type="hidden" name="tab" value="{{ $tab }}">
+            <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" name="search" x-model="q"
+                       x-on:input.debounce.500ms="$el.closest('form').submit()"
+                       placeholder="Buscar aluno por nome..."
+                       value="{{ request('search') }}"
+                       autocomplete="off"
+                       class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl pl-9 pr-10 py-2.5 text-slate-100 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                @if(request('search'))
+                <a href="{{ route('personal.financial.payments', ['tab' => $tab]) }}"
+                   class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </a>
+                @endif
+            </div>
+        </form>
 
-    {{-- Abas --}}
-    <div class="flex gap-1 bg-[#0a1120]/60 border border-slate-700/50 rounded-2xl p-1 w-fit">
-        @php
-            $tabs = [
-                ['key' => 'pending', 'label' => 'Pendentes', 'count' => $countPending, 'color' => 'yellow'],
-                ['key' => 'overdue', 'label' => 'Vencidos',  'count' => $countOverdue, 'color' => 'red'],
-                ['key' => 'paid',    'label' => 'Pagos',     'count' => $countPaid,    'color' => 'emerald'],
-            ];
-        @endphp
-        @foreach($tabs as $t)
-        <a href="{{ route('personal.financial.payments', array_merge(request()->except('tab','page'), ['tab' => $t['key']])) }}"
-           class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-150
-                  {{ $tab === $t['key']
-                       ? 'bg-' . $t['color'] . '-500/15 border border-' . $t['color'] . '-500/30 text-' . $t['color'] . '-300'
-                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50' }}">
-            {{ $t['label'] }}
-            @if($t['count'] > 0)
-            <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-bold
-                         {{ $tab === $t['key'] ? 'bg-' . $t['color'] . '-500/30 text-' . $t['color'] . '-200' : 'bg-slate-700 text-slate-300' }}">
-                {{ $t['count'] }}
-            </span>
-            @endif
-        </a>
-        @endforeach
+        {{-- Abas --}}
+        <div class="flex gap-1 bg-[#0a1120]/60 border border-slate-700/50 rounded-2xl p-1 overflow-x-auto" style="scrollbar-width:none;-ms-overflow-style:none;">
+            @php
+                $tabs = [
+                    ['key' => 'pending',     'label' => 'Pendentes',      'count' => $countPending,    'color' => 'yellow',  'title' => 'Vencem em até 7 dias'],
+                    ['key' => 'all_pending', 'label' => 'Todos Pendentes','count' => $countAllPending, 'color' => 'indigo',  'title' => 'Todos os pagamentos em aberto'],
+                    ['key' => 'overdue',     'label' => 'Vencidos',       'count' => $countOverdue,    'color' => 'red',     'title' => 'Prazo expirado'],
+                    ['key' => 'paid',        'label' => 'Pagos',          'count' => $countPaid,       'color' => 'emerald', 'title' => 'Pagamentos confirmados'],
+                ];
+            @endphp
+            @foreach($tabs as $t)
+            @php $isActive = $tab === $t['key']; @endphp
+            <a href="{{ route('personal.financial.payments', array_merge(request()->only('search'), ['tab' => $t['key']])) }}"
+               title="{{ $t['title'] }}"
+               class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-150 flex-shrink-0
+                      {{ $isActive
+                           ? 'bg-' . $t['color'] . '-500/15 border border-' . $t['color'] . '-500/30 text-' . $t['color'] . '-300'
+                           : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50' }}">
+                {{ $t['label'] }}
+                @if($t['count'] > 0)
+                <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-bold
+                             {{ $isActive ? 'bg-' . $t['color'] . '-500/30 text-' . $t['color'] . '-200' : 'bg-slate-700 text-slate-300' }}">
+                    {{ $t['count'] }}
+                </span>
+                @endif
+            </a>
+            @endforeach
+        </div>
     </div>
 
     {{-- Tabela --}}
@@ -116,10 +160,12 @@
         @if($payments->isEmpty())
             <div class="p-12 text-center">
                 <p class="text-slate-400 text-sm">
-                    @if($tab === 'pending') Nenhum pagamento pendente.
+                    @if($tab === 'pending') Nenhum pagamento com vencimento nos próximos 7 dias.
+                    @elseif($tab === 'all_pending') Nenhum pagamento pendente em aberto.
                     @elseif($tab === 'overdue') Nenhum pagamento vencido.
                     @else Nenhum pagamento registrado ainda.
                     @endif
+                    @if(request('search')) <br><span class="text-slate-500">Busca: "{{ request('search') }}"</span>@endif
                 </p>
             </div>
         @else
@@ -135,8 +181,7 @@
                     <th class="px-5 py-3 text-center">Pago em</th>
                     <th class="px-5 py-3 text-center">Forma</th>
                     @endif
-                    <th class="px-5 py-3 text-center">Ação</th>
-                </tr>
+                    <th class="px-5 py-3 text-center">Ação</th>                </tr>
             </thead>
             <tbody class="divide-y divide-slate-700/40">
                 @foreach($payments as $payment)
@@ -178,13 +223,11 @@
                     @endif
                     <td class="px-5 py-3 text-center">
                         @if($tab !== 'paid')
-                            {{-- Abre modal de confirmação de pagamento --}}
                             <button type="button"
-                                    @click="confirmPay = {{ $payment->id }}; payMethod = ''"
+                                    @click="openPayModal({{ $payment->id }}, {{ $payment->amount }})"
                                     class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/40 rounded-lg text-emerald-300 text-xs font-medium transition-all">
                                 Marcar Pago
-                            </button>
-                        @else
+                            </button>                        @else
                             {{-- Estornar --}}
                             <button type="button"
                                     @click="confirmReverse = {{ $payment->id }}"
@@ -205,36 +248,76 @@
     {{-- Modal: Confirmar Pagamento --}}
     <div x-show="confirmPay !== null" x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-         @click.self="confirmPay = null; payMethod = ''">
-        <div class="bg-[#0f1a2e] border border-emerald-500/30 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+         @click.self="confirmPay = null">
+        <div class="bg-[#0f1a2e] border border-emerald-500/30 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            {{-- Header --}}
             <div class="flex items-center gap-3 mb-5">
-                <div class="w-10 h-10 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                <div class="w-10 h-10 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0">
                     <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
                 </div>
                 <div>
                     <h3 class="text-slate-100 font-semibold">Confirmar Pagamento</h3>
-                    <p class="text-slate-400 text-xs mt-0.5">Selecione a forma de pagamento recebida.</p>
+                    <p class="text-slate-400 text-xs mt-0.5">Selecione a forma e aplique desconto se necessário.</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 mb-6">
-                @foreach([['pix','Pix','cyan','M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'], ['cartao','Cartão','purple','M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'], ['dinheiro','Dinheiro','green','M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z'], ['outro','Outro','slate','M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z']] as [$val, $label, $color, $icon])
-                <button type="button"
-                        @click="payMethod = '{{ $val }}'"
+            {{-- Forma de Pagamento --}}
+            <p class="text-xs text-slate-400 mb-2 font-medium uppercase tracking-wide">Forma de pagamento *</p>
+            <div class="grid grid-cols-2 gap-2 mb-5">
+                @foreach([['pix','Pix','cyan','M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'], ['cartao','Cartão','purple','M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'], ['dinheiro','Dinheiro','green','M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z'], ['outro','Outro','slate','M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z']] as [$val,$label,$color,$icon])
+                <button type="button" @click="payMethod = '{{ $val }}'"
                         :class="payMethod === '{{ $val }}' ? 'border-{{ $color }}-400 bg-{{ $color }}-500/20 text-{{ $color }}-200' : 'border-slate-700/60 text-slate-400 hover:border-slate-600 hover:text-slate-200'"
                         class="flex items-center gap-2 px-3 py-2.5 border rounded-xl text-sm transition-all">
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/>
-                    </svg>
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/></svg>
                     {{ $label }}
                 </button>
                 @endforeach
             </div>
 
+            {{-- Desconto (opcional) --}}
+            <div class="border border-slate-700/50 rounded-xl p-4 mb-5 space-y-3">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wide">Desconto <span class="text-slate-600 normal-case">(opcional)</span></p>
+                    {{-- Toggle R$ / % --}}
+                    <div class="flex rounded-lg overflow-hidden border border-slate-700/50 text-xs">
+                        <button type="button" @click="discountType = 'value'"
+                                :class="discountType === 'value' ? 'bg-slate-600 text-white' : 'bg-slate-800/60 text-slate-400 hover:text-slate-200'"
+                                class="px-3 py-1 transition-all">R$</button>
+                        <button type="button" @click="discountType = 'percent'"
+                                :class="discountType === 'percent' ? 'bg-slate-600 text-white' : 'bg-slate-800/60 text-slate-400 hover:text-slate-200'"
+                                class="px-3 py-1 transition-all">%</button>
+                    </div>
+                </div>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none"
+                          x-text="discountType === 'value' ? 'R$' : '%'"></span>
+                    <input type="number" x-model="discountInput" min="0"
+                           :max="discountType === 'percent' ? 100 : originalAmount"
+                           step="0.01" placeholder="0,00"
+                           class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl pl-9 pr-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                </div>
+                {{-- Resumo de valores --}}
+                <div class="grid grid-cols-3 gap-2 pt-1 text-center text-xs" x-show="originalAmount > 0">
+                    <div>
+                        <p class="text-slate-500 mb-0.5">Original</p>
+                        <p class="text-slate-300 font-medium" x-text="'R$ ' + originalAmount.toFixed(2).replace('.',',')"></p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 mb-0.5">Desconto</p>
+                        <p class="text-orange-300 font-medium" x-text="'- R$ ' + discountAmount.toFixed(2).replace('.',',')"></p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 mb-0.5">Total Pago</p>
+                        <p class="text-emerald-300 font-bold" x-text="'R$ ' + finalAmount.toFixed(2).replace('.',',')"></p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Ações --}}
             <div class="flex gap-3 justify-end">
-                <button @click="confirmPay = null; payMethod = ''"
+                <button @click="confirmPay = null"
                         class="px-4 py-2 rounded-xl text-sm text-slate-400 hover:text-slate-200 transition-colors">
                     Cancelar
                 </button>
@@ -242,12 +325,14 @@
                 <form method="POST" action="{{ route('personal.financial.payments.mark-paid', $payment) }}"
                       x-show="confirmPay === {{ $payment->id }}" x-cloak>
                     @csrf @method('PATCH')
-                    <input type="hidden" name="payment_method" :value="payMethod">
+                    <input type="hidden" name="payment_method"  :value="payMethod">
+                    <input type="hidden" name="discount_type"   :value="discountInput > 0 ? discountType : ''">
+                    <input type="hidden" name="discount_value"  :value="discountInput > 0 ? discountInput : ''">
                     <button type="submit"
                             :disabled="!payMethod"
                             :class="payMethod ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed'"
                             class="px-4 py-2 rounded-xl text-sm font-medium transition-all">
-                        Confirmar
+                        Confirmar Pagamento
                     </button>
                 </form>
                 @endforeach

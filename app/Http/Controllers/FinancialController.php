@@ -253,6 +253,18 @@ class FinancialController extends Controller
         $isOwnStudent = $this->personal()->students()->where('users.id', $data['student_id'])->exists();
         if (!$isOwnStudent) abort(403);
 
+        // Bloquear duplo vínculo: aluno não pode ter mais de um plano ativo
+        $planAtivo = StudentPlan::where('student_id', $data['student_id'])
+            ->where('personal_id', Auth::id())
+            ->whereIn('status', ['active', 'overdue'])
+            ->first();
+
+        if ($planAtivo) {
+            return back()
+                ->withInput()
+                ->withErrors(['student_id' => 'Este aluno já possui o plano "' . $planAtivo->financialPlan->name . '" ativo. Para trocar, edite o vínculo existente.']);
+        }
+
         $data['due_date']    = $this->calcDueDate($data['start_date'], $data['periodicity'], $data['custom_days'] ?? null);
         $data['personal_id'] = Auth::id();
         $data['status']      = 'active';
@@ -320,36 +332,45 @@ class FinancialController extends Controller
 
     public function payments(Request $request)
     {
-        $pid  = Auth::id();
-        $now  = now()->startOfDay();
-        $tab  = in_array($request->tab, ['pending', 'overdue', 'paid']) ? $request->tab : 'pending';
+        $pid       = Auth::id();
+        $now       = now()->startOfDay();
+        $weekAhead = now()->addDays(7)->endOfDay();
+        $tab       = in_array($request->tab, ['pending', 'all_pending', 'overdue', 'paid'])
+                        ? $request->tab : 'pending';
 
         $base = fn() => Payment::with('student', 'studentPlan.financialPlan')
             ->where('personal_id', $pid);
 
-        // Contagens para os badges de cada aba
-        $countPending = (clone $base())
-            ->where('status', 'pending')->where('due_date', '>=', $now)->count();
-        $countOverdue = (clone $base())
-            ->where(fn($q) => $q->where('status', 'overdue')
-                ->orWhere(fn($q2) => $q2->where('status', 'pending')->where('due_date', '<', $now)))
-            ->count();
-        $countPaid = (clone $base())->where('status', 'paid')->count();
+        // Contagens para os badges (sem filtro de busca, sempre o total real)
+        $countPending    = (clone $base())->where('status', 'pending')
+                            ->whereBetween('due_date', [$now, $weekAhead])->count();
+        $countAllPending = (clone $base())->where('status', 'pending')
+                            ->where('due_date', '>=', $now)->count();
+        $countOverdue    = (clone $base())->where(
+                            fn($q) => $q->where('status', 'overdue')
+                                ->orWhere(fn($q2) => $q2->where('status', 'pending')->where('due_date', '<', $now))
+                            )->count();
+        $countPaid       = (clone $base())->where('status', 'paid')->count();
 
-        // Dados da aba ativa
+        // Query da aba ativa
         $query = $base();
-        if ($tab === 'pending') {
-            $query->where('status', 'pending')->where('due_date', '>=', $now)->orderBy('due_date');
-        } elseif ($tab === 'overdue') {
-            $query->where(fn($q) => $q->where('status', 'overdue')
-                ->orWhere(fn($q2) => $q2->where('status', 'pending')->where('due_date', '<', $now)))
-                ->orderBy('due_date');
-        } else {
-            $query->where('status', 'paid')->orderByDesc('paid_at');
-        }
+        match ($tab) {
+            'pending'     => $query->where('status', 'pending')
+                                   ->whereBetween('due_date', [$now, $weekAhead])
+                                   ->orderBy('due_date'),
+            'all_pending' => $query->where('status', 'pending')
+                                   ->where('due_date', '>=', $now)
+                                   ->orderBy('due_date'),
+            'overdue'     => $query->where(fn($q) => $q->where('status', 'overdue')
+                                ->orWhere(fn($q2) => $q2->where('status', 'pending')->where('due_date', '<', $now)))
+                                ->orderBy('due_date'),
+            'paid'        => $query->where('status', 'paid')->orderByDesc('paid_at'),
+        };
 
-        if ($request->filled('student_id')) {
-            $query->where('student_id', $request->student_id);
+        // Busca por nome do aluno
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->whereHas('student', fn($q) => $q->where('name', 'like', "%{$s}%"));
         }
 
         $payments = $query->paginate(20)->withQueryString();
@@ -360,7 +381,7 @@ class FinancialController extends Controller
 
         return view('personal.financial.payments.index', compact(
             'payments', 'students', 'studentPlansActive', 'tab',
-            'countPending', 'countOverdue', 'countPaid'
+            'countPending', 'countAllPending', 'countOverdue', 'countPaid'
         ));
     }
 
@@ -393,12 +414,36 @@ class FinancialController extends Controller
 
         $request->validate([
             'payment_method' => 'required|in:pix,cartao,dinheiro,outro',
+            'discount_type'  => 'nullable|in:value,percent',
+            'discount_value' => 'nullable|numeric|min:0',
         ]);
 
+        // Calcular desconto
+        $originalAmount = $p->amount;
+        $discountType   = $request->discount_type;
+        $discountValue  = $request->filled('discount_value') ? (float) $request->discount_value : null;
+        $finalAmount    = $originalAmount;
+
+        if ($discountValue > 0 && $discountType) {
+            if ($discountType === 'percent') {
+                $discountValue = min($discountValue, 100);
+                $finalAmount   = round($originalAmount * (1 - $discountValue / 100), 2);
+            } else {
+                $finalAmount = max(0, round($originalAmount - $discountValue, 2));
+            }
+        } else {
+            $discountType  = null;
+            $discountValue = null;
+        }
+
         $p->update([
-            'status'         => 'paid',
-            'paid_at'        => Carbon::today(),
-            'payment_method' => $request->payment_method,
+            'status'          => 'paid',
+            'paid_at'         => Carbon::today(),
+            'payment_method'  => $request->payment_method,
+            'original_amount' => $originalAmount,
+            'discount_type'   => $discountType,
+            'discount_value'  => $discountValue,
+            'amount'          => $finalAmount,
         ]);
 
         // Recalcular próximo vencimento no StudentPlan
@@ -411,7 +456,6 @@ class FinancialController extends Controller
                 'status'   => 'active',
             ]);
 
-            // Criar próxima cobrança somente se não existir uma para esse vencimento
             $exists = Payment::where('student_plan_id', $sp->id)
                 ->where('due_date', $nextDue)
                 ->where('status', 'pending')
@@ -443,9 +487,13 @@ class FinancialController extends Controller
         $newStatus = $p->due_date->isPast() ? 'overdue' : 'pending';
 
         $p->update([
-            'status'         => $newStatus,
-            'paid_at'        => null,
-            'payment_method' => null,
+            'status'          => $newStatus,
+            'paid_at'         => null,
+            'payment_method'  => null,
+            'amount'          => $p->original_amount ?? $p->amount,
+            'original_amount' => null,
+            'discount_type'   => null,
+            'discount_value'  => null,
         ]);
 
         // Desfazer o que markPaid fez: deletar o próximo pagamento auto-gerado e resetar due_date
