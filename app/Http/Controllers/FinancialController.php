@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\FinancialReportExport;
 use App\Models\FinancialPlan;
 use App\Models\StudentPlan;
 use App\Models\Payment;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class FinancialController extends Controller
 {
@@ -49,40 +52,22 @@ class FinancialController extends Controller
             ->whereMonth('paid_at', $now->month)
             ->sum('amount');
 
-        // Pendente = cobranças ainda dentro do prazo (due_date >= hoje, qualquer mês)
+        // Pendente = cobranças com vencimento no mês atual ainda não pagas
         $pendente = Payment::where('personal_id', $personalId)
             ->where('status', 'pending')
-            ->where('due_date', '>=', $now->copy()->startOfDay())
+            ->whereYear('due_date', $now->year)
+            ->whereMonth('due_date', $now->month)
             ->sum('amount');
 
-        // Vencido = overdue + pending cujo prazo já passou (qualquer mês)
+        // Vencido = cobranças com vencimento no mês atual que já passaram sem pagamento
         $vencido = Payment::where('personal_id', $personalId)
-            ->where(function ($q) use ($now) {
-                $q->where('status', 'overdue')
-                  ->orWhere(function ($q2) use ($now) {
-                      $q2->where('status', 'pending')
-                         ->where('due_date', '<', $now->copy()->startOfDay());
-                  });
-            })
+            ->where('status', 'overdue')
+            ->whereYear('due_date', $now->year)
+            ->whereMonth('due_date', $now->month)
             ->sum('amount');
 
-        // Faturamento = caixa real do mês (paid_at em março) + em aberto com vencimento em março
-        // Cobre tanto pagamentos antecipados quanto cobranças normais do mês
-        $faturamento = Payment::where('personal_id', $personalId)
-            ->where(function ($q) use ($now) {
-                $q->where(function ($q2) use ($now) {
-                    // Dinheiro recebido em março (qualquer vencimento, ex: pagamento antecipado de abril)
-                    $q2->where('status', 'paid')
-                       ->whereYear('paid_at', $now->year)
-                       ->whereMonth('paid_at', $now->month);
-                })->orWhere(function ($q2) use ($now) {
-                    // Cobranças com vencimento em março ainda em aberto
-                    $q2->whereIn('status', ['pending', 'overdue'])
-                       ->whereYear('due_date', $now->year)
-                       ->whereMonth('due_date', $now->month);
-                });
-            })
-            ->sum('amount');
+        // Faturamento Esperado = Recebido + Pendente + Vencido do mês atual
+        $faturamento = $recebido + $pendente + $vencido;
 
         $alunosAtivos = StudentPlan::where('personal_id', $personalId)
             ->where('status', 'active')->count();
@@ -240,11 +225,13 @@ class FinancialController extends Controller
     public function storePlanAssignment(Request $request)
     {
         $data = $request->validate([
-            'student_id'       => 'required|exists:users,id',
-            'financial_plan_id'=> 'required|exists:financial_plans,id',
-            'start_date'       => 'required|date',
-            'periodicity'      => 'required|in:monthly,quarterly,semiannual,annual,custom',
-            'custom_days'      => 'nullable|integer|min:1|required_if:periodicity,custom',
+            'student_id'        => 'required|exists:users,id',
+            'financial_plan_id' => 'required|exists:financial_plans,id',
+            'start_date'        => 'required|date',
+            'due_date'          => 'required|date',
+            'periodicity'       => 'required|in:monthly,quarterly,semiannual,annual,custom',
+            'custom_days'       => 'nullable|integer|min:1|required_if:periodicity,custom',
+            'payment_method'    => 'nullable|in:pix,card,cash,other',
         ]);
 
         $plan = FinancialPlan::findOrFail($data['financial_plan_id']);
@@ -253,7 +240,7 @@ class FinancialController extends Controller
         $isOwnStudent = $this->personal()->students()->where('users.id', $data['student_id'])->exists();
         if (!$isOwnStudent) abort(403);
 
-        // Bloquear duplo vínculo: aluno não pode ter mais de um plano ativo
+        // Bloquear duplo vínculo
         $planAtivo = StudentPlan::where('student_id', $data['student_id'])
             ->where('personal_id', Auth::id())
             ->whereIn('status', ['active', 'overdue'])
@@ -265,24 +252,44 @@ class FinancialController extends Controller
                 ->withErrors(['student_id' => 'Este aluno já possui o plano "' . $planAtivo->financialPlan->name . '" ativo. Para trocar, edite o vínculo existente.']);
         }
 
-        $data['due_date']    = $this->calcDueDate($data['start_date'], $data['periodicity'], $data['custom_days'] ?? null);
-        $data['personal_id'] = Auth::id();
-        $data['status']      = 'active';
+        $sp = StudentPlan::create([
+            'student_id'        => $data['student_id'],
+            'personal_id'       => Auth::id(),
+            'financial_plan_id' => $data['financial_plan_id'],
+            'start_date'        => $data['start_date'],
+            'due_date'          => $data['due_date'],
+            'periodicity'       => $data['periodicity'],
+            'custom_days'       => $data['custom_days'] ?? null,
+            'status'            => 'active',
+        ]);
 
-        $sp = StudentPlan::create($data);
-
-        // Criar primeira cobrança automaticamente
+        // 1) Pagamento do mês atual — PAGO (aluno paga ao entrar)
         Payment::create([
             'student_plan_id' => $sp->id,
             'student_id'      => $sp->student_id,
             'personal_id'     => Auth::id(),
             'amount'          => $plan->price,
-            'due_date'        => $sp->due_date,
+            'original_amount' => $plan->price,
+            'due_date'        => $data['start_date'],
+            'paid_at'         => now(),
+            'status'          => 'paid',
+            'payment_method'  => $data['payment_method'] ?? null,
+        ]);
+
+        // 2) Próximo vencimento — PENDENTE
+        Payment::create([
+            'student_plan_id' => $sp->id,
+            'student_id'      => $sp->student_id,
+            'personal_id'     => Auth::id(),
+            'amount'          => $plan->price,
+            'original_amount' => $plan->price,
+            'due_date'        => $data['due_date'],
+            'paid_at'         => null,
             'status'          => 'pending',
         ]);
 
         return redirect()->route('personal.financial.student-plans')
-            ->with('success', 'Plano vinculado ao aluno com sucesso!');
+            ->with('success', 'Plano vinculado! Pagamento de hoje registrado e próximo vencimento agendado.');
     }
 
     public function editAssignment(StudentPlan $sp)
@@ -298,14 +305,13 @@ class FinancialController extends Controller
         $this->validateStudentPlanOwnership($sp);
 
         $data = $request->validate([
-            'financial_plan_id'=> 'required|exists:financial_plans,id',
-            'start_date'       => 'required|date',
-            'periodicity'      => 'required|in:monthly,quarterly,semiannual,annual,custom',
-            'custom_days'      => 'nullable|integer|min:1|required_if:periodicity,custom',
-            'status'           => 'required|in:active,overdue,suspended',
+            'financial_plan_id' => 'required|exists:financial_plans,id',
+            'start_date'        => 'required|date',
+            'due_date'          => 'required|date',
+            'periodicity'       => 'required|in:monthly,quarterly,semiannual,annual,custom',
+            'custom_days'       => 'nullable|integer|min:1|required_if:periodicity,custom',
+            'status'            => 'required|in:active,overdue,suspended',
         ]);
-
-        $data['due_date'] = $this->calcDueDate($data['start_date'], $data['periodicity'], $data['custom_days'] ?? null);
 
         $sp->update($data);
 
@@ -558,47 +564,198 @@ class FinancialController extends Controller
 
     // ─── Relatórios ───────────────────────────────────────────────────────────
 
+    public function runSuspendCheck()
+    {
+        $today     = \Carbon\Carbon::today();
+        $threshold = \Carbon\Carbon::today()->subDays(5);
+
+        Payment::where('status', 'pending')->whereDate('due_date', '<', $today)->update(['status' => 'overdue']);
+
+        StudentPlan::where('status', 'active')
+            ->whereDate('due_date', '<', $today)
+            ->whereDate('due_date', '>=', $threshold)
+            ->update(['status' => 'overdue']);
+
+        $suspended = StudentPlan::whereIn('status', ['active', 'overdue'])
+            ->whereDate('due_date', '<', $threshold)
+            ->update(['status' => 'suspended']);
+
+        $msg = $suspended > 0
+            ? "{$suspended} aluno(s) suspenso(s) por inadimplência."
+            : 'Nenhum novo aluno suspenso.';
+
+        return back()->with('success', $msg);
+    }
+
     public function reports(Request $request)
     {
-        $personalId = Auth::id();
-        $year       = $request->input('year', Carbon::now()->year);
+        $data = $this->buildReportData($request);
+        $students = $this->personal()->students()->orderBy('users.name')->get(['users.id', 'users.name']);
+        $plans    = FinancialPlan::where('personal_id', Auth::id())->orderBy('name')->get(['id', 'name']);
 
-        // Faturamento por mês no ano
+        return view('personal.financial.reports', array_merge($data, compact('students', 'plans')));
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $data     = $this->buildReportData($request);
+        $personal = Auth::user();
+        $pdf = Pdf::loadView('personal.financial.reports-pdf', array_merge($data, compact('personal')))
+            ->setPaper('a4', 'landscape');
+
+        $filename = 'relatorio-financeiro-' . $data['filterMonth'] . '-' . $data['filterYear'] . '.pdf';
+        return $pdf->download($filename);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $data     = $this->buildReportData($request);
+        $filename = 'relatorio-financeiro-' . $data['filterMonth'] . '-' . $data['filterYear'] . '.xlsx';
+        return Excel::download(new FinancialReportExport($data['pagamentosMes']), $filename);
+    }
+
+    private function buildReportData(Request $request): array
+    {
+        $personalId  = Auth::id();
+        $now         = Carbon::now();
+        $filterYear  = (int) $request->input('year',  $now->year);
+        $filterMonth = (int) $request->input('month', $now->month); // 0 = todos os meses do ano
+        $studentId   = $request->input('student_id');
+        $statusFilter = $request->input('status_filter');
+        $planFilter   = $request->input('plan_id');
+
+        // ── Faturamento anual (gráfico existente) ──────────────────────────
         $faturamentoPorMes = [];
         for ($m = 1; $m <= 12; $m++) {
             $faturamentoPorMes[] = [
-                'label'    => Carbon::create($year, $m)->translatedFormat('M'),
+                'label'    => Carbon::create($filterYear, $m)->translatedFormat('M'),
                 'recebido' => (float) Payment::where('personal_id', $personalId)->where('status', 'paid')
-                    ->whereYear('paid_at', $year)->whereMonth('paid_at', $m)->sum('amount'),
+                    ->whereYear('paid_at', $filterYear)->whereMonth('paid_at', $m)->sum('amount'),
                 'pendente' => (float) Payment::where('personal_id', $personalId)->whereIn('status', ['pending', 'overdue'])
-                    ->whereYear('due_date', $year)->whereMonth('due_date', $m)->sum('amount'),
+                    ->whereYear('due_date', $filterYear)->whereMonth('due_date', $m)->sum('amount'),
             ];
         }
 
-        // Inadimplentes
-        $inadimplentes = StudentPlan::with('student', 'financialPlan')
-            ->where('personal_id', $personalId)
-            ->whereIn('status', ['overdue', 'suspended'])
-            ->get();
+        // ── Relatório por período ──────────────────────────────────────────
+        // Quando filterMonth=0, considera o ano inteiro
+        $applyPeriodFilter = function ($query) use ($personalId, $filterYear, $filterMonth) {
+            $query->where('personal_id', $personalId)->whereYear('due_date', $filterYear);
+            if ($filterMonth > 0) {
+                $query->whereMonth('due_date', $filterMonth);
+            }
+            return $query;
+        };
 
-        // Histórico por aluno (filtro)
-        $studentId = $request->input('student_id');
-        $historyPayments = collect();
-        $historyStudent  = null;
-        if ($studentId) {
-            $historyStudent  = User::find($studentId);
-            $historyPayments = Payment::with('studentPlan.financialPlan')
-                ->where('personal_id', $personalId)
-                ->where('student_id', $studentId)
-                ->orderBy('due_date', 'desc')
-                ->get();
+        $baseQuery = fn() => $applyPeriodFilter(Payment::query());
+
+        if ($filterMonth > 0) {
+            $totalRecebido = (float) Payment::where('personal_id', $personalId)->where('status', 'paid')
+                ->whereYear('paid_at', $filterYear)->whereMonth('paid_at', $filterMonth)->sum('amount');
+        } else {
+            $totalRecebido = (float) Payment::where('personal_id', $personalId)->where('status', 'paid')
+                ->whereYear('paid_at', $filterYear)->sum('amount');
+        }
+        $totalPendente  = (float) $baseQuery()->where('status', 'pending')->sum('amount');
+        $totalVencido   = (float) $baseQuery()->where('status', 'overdue')->sum('amount');
+        $totalFaturado  = $totalRecebido + $totalPendente + $totalVencido;
+
+        $pmQuery = Payment::with(['student', 'studentPlan.financialPlan'])
+            ->where('personal_id', $personalId)
+            ->where(function ($q) use ($filterYear, $filterMonth) {
+                if ($filterMonth > 0) {
+                    // Vence no mês selecionado OU foi pago no mês selecionado
+                    $q->where(fn($q2) => $q2->whereYear('due_date', $filterYear)->whereMonth('due_date', $filterMonth))
+                      ->orWhere(fn($q2) => $q2->where('status', 'paid')
+                            ->whereYear('paid_at', $filterYear)->whereMonth('paid_at', $filterMonth));
+                } else {
+                    // Ano inteiro: vence no ano OU foi pago no ano
+                    $q->where(fn($q2) => $q2->whereYear('due_date', $filterYear))
+                      ->orWhere(fn($q2) => $q2->where('status', 'paid')->whereYear('paid_at', $filterYear));
+                }
+            });
+        if ($statusFilter) $pmQuery->where('status', $statusFilter);
+        if ($studentId)    $pmQuery->where('student_id', $studentId);
+        if ($planFilter)   $pmQuery->whereHas('studentPlan', fn($q) => $q->where('financial_plan_id', $planFilter));
+        $pagamentosMes = $pmQuery->orderBy('due_date')->get();
+
+        // ── Métricas analíticas ────────────────────────────────────────────
+        $activePlans = StudentPlan::with('financialPlan')
+            ->where('personal_id', $personalId)->where('status', 'active')->get();
+
+        $mrr = $activePlans->sum(function ($sp) {
+            $price = (float) ($sp->financialPlan->price ?? 0);
+            return match ($sp->periodicity) {
+                'monthly'    => $price,
+                'quarterly'  => $price / 3,
+                'semiannual' => $price / 6,
+                'annual'     => $price / 12,
+                default      => $price,
+            };
+        });
+
+        $qtdPagantesQ = Payment::where('personal_id', $personalId)->where('status', 'paid')
+            ->whereYear('paid_at', $filterYear);
+        if ($filterMonth > 0) $qtdPagantesQ->whereMonth('paid_at', $filterMonth);
+        $qtdPagantes = $qtdPagantesQ->distinct('student_id')->count('student_id');
+        $ticketMedio = $qtdPagantes > 0 ? $totalRecebido / $qtdPagantes : 0;
+
+        $totalAtivos     = StudentPlan::where('personal_id', $personalId)->whereIn('status', ['active', 'overdue', 'suspended'])->count();
+        $totalInadimpl   = StudentPlan::where('personal_id', $personalId)->whereIn('status', ['overdue', 'suspended'])->count();
+        $taxaInadimplencia = $totalAtivos > 0 ? round($totalInadimpl / $totalAtivos * 100, 1) : 0;
+
+        $ranking = Payment::where('personal_id', $personalId)->where('status', 'paid')
+            ->where('paid_at', '>=', $now->copy()->subMonths(12))
+            ->select('student_id', DB::raw('SUM(amount) as total'))
+            ->groupBy('student_id')->orderByDesc('total')->limit(5)
+            ->with('student')->get();
+
+        // ── Faturamento Futuro (3 meses) ──────────────────────────────────
+        $faturamentoFuturo = [];
+        for ($i = 1; $i <= 3; $i++) {
+            $mes = $now->copy()->addMonths($i);
+            $plans = StudentPlan::with('financialPlan')
+                ->where('personal_id', $personalId)->where('status', 'active')
+                ->whereYear('due_date', $mes->year)->whereMonth('due_date', $mes->month)->get();
+            $faturamentoFuturo[] = [
+                'label'   => $mes->translatedFormat('F/Y'),
+                'valor'   => $plans->sum(fn($sp) => (float) ($sp->financialPlan->price ?? 0)),
+                'alunos'  => $plans->count(),
+            ];
         }
 
-        $students = $this->personal()->students()->orderBy('users.name')->get(['users.id', 'users.name']);
+        // ── Alertas ────────────────────────────────────────────────────────
+        $alertasVencimento = StudentPlan::with(['student', 'financialPlan'])
+            ->where('personal_id', $personalId)->where('status', 'active')
+            ->whereBetween('due_date', [$now->toDateString(), $now->copy()->addDays(7)->toDateString()])
+            ->orderBy('due_date')->get();
 
-        return view('personal.financial.reports', compact(
-            'faturamentoPorMes', 'inadimplentes', 'historyPayments',
-            'historyStudent', 'students', 'year'
-        ));
+        $alertasInadimplentes = StudentPlan::with(['student', 'financialPlan'])
+            ->where('personal_id', $personalId)->whereIn('status', ['overdue', 'suspended'])
+            ->orderBy('due_date')->get();
+
+        // ── Inadimplentes (lista) ─────────────────────────────────────────
+        $inadimplentes = StudentPlan::with('student', 'financialPlan')
+            ->where('personal_id', $personalId)->whereIn('status', ['overdue', 'suspended'])->get();
+
+        // ── Histórico por aluno ───────────────────────────────────────────
+        $historyPayments = collect();
+        $historyStudent  = null;
+        $historyTotal    = 0;
+        if ($studentId) {
+            $historyStudent  = User::find($studentId);
+            $hQuery = Payment::with('studentPlan.financialPlan')
+                ->where('personal_id', $personalId)->where('student_id', $studentId);
+            $historyPayments = $hQuery->orderBy('due_date', 'desc')->get();
+            $historyTotal    = $historyPayments->where('status', 'paid')->sum('amount');
+        }
+
+        return compact(
+            'faturamentoPorMes', 'faturamentoFuturo',
+            'totalFaturado', 'totalRecebido', 'totalPendente', 'totalVencido', 'pagamentosMes',
+            'mrr', 'ticketMedio', 'taxaInadimplencia', 'ranking',
+            'alertasVencimento', 'alertasInadimplentes', 'inadimplentes',
+            'historyPayments', 'historyStudent', 'historyTotal',
+            'filterYear', 'filterMonth', 'studentId', 'statusFilter', 'planFilter'
+        );
     }
 }
