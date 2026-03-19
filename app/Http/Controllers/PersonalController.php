@@ -348,7 +348,8 @@ class PersonalController extends Controller
     public function createMeasurement(User $student)
     {
         $this->validateStudentBelongsToPersonal($student);
-        return view('personal.measurements.create', compact('student'));
+        $previousMeasurement = BodyMeasurement::where('student_id', $student->id)->latest()->first();
+        return view('personal.measurements.create', compact('student', 'previousMeasurement'));
     }
 
     /**
@@ -542,7 +543,11 @@ class PersonalController extends Controller
     {
         $student = $measurement->student;
         $this->validateStudentBelongsToPersonal($student);
-        return view('personal.measurements.edit', compact('measurement', 'student'));
+        $previousMeasurement = BodyMeasurement::where('student_id', $student->id)
+            ->where('id', '<', $measurement->id)
+            ->latest()
+            ->first();
+        return view('personal.measurements.edit', compact('measurement', 'student', 'previousMeasurement'));
     }
 
     /**

@@ -63,6 +63,131 @@
                 </div>
             </div>
 
+            {{-- ── Comparativo com avaliação anterior ── --}}
+            @if(isset($previousMeasurement) && $previousMeasurement)
+            <div x-data="measureComparison()" x-init="initTracking()" class="mb-6">
+                <div class="border border-indigo-500/30 bg-indigo-950/20 rounded-xl overflow-hidden">
+                    <button type="button" @click="open = !open"
+                            class="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-indigo-900/10 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-indigo-300">Comparativo com avaliação anterior</p>
+                                <p class="text-xs text-slate-400">Referência: {{ $previousMeasurement->date?->format('d/m/Y') }}</p>
+                            </div>
+                        </div>
+                        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''"
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+
+                    <div x-show="open"
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-100"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0">
+                        <div class="px-5 pb-5 border-t border-indigo-500/20">
+
+                            {{-- Composição Corporal --}}
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-4 mb-2">Composição Corporal</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-xs text-slate-500 border-b border-slate-700/50">
+                                            <th class="text-left pb-1.5 font-medium">Medida</th>
+                                            <th class="text-center pb-1.5 font-medium w-24">Anterior</th>
+                                            <th class="text-center pb-1.5 font-medium w-24">Atual</th>
+                                            <th class="text-center pb-1.5 font-medium w-24">Variação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/50">
+                                        <tr>
+                                            <td class="py-1.5 text-slate-300 text-xs">Peso (kg)</td>
+                                            <td class="py-1.5 text-center text-slate-400 text-xs">{{ $previousMeasurement->weight ? number_format($previousMeasurement->weight, 1, ',', '') : '—' }}</td>
+                                            <td class="py-1.5 text-center text-xs text-slate-200" x-text="fmtCurr('weight', 1) ?? '—'"></td>
+                                            <td class="py-1.5 text-center text-xs font-semibold" :class="deltaClass('weight', false, true)" x-text="deltaText('weight')"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 text-slate-300 text-xs">% Gordura</td>
+                                            <td class="py-1.5 text-center text-slate-400 text-xs">{{ $previousMeasurement->body_fat ? number_format($previousMeasurement->body_fat, 1, ',', '') . '%' : '—' }}</td>
+                                            <td class="py-1.5 text-center text-xs text-slate-200" x-text="fmtCurr('body_fat', 1) ? fmtCurr('body_fat', 1) + '%' : '—'"></td>
+                                            <td class="py-1.5 text-center text-xs font-semibold" :class="deltaClass('body_fat', true, false)" x-text="deltaText('body_fat')"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 text-slate-300 text-xs">Massa Muscular (kg)</td>
+                                            <td class="py-1.5 text-center text-slate-400 text-xs">{{ $previousMeasurement->muscle_mass ? number_format($previousMeasurement->muscle_mass, 1, ',', '') : '—' }}</td>
+                                            <td class="py-1.5 text-center text-xs text-slate-200" x-text="fmtCurr('muscle_mass', 1) ?? '—'"></td>
+                                            <td class="py-1.5 text-center text-xs font-semibold" :class="deltaClass('muscle_mass', false, false)" x-text="deltaText('muscle_mass')"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {{-- Circunferências --}}
+                            @php
+                                $circFields = [
+                                    ['chest',       'Peitoral',        false, true],
+                                    ['waist',       'Cintura',         true,  false],
+                                    ['abdomen',     'Abdômen',         true,  false],
+                                    ['hips',        'Quadril',         false, true],
+                                    ['right_arm',   'Braço D',         false, true],
+                                    ['left_arm',    'Braço E',         false, true],
+                                    ['right_thigh', 'Coxa D',          false, true],
+                                    ['left_thigh',  'Coxa E',          false, true],
+                                    ['right_calf',  'Panturrilha D',   false, true],
+                                    ['left_calf',   'Panturrilha E',   false, true],
+                                ];
+                                $hasAnyCirc = collect($circFields)->some(fn($f) => $previousMeasurement->{$f[0]} !== null);
+                            @endphp
+                            @if($hasAnyCirc)
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-4 mb-2">Circunferências (cm)</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-xs text-slate-500 border-b border-slate-700/50">
+                                            <th class="text-left pb-1.5 font-medium">Medida</th>
+                                            <th class="text-center pb-1.5 font-medium w-24">Anterior</th>
+                                            <th class="text-center pb-1.5 font-medium w-24">Atual</th>
+                                            <th class="text-center pb-1.5 font-medium w-24">Variação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/50">
+                                        @foreach($circFields as [$fld, $lbl, $digGood, $neut])
+                                        @if($previousMeasurement->$fld !== null)
+                                        <tr>
+                                            <td class="py-1.5 text-slate-300 text-xs">{{ $lbl }}</td>
+                                            <td class="py-1.5 text-center text-slate-400 text-xs">{{ number_format($previousMeasurement->$fld, 1, ',', '') }}</td>
+                                            <td class="py-1.5 text-center text-xs text-slate-200" x-text="fmtCurr('{{ $fld }}', 1) ?? '—'"></td>
+                                            <td class="py-1.5 text-center text-xs font-semibold"
+                                                :class="deltaClass('{{ $fld }}', {{ $digGood ? 'true' : 'false' }}, {{ $neut ? 'true' : 'false' }})"
+                                                x-text="deltaText('{{ $fld }}')"></td>
+                                        </tr>
+                                        @endif
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            @endif
+
+                            <p class="text-xs text-slate-500 mt-3 flex items-center gap-2 flex-wrap">
+                                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Melhora</span>
+                                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> Piora</span>
+                                <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> Neutro / Sem dado atual</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+            {{-- ── /Comparativo ── --}}
+
             <h4 class="text-lg font-medium text-gray-200 mb-4 border-b border-gray-700 pb-2">Dados Corporais</h4>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div>
@@ -1131,6 +1256,56 @@
         });
         document.getElementById('confirmButton').disabled = true;
         document.getElementById('selected_protocol').value = '';
+    }
+    function measureComparison() {
+        const prev = @json($previousMeasurement ?? null);
+        return {
+            open: true,
+            curr: {},
+            prev: prev,
+            initTracking() {
+                const form = document.getElementById('measurementForm');
+                if (!form) return;
+                form.addEventListener('input', (e) => {
+                    if (!e.target.name) return;
+                    const raw = String(e.target.value).replace(',', '.');
+                    const v = parseFloat(raw);
+                    this.curr = { ...this.curr, [e.target.name]: isNaN(v) ? null : v };
+                });
+            },
+            prevVal(field) {
+                if (!this.prev) return null;
+                const v = parseFloat(String(this.prev[field] ?? '').replace(',', '.'));
+                return isNaN(v) ? null : v;
+            },
+            currVal(field) {
+                return this.curr[field] ?? null;
+            },
+            delta(field) {
+                const p = this.prevVal(field);
+                const c = this.currVal(field);
+                if (p === null || c === null) return null;
+                return parseFloat((c - p).toFixed(2));
+            },
+            deltaText(field) {
+                const d = this.delta(field);
+                if (d === null) return '—';
+                if (d === 0) return '=';
+                return (d > 0 ? '+' : '') + d.toFixed(1).replace('.', ',');
+            },
+            deltaClass(field, downIsGood, neutral) {
+                if (neutral) return 'text-slate-400';
+                const d = this.delta(field);
+                if (d === null || d === 0) return 'text-slate-400';
+                if (downIsGood) return d < 0 ? 'text-emerald-400' : 'text-rose-400';
+                return d > 0 ? 'text-emerald-400' : 'text-rose-400';
+            },
+            fmtCurr(field, dec) {
+                const c = this.currVal(field);
+                if (c === null) return null;
+                return c.toFixed(dec).replace('.', ',');
+            }
+        };
     }
 </script>
 @endsection
