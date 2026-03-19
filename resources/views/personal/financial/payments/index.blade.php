@@ -130,7 +130,7 @@
             @php
                 $tabs = [
                     ['key' => 'pending',     'label' => 'Pendentes',      'count' => $countPending,    'color' => 'yellow',  'title' => 'Vencem em até 7 dias'],
-                    ['key' => 'all_pending', 'label' => 'Todos Pendentes','count' => $countAllPending, 'color' => 'indigo',  'title' => 'Todos os pagamentos em aberto'],
+                    ['key' => 'all_pending', 'label' => 'Pendências Futuras','count' => $countAllPending, 'color' => 'indigo',  'title' => 'Todos os pagamentos em aberto'],
                     ['key' => 'overdue',     'label' => 'Vencidos',       'count' => $countOverdue,    'color' => 'red',     'title' => 'Prazo expirado'],
                     ['key' => 'paid',        'label' => 'Pagos',          'count' => $countPaid,       'color' => 'emerald', 'title' => 'Pagamentos confirmados'],
                 ];
