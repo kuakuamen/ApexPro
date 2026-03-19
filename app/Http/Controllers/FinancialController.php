@@ -232,6 +232,9 @@ class FinancialController extends Controller
             'periodicity'       => 'required|in:monthly,quarterly,semiannual,annual,custom',
             'custom_days'       => 'nullable|integer|min:1|required_if:periodicity,custom',
             'payment_method'    => 'nullable|in:pix,card,cash,other',
+            'skip_payment'      => 'nullable|in:0,1',
+            'discount_type'     => 'nullable|in:none,fixed,percent',
+            'discount_value'    => 'nullable|numeric|min:0',
         ]);
 
         $plan = FinancialPlan::findOrFail($data['financial_plan_id']);
@@ -263,17 +266,30 @@ class FinancialController extends Controller
             'status'            => 'active',
         ]);
 
-        // 1) Pagamento do mês atual — PAGO (aluno paga ao entrar)
+        // 1) Pagamento do mês atual — PAGO ou PENDENTE conforme escolha
+        $skipPayment  = ($data['skip_payment'] ?? '0') === '1';
+        $discountType = $data['discount_type'] ?? 'none';
+        $discountVal  = (float) ($data['discount_value'] ?? 0);
+
+        $entryAmount = $plan->price;
+        if (!$skipPayment && $discountType !== 'none' && $discountVal > 0) {
+            if ($discountType === 'fixed') {
+                $entryAmount = max(0, $plan->price - $discountVal);
+            } elseif ($discountType === 'percent') {
+                $entryAmount = max(0, $plan->price - ($plan->price * $discountVal / 100));
+            }
+        }
+
         Payment::create([
             'student_plan_id' => $sp->id,
             'student_id'      => $sp->student_id,
             'personal_id'     => Auth::id(),
-            'amount'          => $plan->price,
+            'amount'          => $entryAmount,
             'original_amount' => $plan->price,
             'due_date'        => $data['start_date'],
-            'paid_at'         => now(),
-            'status'          => 'paid',
-            'payment_method'  => $data['payment_method'] ?? null,
+            'paid_at'         => $skipPayment ? null : now(),
+            'status'          => $skipPayment ? 'pending' : 'paid',
+            'payment_method'  => $skipPayment ? null : ($data['payment_method'] ?? null),
         ]);
 
         // 2) Próximo vencimento — PENDENTE
@@ -289,7 +305,10 @@ class FinancialController extends Controller
         ]);
 
         return redirect()->route('personal.financial.student-plans')
-            ->with('success', 'Plano vinculado! Pagamento de hoje registrado e próximo vencimento agendado.');
+            ->with('success', $skipPayment
+                ? 'Plano vinculado! Ambos os pagamentos registrados como Pendente.'
+                : 'Plano vinculado! Pagamento de hoje registrado e próximo vencimento agendado.'
+            );
     }
 
     public function editAssignment(StudentPlan $sp)
@@ -332,6 +351,17 @@ class FinancialController extends Controller
             : 'Acesso do aluno liberado.';
 
         return back()->with('success', $msg);
+    }
+
+    public function destroyAssignment(StudentPlan $sp)
+    {
+        $this->validateStudentPlanOwnership($sp);
+
+        $sp->payments()->delete();
+        $sp->delete();
+
+        return redirect()->route('personal.financial.student-plans')
+            ->with('success', 'Vínculo e todos os pagamentos foram excluídos permanentemente.');
     }
 
     // ─── Pagamentos ───────────────────────────────────────────────────────────

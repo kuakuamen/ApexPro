@@ -99,6 +99,7 @@ Route::middleware(['auth', 'role:personal', 'subscription'])->prefix('personal')
         Route::get('/vinculos/{sp}/editar',          [FinancialController::class, 'editAssignment'])        ->name('student-plans.edit');
         Route::put('/vinculos/{sp}',                 [FinancialController::class, 'updateAssignment'])      ->name('student-plans.update');
         Route::patch('/vinculos/{sp}/toggle-acesso', [FinancialController::class, 'toggleStudentAccess'])   ->name('student-plans.toggle');
+        Route::delete('/vinculos/{sp}',              [FinancialController::class, 'destroyAssignment'])     ->name('student-plans.destroy');
         Route::post('/verificar-inadimplencia',      [FinancialController::class, 'runSuspendCheck'])        ->name('run-suspend-check');
         Route::get('/pagamentos',                    [FinancialController::class, 'payments'])              ->name('payments');
         Route::post('/pagamentos',                   [FinancialController::class, 'storePayment'])          ->name('payments.store');

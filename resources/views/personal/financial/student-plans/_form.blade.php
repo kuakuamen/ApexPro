@@ -48,6 +48,9 @@
             dueDate: '{{ old('due_date', $defaultDueDate) }}',
             showModal: false,
             payMethod: 'pix',
+            skipPayment: false,
+            discountType: 'none',
+            discountValue: '',
 
             init() {
                 this.$watch('startDate',  () => this.recalcDue());
@@ -84,7 +87,10 @@
 
             {{-- Hidden: forma de pagamento para o controller --}}
             @if(!$isEdit)
-                <input type="hidden" name="payment_method" :value="payMethod">
+                <input type="hidden" name="payment_method" :value="skipPayment ? '' : payMethod">
+                <input type="hidden" name="skip_payment" :value="skipPayment ? '1' : '0'">
+                <input type="hidden" name="discount_type" :value="discountType">
+                <input type="hidden" name="discount_value" :value="discountValue">
             @endif
 
             {{-- Aluno --}}
@@ -205,13 +211,29 @@
                 </div>
 
                 {{-- Info fixa --}}
-                <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 mb-4 space-y-1">
+                <div x-show="!skipPayment" class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 mb-4 space-y-1">
                     <p class="text-xs text-emerald-300 font-medium">O pagamento de hoje será registrado automaticamente como <strong>Pago</strong>.</p>
                     <p class="text-xs text-slate-400">O próximo vencimento (<span class="text-slate-200" x-text="dueDate ? new Date(dueDate + 'T00:00:00').toLocaleDateString('pt-BR') : ''"></span>) ficará como <strong>Pendente</strong>.</p>
                 </div>
+                <div x-show="skipPayment" x-cloak class="bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-3 mb-4 space-y-1">
+                    <p class="text-xs text-orange-300 font-medium">O mês atual ficará registrado como <strong>Pendente</strong>.</p>
+                    <p class="text-xs text-slate-400">O próximo vencimento (<span class="text-slate-200" x-text="dueDate ? new Date(dueDate + 'T00:00:00').toLocaleDateString('pt-BR') : ''"></span>) também ficará como <strong>Pendente</strong>.</p>
+                </div>
+
+                {{-- Toggle: Pagamento não realizado --}}
+                <div class="mb-4">
+                    <label class="flex items-center gap-3 cursor-pointer select-none">
+                        <div class="relative">
+                            <input type="checkbox" class="sr-only" x-model="skipPayment">
+                            <div :class="skipPayment ? 'bg-orange-500' : 'bg-slate-700'" class="w-9 h-5 rounded-full transition-colors"></div>
+                            <div :class="skipPayment ? 'translate-x-4' : 'translate-x-0.5'" class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform"></div>
+                        </div>
+                        <span class="text-xs font-medium text-slate-300">Pagamento não realizado</span>
+                    </label>
+                </div>
 
                 {{-- Forma de pagamento --}}
-                <div class="mb-5">
+                <div class="mb-4" x-show="!skipPayment">
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Forma de Pagamento</label>
                     <div class="grid grid-cols-2 gap-2">
                         @foreach(['pix' => 'Pix', 'card' => 'Cartão', 'cash' => 'Dinheiro', 'other' => 'Outro'] as $val => $lbl)
@@ -223,6 +245,23 @@
                             {{ $lbl }}
                         </button>
                         @endforeach
+                    </div>
+                </div>
+
+                {{-- Desconto --}}
+                <div class="mb-5">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Desconto</label>
+                    <div class="flex gap-2">
+                        <select x-model="discountType" class="bg-slate-800/60 border border-slate-700/50 rounded-xl px-3 py-2 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shrink-0">
+                            <option value="none">Sem desconto</option>
+                            <option value="fixed">R$ fixo</option>
+                            <option value="percent">Percentual</option>
+                        </select>
+                        <input x-show="discountType !== 'none'" x-cloak
+                            type="number" min="0" step="0.01"
+                            x-model="discountValue"
+                            :placeholder="discountType === 'percent' ? 'Ex: 10 (%)' : 'Ex: 20,00'"
+                            class="flex-1 bg-slate-800/60 border border-slate-700/50 rounded-xl px-3 py-2 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
                     </div>
                 </div>
 
