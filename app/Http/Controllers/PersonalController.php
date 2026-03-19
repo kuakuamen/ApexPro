@@ -977,14 +977,50 @@ class PersonalController extends Controller
             ];
         })->values();
 
+        // Comparativo completo entre as duas últimas avaliações
+        $lastTwoFull = BodyMeasurement::where('student_id', $student->id)
+            ->orderByDesc('date')
+            ->limit(2)
+            ->get();
+
+        $comparison = null;
+        if ($lastTwoFull->count() >= 2) {
+            $compLast = $lastTwoFull->first();
+            $compPrev = $lastTwoFull->last();
+            $compFields = [
+                'weight', 'body_fat', 'muscle_mass',
+                'chest', 'waist', 'abdomen', 'hips',
+                'right_arm', 'left_arm', 'right_thigh', 'left_thigh', 'right_calf', 'left_calf',
+                'ombro', 'torax', 'abdomen_inferior',
+                'left_arm_contracted', 'right_arm_contracted',
+                'left_forearm', 'right_forearm',
+                'subescapular', 'tricipital', 'bicipital', 'toracica',
+                'abdominal_fold', 'axilar_media', 'suprailiaca', 'coxa_fold', 'panturrilha_fold',
+                'sum_skinfolds',
+            ];
+            $prevData = [];
+            $lastData = [];
+            foreach ($compFields as $f) {
+                $prevData[$f] = $compPrev->$f !== null ? (float) $compPrev->$f : null;
+                $lastData[$f] = $compLast->$f !== null ? (float) $compLast->$f : null;
+            }
+            $comparison = [
+                'prev_date' => $compPrev->date?->format('d/m/Y'),
+                'last_date' => $compLast->date?->format('d/m/Y'),
+                'prev'      => $prevData,
+                'last'      => $lastData,
+            ];
+        }
+
         return response()->json([
-            'student'  => ['id' => $student->id, 'name' => $student->name],
-            'dates'    => $dates,
-            'weights'  => $weights,
-            'muscles'  => $muscles,
-            'bodyFats' => $bodyFats,
-            'summary'  => $summary,
-            'history'  => $history,
+            'student'    => ['id' => $student->id, 'name' => $student->name],
+            'dates'      => $dates,
+            'weights'    => $weights,
+            'muscles'    => $muscles,
+            'bodyFats'   => $bodyFats,
+            'summary'    => $summary,
+            'history'    => $history,
+            'comparison' => $comparison,
         ]);
     }
 }

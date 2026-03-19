@@ -195,6 +195,130 @@
             </div>
         </div>
 
+        <!-- Comparativo entre duas últimas avaliações -->
+        <div x-show="comparison" x-cloak class="bg-[#0f1a2e]/80 border border-indigo-500/30 rounded-2xl overflow-hidden">
+            <button type="button" @click="compOpen = !compOpen"
+                    class="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-indigo-900/10 transition-colors">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-indigo-300">Comparativo de Medidas</p>
+                        <p class="text-xs text-slate-400" x-text="comparison ? comparison.prev_date + ' → ' + comparison.last_date : ''"></p>
+                    </div>
+                </div>
+                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="compOpen ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div x-show="compOpen"
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0">
+                <div class="border-t border-indigo-500/20 px-5 pb-5 space-y-5">
+
+                    <!-- Tabela reutilizável via template -->
+                    <template x-if="compRows('corpo').length > 0">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-4 mb-2">Composição Corporal</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-xs text-slate-500 border-b border-slate-700/50">
+                                            <th class="text-left pb-1.5 font-medium">Medida</th>
+                                            <th class="text-center pb-1.5 font-medium w-28" x-text="comparison ? comparison.prev_date : 'Anterior'"></th>
+                                            <th class="text-center pb-1.5 font-medium w-28" x-text="comparison ? comparison.last_date : 'Atual'"></th>
+                                            <th class="text-center pb-1.5 font-medium w-24">Variação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/50">
+                                        <template x-for="row in compRows('corpo')" :key="row.label">
+                                            <tr>
+                                                <td class="py-1.5 text-slate-300 text-xs" x-text="row.label"></td>
+                                                <td class="py-1.5 text-center text-slate-400 text-xs" x-text="row.prev"></td>
+                                                <td class="py-1.5 text-center text-slate-200 text-xs" x-text="row.last"></td>
+                                                <td class="py-1.5 text-center text-xs font-semibold" :class="row.deltaClass" x-text="row.deltaText"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="compRows('circs').length > 0">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-2 mb-2">Circunferências (cm)</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-xs text-slate-500 border-b border-slate-700/50">
+                                            <th class="text-left pb-1.5 font-medium">Medida</th>
+                                            <th class="text-center pb-1.5 font-medium w-28" x-text="comparison ? comparison.prev_date : 'Anterior'"></th>
+                                            <th class="text-center pb-1.5 font-medium w-28" x-text="comparison ? comparison.last_date : 'Atual'"></th>
+                                            <th class="text-center pb-1.5 font-medium w-24">Variação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/50">
+                                        <template x-for="row in compRows('circs')" :key="row.label">
+                                            <tr>
+                                                <td class="py-1.5 text-slate-300 text-xs" x-text="row.label"></td>
+                                                <td class="py-1.5 text-center text-slate-400 text-xs" x-text="row.prev"></td>
+                                                <td class="py-1.5 text-center text-slate-200 text-xs" x-text="row.last"></td>
+                                                <td class="py-1.5 text-center text-xs font-semibold" :class="row.deltaClass" x-text="row.deltaText"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="compRows('dobras').length > 0">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-2 mb-2">Dobras Cutâneas (mm)</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-xs text-slate-500 border-b border-slate-700/50">
+                                            <th class="text-left pb-1.5 font-medium">Medida</th>
+                                            <th class="text-center pb-1.5 font-medium w-28" x-text="comparison ? comparison.prev_date : 'Anterior'"></th>
+                                            <th class="text-center pb-1.5 font-medium w-28" x-text="comparison ? comparison.last_date : 'Atual'"></th>
+                                            <th class="text-center pb-1.5 font-medium w-24">Variação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/50">
+                                        <template x-for="row in compRows('dobras')" :key="row.label">
+                                            <tr>
+                                                <td class="py-1.5 text-slate-300 text-xs" x-text="row.label"></td>
+                                                <td class="py-1.5 text-center text-slate-400 text-xs" x-text="row.prev"></td>
+                                                <td class="py-1.5 text-center text-slate-200 text-xs" x-text="row.last"></td>
+                                                <td class="py-1.5 text-center text-xs font-semibold" :class="row.deltaClass" x-text="row.deltaText"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <p class="text-xs text-slate-500 flex items-center gap-2 flex-wrap pt-1">
+                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Melhora</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> Piora</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> Neutro</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
     </div><!-- /painel -->
 
 </div>
@@ -209,6 +333,8 @@ function evolutionPage() {
         noData: false,
         summary: null,
         history: [],
+        comparison: null,
+        compOpen: true,
         compositionChart: null,
         bodyFatChart: null,
 
@@ -226,6 +352,7 @@ function evolutionPage() {
             this.noData  = false;
             this.summary = null;
             this.history = [];
+            this.comparison = null;
             this.destroyCharts();
 
             fetch(`{{ url('personal/evolucao/dados') }}/${id}`, {
@@ -240,8 +367,9 @@ function evolutionPage() {
                     return;
                 }
 
-                this.summary = data.summary;
-                this.history = data.history;
+                this.summary    = data.summary;
+                this.history    = data.history;
+                this.comparison = data.comparison ?? null;
 
                 this.$nextTick(() => {
                     this.buildCompositionChart(data.dates, data.weights, data.muscles);
@@ -252,6 +380,60 @@ function evolutionPage() {
                 this.loading = false;
                 this.noData  = true;
             });
+        },
+
+        compRows(group) {
+            const c = this.comparison;
+            if (!c) return [];
+            const prev = c.prev;
+            const last = c.last;
+            const groups = {
+                corpo: [
+                    { label: 'Peso (kg)',           field: 'weight',       downIsGood: false, neutral: true  },
+                    { label: '% Gordura',           field: 'body_fat',     downIsGood: true,  neutral: false },
+                    { label: 'Massa Muscular (kg)', field: 'muscle_mass',  downIsGood: false, neutral: false },
+                ],
+                circs: [
+                    { label: 'Peitoral',       field: 'chest',        downIsGood: false, neutral: true  },
+                    { label: 'Cintura',        field: 'waist',        downIsGood: true,  neutral: false },
+                    { label: 'Abdômen',        field: 'abdomen',      downIsGood: true,  neutral: false },
+                    { label: 'Quadril',        field: 'hips',         downIsGood: false, neutral: true  },
+                    { label: 'Braço D',        field: 'right_arm',    downIsGood: false, neutral: true  },
+                    { label: 'Braço E',        field: 'left_arm',     downIsGood: false, neutral: true  },
+                    { label: 'Coxa D',         field: 'right_thigh',  downIsGood: false, neutral: true  },
+                    { label: 'Coxa E',         field: 'left_thigh',   downIsGood: false, neutral: true  },
+                    { label: 'Panturrilha D',  field: 'right_calf',   downIsGood: false, neutral: true  },
+                    { label: 'Panturrilha E',  field: 'left_calf',    downIsGood: false, neutral: true  },
+                ],
+                dobras: [
+                    { label: 'Subescapular',   field: 'subescapular',     downIsGood: true, neutral: false },
+                    { label: 'Tricipital',     field: 'tricipital',       downIsGood: true, neutral: false },
+                    { label: 'Bicipital',      field: 'bicipital',        downIsGood: true, neutral: false },
+                    { label: 'Torácica',       field: 'toracica',         downIsGood: true, neutral: false },
+                    { label: 'Abdominal',      field: 'abdominal_fold',   downIsGood: true, neutral: false },
+                    { label: 'Axilar Média',   field: 'axilar_media',     downIsGood: true, neutral: false },
+                    { label: 'Supra-ilíaca',   field: 'suprailiaca',      downIsGood: true, neutral: false },
+                    { label: 'Coxa',           field: 'coxa_fold',        downIsGood: true, neutral: false },
+                    { label: 'Panturrilha',    field: 'panturrilha_fold', downIsGood: true, neutral: false },
+                    { label: 'Soma (mm)',       field: 'sum_skinfolds',   downIsGood: true, neutral: false },
+                ],
+            };
+            return (groups[group] || [])
+                .filter(m => prev[m.field] !== null || last[m.field] !== null)
+                .map(m => {
+                    const p = prev[m.field];
+                    const l = last[m.field];
+                    const d = (p !== null && l !== null) ? parseFloat((l - p).toFixed(2)) : null;
+                    const dt = d === null ? '—' : (d === 0 ? '=' : (d > 0 ? '+' : '') + d.toFixed(1).replace('.', ','));
+                    let dc = 'text-slate-400';
+                    if (!m.neutral && d !== null && d !== 0) {
+                        dc = m.downIsGood
+                            ? (d < 0 ? 'text-emerald-400' : 'text-rose-400')
+                            : (d > 0 ? 'text-emerald-400' : 'text-rose-400');
+                    }
+                    const fmt = v => v !== null ? parseFloat(v).toFixed(1).replace('.', ',') : '—';
+                    return { label: m.label, prev: fmt(p), last: fmt(l), deltaText: dt, deltaClass: dc };
+                });
         },
 
         destroyCharts() {
