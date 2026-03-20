@@ -211,7 +211,13 @@
     {{-- ── Gráfico Faturamento Anual ── --}}
     <div class="bg-[#0f1a2e]/80 border border-slate-700/50 rounded-2xl p-5">
         <h2 class="text-sm font-semibold text-slate-200 mb-4">Faturamento Mensal {{ $filterYear }}</h2>
-        <div style="height:240px"><canvas id="reportChart"></canvas></div>
+        <div style="height:240px; position:relative">
+            <canvas id="reportChart"></canvas>
+            <div id="reportChartEmpty" style="display:none; position:absolute; inset:0;" class="flex flex-col items-center justify-center gap-2">
+                <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <p class="text-slate-500 text-sm">Nenhum pagamento registrado em {{ $filterYear }}</p>
+            </div>
+        </div>
     </div>
 
     {{-- ── Ranking de Alunos ── --}}
@@ -383,11 +389,21 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('reportChart');
     if (!ctx) return;
     const data = @json($faturamentoPorMes);
+
+    const hasData = data.some(d => d.recebido > 0 || d.pendente > 0);
+    if (!hasData) {
+        ctx.style.display = 'none';
+        const empty = document.getElementById('reportChartEmpty');
+        if (empty) empty.style.display = 'flex';
+        return;
+    }
+
     new Chart(ctx, {
         type: 'bar',
         data: {
