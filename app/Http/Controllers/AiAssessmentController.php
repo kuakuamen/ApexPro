@@ -80,10 +80,21 @@ class AiAssessmentController extends Controller
         $date = null;
 
         if ($lastAssessment && $lastMeasurement) {
-            // Measurement tem side_left; Assessment não — prefere measurement se mais recente ou mesma data
-            $assessmentDate = $lastAssessment->created_at;
-            $measurementDate = $lastMeasurement->updated_at ?? $lastMeasurement->created_at;
-            $source = ($measurementDate >= $assessmentDate) ? 'measurement' : 'assessment';
+            // Medição corporal sempre tem mais fotos (4 padrão + extras vs 3 do assessment).
+            // Preferir measurement a menos que o assessment seja significativamente mais recente
+            // (mais de 30 dias após a última medição) e não haja extras na medição.
+            $assessmentDate  = $lastAssessment->created_at;
+            $measurementDate = \Carbon\Carbon::parse($lastMeasurement->date ?? $lastMeasurement->created_at);
+            $hasExtras       = !empty($lastMeasurement->extra_photos);
+            $daysDiff        = $measurementDate->diffInDays($assessmentDate, false); // positivo = assessment mais novo
+
+            if ($hasExtras || $daysDiff <= 30) {
+                // Measurement tem extras ou está próxima — sempre preferir measurement
+                $source = 'measurement';
+            } else {
+                // Assessment é muito mais recente (>30 dias) e measurement não tem extras
+                $source = 'assessment';
+            }
         } elseif ($lastMeasurement) {
             $source = 'measurement';
         } elseif ($lastAssessment) {
