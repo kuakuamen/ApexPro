@@ -1567,24 +1567,22 @@
                         Fechar
                     </button>
                 </div>
+            </div>
+        </div>
 
-                <!-- Zoom da Imagem (na própria tela) -->
-                <div x-show="zoomOpen" x-cloak class="fixed inset-0" style="z-index: 5200;" @keydown.escape.window="zoomOpen = false"
-                     x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                     x-transition:leave="ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-                    <div class="absolute inset-0 bg-black/55" @click="zoomOpen = false"></div>
-                    <div class="absolute inset-0 flex items-center justify-center p-4">
-                        <div class="w-full max-w-6xl"
-                             x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                             x-transition:leave="ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
-                            <div class="flex items-center justify-between mb-3">
-                                <p class="text-sm text-indigo-300 font-medium" x-text="zoomPhoto?.label || 'Imagem'"></p>
-                                <button type="button" @click="zoomOpen = false" class="text-gray-300 hover:text-white text-xl">✕</button>
-                            </div>
-                            <img :src="zoomPhoto?.url" :alt="zoomPhoto?.label || 'Imagem ampliada'" class="w-full max-h-[82vh] object-contain rounded-lg border border-zinc-700 bg-zinc-950">
-                        </div>
-                    </div>
+        <!-- Zoom da Imagem — fora do container com opacity-35 para não herdar transparência -->
+        <div x-show="zoomOpen" x-cloak class="absolute inset-0 flex items-center justify-center p-4 bg-black/90" style="z-index: 5200;"
+             @click.self="zoomOpen = false"
+             x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="w-full max-w-4xl"
+                 x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm text-indigo-300 font-medium" x-text="zoomPhoto?.label || 'Imagem'"></p>
+                    <button type="button" @click="zoomOpen = false" class="text-gray-300 hover:text-white text-xl leading-none">✕</button>
                 </div>
+                <img :src="zoomPhoto?.url" :alt="zoomPhoto?.label || 'Imagem ampliada'" class="w-full max-h-[85vh] object-contain rounded-lg border border-zinc-700">
             </div>
         </div>
     </div>
