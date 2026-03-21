@@ -116,7 +116,7 @@ class AiAssessmentController extends Controller
             // Incluir TODAS as fotos extras sem limite fixo
             $extraPhotos = is_array($lastMeasurement->extra_photos) ? $lastMeasurement->extra_photos : [];
             foreach ($extraPhotos as $index => $path) {
-                if ($path && Storage::disk('private')->exists($path)) {
+                if ($path) {
                     $extras[] = route('measurement.photo.extra', [$lastMeasurement->id, $index]);
                 }
             }
