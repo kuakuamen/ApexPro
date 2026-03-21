@@ -50,16 +50,46 @@
               class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
               x-data="{ status: '{{ old('status','pending') }}' }">
             @csrf
-            <div>
+            <script>window._fmActivePlans = {!! json_encode($studentPlansActive->map(fn($sp) => ['id' => $sp->id, 'label' => $sp->student->name . ' — ' . $sp->financialPlan->name])->values()) !!};</script>
+            <div x-data="{
+                    open: false,
+                    search: '',
+                    selectedId: '{{ old('student_plan_id') }}',
+                    selectedLabel: '',
+                    plans: window._fmActivePlans,
+                    get filtered() {
+                        if (!this.search) return this.plans;
+                        const q = this.search.toLowerCase();
+                        return this.plans.filter(p => p.label.toLowerCase().includes(q));
+                    },
+                    select(p) { this.selectedId = p.id; this.selectedLabel = p.label; this.search = ''; this.open = false; },
+                    init() { const found = this.plans.find(p => p.id == this.selectedId); if (found) this.selectedLabel = found.label; }
+                }" @click.outside="open = false">
                 <label class="block text-xs text-slate-400 mb-1.5">Vínculo Aluno/Plano *</label>
-                <select name="student_plan_id" required class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                    <option value="">Selecione</option>
-                    @foreach($studentPlansActive as $sp)
-                        <option value="{{ $sp->id }}" {{ old('student_plan_id') == $sp->id ? 'selected' : '' }}>
-                            {{ $sp->student->name }} — {{ $sp->financialPlan->name }}
-                        </option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="student_plan_id" :value="selectedId" required>
+                <div class="relative">
+                    <button type="button" @click="open = !open"
+                        :class="!selectedId ? 'text-slate-500' : 'text-slate-100'"
+                        class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-3 py-2.5 text-sm text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-colors">
+                        <span class="truncate" x-text="selectedLabel || 'Selecione'"></span>
+                        <svg class="w-4 h-4 text-slate-400 shrink-0 ml-1 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="open" x-cloak class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                        <div class="p-2 border-b border-slate-700/40">
+                            <input type="text" x-model="search" @click.stop x-ref="planInput"
+                                x-init="$watch('open', v => v && $nextTick(() => $refs.planInput.focus()))"
+                                placeholder="Buscar..."
+                                class="w-full bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-1.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                        </div>
+                        <ul class="max-h-40 overflow-y-auto">
+                            <template x-if="filtered.length === 0"><li class="px-4 py-3 text-sm text-slate-500 text-center">Nenhum resultado</li></template>
+                            <template x-for="p in filtered" :key="p.id">
+                                <li @click="select(p)" :class="selectedId == p.id ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                    class="px-4 py-2.5 text-sm cursor-pointer transition-colors" x-text="p.label"></li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
             </div>
             <div>
                 <label class="block text-xs text-slate-400 mb-1.5">Valor (R$) *</label>
@@ -71,13 +101,32 @@
                 <input type="date" name="due_date" value="{{ old('due_date', now()->format('Y-m-d')) }}" required
                     class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
             </div>
-            <div>
+            <div x-data="{
+                    open: false,
+                    options: [
+                        {value:'pending', label:'Pendente'},
+                        {value:'paid',    label:'Pago'},
+                        {value:'overdue', label:'Atrasado'}
+                    ]
+                }" @click.outside="open = false">
                 <label class="block text-xs text-slate-400 mb-1.5">Status *</label>
-                <select name="status" x-model="status" required class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                    <option value="pending">Pendente</option>
-                    <option value="paid">Pago</option>
-                    <option value="overdue">Atrasado</option>
-                </select>
+                <input type="hidden" name="status" :value="$parent.status">
+                <div class="relative">
+                    <button type="button" @click="open = !open"
+                        class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-3 py-2.5 text-sm text-slate-100 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-colors">
+                        <span x-text="options.find(o => o.value === $parent.status)?.label ?? 'Pendente'"></span>
+                        <svg class="w-4 h-4 text-slate-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="open" x-cloak class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                        <ul>
+                            <template x-for="o in options" :key="o.value">
+                                <li @click="$parent.status = o.value; open = false"
+                                    :class="$parent.status === o.value ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                    class="px-4 py-2.5 text-sm cursor-pointer transition-colors" x-text="o.label"></li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
             </div>
             <div x-show="status === 'paid'" x-cloak>
                 <label class="block text-xs text-slate-400 mb-1.5">Data do Pagamento</label>

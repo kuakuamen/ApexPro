@@ -14,20 +14,63 @@
             </a>
             <h1 class="text-xl font-bold text-slate-100">Relatórios Financeiros</h1>
         </div>
-        <form method="GET" action="{{ route('personal.financial.reports') }}" class="flex items-center gap-2 flex-wrap">
-            <select name="month" class="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-teal-500">
-                <option value="0" @selected($filterMonth == 0)>Todos os meses</option>
-                @foreach(range(1,12) as $m)
-                    <option value="{{ $m }}" @selected($m == $filterMonth)>
-                        {{ \Carbon\Carbon::create(null,$m)->translatedFormat('F') }}
-                    </option>
-                @endforeach
-            </select>
-            <select name="year" class="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-teal-500">
-                @foreach(range(now()->year - 2, now()->year + 1) as $y)
-                    <option value="{{ $y }}" @selected($y == $filterYear)>{{ $y }}</option>
-                @endforeach
-            </select>
+        <form method="GET" action="{{ route('personal.financial.reports') }}" class="flex items-center gap-2 flex-wrap"
+            x-data="{
+                month: '{{ $filterMonth }}',
+                year:  '{{ $filterYear }}',
+                monthOpen: false,
+                yearOpen:  false,
+                months: [
+                    {value:'0',  label:'Todos os meses'},
+                    @foreach(range(1,12) as $m)
+                    {value:'{{ $m }}', label:'{{ \Carbon\Carbon::create(null,$m)->translatedFormat('F') }}'},
+                    @endforeach
+                ],
+                years: [
+                    @foreach(range(now()->year - 2, now()->year + 1) as $y)
+                    {value:'{{ $y }}', label:'{{ $y }}'},
+                    @endforeach
+                ]
+            }">
+            <input type="hidden" name="month" :value="month">
+            <input type="hidden" name="year"  :value="year">
+
+            {{-- Month dropdown --}}
+            <div class="relative" @click.outside="monthOpen = false">
+                <button type="button" @click="monthOpen = !monthOpen"
+                    class="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2 flex items-center gap-2 focus:outline-none focus:border-teal-500 min-w-[150px] justify-between">
+                    <span x-text="months.find(m => m.value == month)?.label ?? 'Todos os meses'"></span>
+                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform" :class="monthOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="monthOpen" x-cloak class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                    <ul class="max-h-52 overflow-y-auto">
+                        <template x-for="m in months" :key="m.value">
+                            <li @click="month = m.value; monthOpen = false"
+                                :class="month == m.value ? 'bg-teal-600/20 text-teal-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                class="px-3 py-2 text-sm cursor-pointer transition-colors" x-text="m.label"></li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+
+            {{-- Year dropdown --}}
+            <div class="relative" @click.outside="yearOpen = false">
+                <button type="button" @click="yearOpen = !yearOpen"
+                    class="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2 flex items-center gap-2 focus:outline-none focus:border-teal-500 justify-between">
+                    <span x-text="year"></span>
+                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform" :class="yearOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="yearOpen" x-cloak class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                    <ul>
+                        <template x-for="y in years" :key="y.value">
+                            <li @click="year = y.value; yearOpen = false"
+                                :class="year == y.value ? 'bg-teal-600/20 text-teal-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                class="px-3 py-2 text-sm cursor-pointer transition-colors" x-text="y.label"></li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+
             <button type="submit" class="bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
                 Filtrar
             </button>
@@ -126,38 +169,97 @@
         </div>
 
         {{-- Filtros avançados --}}
-        <form method="GET" action="{{ route('personal.financial.reports') }}" class="flex flex-wrap gap-2 items-end">
+        <script>
+            window._rptStudents = {!! json_encode($students->map(fn($s) => ['id'=>$s->id,'label'=>$s->name])->values()) !!};
+            window._rptPlans    = {!! json_encode($plans->map(fn($p) => ['id'=>$p->id,'label'=>$p->name])->values()) !!};
+        </script>
+        <form method="GET" action="{{ route('personal.financial.reports') }}" class="flex flex-wrap gap-2 items-end"
+            x-data="{
+                studentId:    '{{ $studentId }}',
+                planId:       '{{ $planFilter }}',
+                statusFilter: '{{ $statusFilter }}',
+                studentOpen: false, planOpen: false, statusOpen: false,
+                students: window._rptStudents,
+                studentSearch: '',
+                plans: window._rptPlans,
+                planSearch: '',
+                statusOpts: [{value:'',label:'Todos'},{value:'paid',label:'Pago'},{value:'pending',label:'Pendente'},{value:'overdue',label:'Vencido'}],
+                get filteredStudents() { const q=this.studentSearch.toLowerCase(); return q?this.students.filter(s=>s.label.toLowerCase().includes(q)):[{id:'',label:'Todos'},...this.students]; },
+                get filteredPlans()    { const q=this.planSearch.toLowerCase();    return q?this.plans.filter(p=>p.label.toLowerCase().includes(q)):[{id:'',label:'Todos'},...this.plans]; }
+            }">
             <input type="hidden" name="month" value="{{ $filterMonth }}">
             <input type="hidden" name="year"  value="{{ $filterYear }}">
+            <input type="hidden" name="student_id"    :value="studentId">
+            <input type="hidden" name="plan_id"       :value="planId">
+            <input type="hidden" name="status_filter" :value="statusFilter">
 
+            {{-- Aluno --}}
             <div class="flex flex-col gap-1">
                 <label class="text-xs text-slate-400">Aluno</label>
-                <select name="student_id" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-teal-500 min-w-[150px]">
-                    <option value="">Todos</option>
-                    @foreach($students as $s)
-                        <option value="{{ $s->id }}" @selected($s->id == $studentId)>{{ $s->name }}</option>
-                    @endforeach
-                </select>
+                <div class="relative" @click.outside="studentOpen = false">
+                    <button type="button" @click="studentOpen = !studentOpen"
+                        class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 flex items-center gap-2 min-w-[150px] justify-between focus:outline-none focus:border-teal-500 transition-colors">
+                        <span class="truncate" x-text="studentId ? (students.find(s=>s.id==studentId)?.label ?? 'Todos') : 'Todos'"></span>
+                        <svg class="w-3 h-3 text-slate-400 shrink-0 transition-transform" :class="studentOpen?'rotate-180':''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="studentOpen" x-cloak class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                        <div class="p-1.5 border-b border-slate-700/40">
+                            <input type="text" x-model="studentSearch" @click.stop placeholder="Buscar..." class="w-full bg-slate-800/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500/50">
+                        </div>
+                        <ul class="max-h-40 overflow-y-auto">
+                            <template x-for="s in filteredStudents" :key="s.id">
+                                <li @click="studentId = s.id; studentOpen = false; studentSearch = ''"
+                                    :class="studentId == s.id ? 'bg-teal-600/20 text-teal-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                    class="px-3 py-2 text-xs cursor-pointer transition-colors" x-text="s.label"></li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
+            {{-- Plano --}}
             <div class="flex flex-col gap-1">
                 <label class="text-xs text-slate-400">Plano</label>
-                <select name="plan_id" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-teal-500 min-w-[130px]">
-                    <option value="">Todos</option>
-                    @foreach($plans as $p)
-                        <option value="{{ $p->id }}" @selected($p->id == $planFilter)>{{ $p->name }}</option>
-                    @endforeach
-                </select>
+                <div class="relative" @click.outside="planOpen = false">
+                    <button type="button" @click="planOpen = !planOpen"
+                        class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 flex items-center gap-2 min-w-[130px] justify-between focus:outline-none focus:border-teal-500 transition-colors">
+                        <span class="truncate" x-text="planId ? (plans.find(p=>p.id==planId)?.label ?? 'Todos') : 'Todos'"></span>
+                        <svg class="w-3 h-3 text-slate-400 shrink-0 transition-transform" :class="planOpen?'rotate-180':''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="planOpen" x-cloak class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                        <div class="p-1.5 border-b border-slate-700/40">
+                            <input type="text" x-model="planSearch" @click.stop placeholder="Buscar..." class="w-full bg-slate-800/80 border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500/50">
+                        </div>
+                        <ul class="max-h-40 overflow-y-auto">
+                            <template x-for="p in filteredPlans" :key="p.id">
+                                <li @click="planId = p.id; planOpen = false; planSearch = ''"
+                                    :class="planId == p.id ? 'bg-teal-600/20 text-teal-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                    class="px-3 py-2 text-xs cursor-pointer transition-colors" x-text="p.label"></li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
+            {{-- Status --}}
             <div class="flex flex-col gap-1">
                 <label class="text-xs text-slate-400">Status</label>
-                <select name="status_filter" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-teal-500">
-                    <option value="">Todos</option>
-                    <option value="paid"    @selected($statusFilter=='paid')>Pago</option>
-                    <option value="pending" @selected($statusFilter=='pending')>Pendente</option>
-                    <option value="overdue" @selected($statusFilter=='overdue')>Vencido</option>
-                </select>
+                <div class="relative" @click.outside="statusOpen = false">
+                    <button type="button" @click="statusOpen = !statusOpen"
+                        class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 flex items-center gap-2 min-w-[100px] justify-between focus:outline-none focus:border-teal-500 transition-colors">
+                        <span x-text="statusOpts.find(o=>o.value===statusFilter)?.label ?? 'Todos'"></span>
+                        <svg class="w-3 h-3 text-slate-400 shrink-0 transition-transform" :class="statusOpen?'rotate-180':''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="statusOpen" x-cloak class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                        <ul>
+                            <template x-for="o in statusOpts" :key="o.value">
+                                <li @click="statusFilter = o.value; statusOpen = false"
+                                    :class="statusFilter === o.value ? 'bg-teal-600/20 text-teal-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                    class="px-3 py-2 text-xs cursor-pointer transition-colors" x-text="o.label"></li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             <button type="submit" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors self-end">

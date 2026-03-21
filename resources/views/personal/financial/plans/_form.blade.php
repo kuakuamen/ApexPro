@@ -38,16 +38,36 @@
                     class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
             </div>
 
-            <div x-data="{ periodicity: '{{ $old('periodicity', 'monthly') }}' }">
+            <div x-data="{
+                    periodicity: '{{ $old('periodicity', 'monthly') }}',
+                    periodicityOpen: false,
+                    periodicityOpts: [
+                        {value:'monthly',    label:'Mensal'},
+                        {value:'quarterly',  label:'Trimestral'},
+                        {value:'semiannual', label:'Semestral'},
+                        {value:'annual',     label:'Anual'},
+                        {value:'custom',     label:'Personalizado'}
+                    ]
+                }" @click.outside="periodicityOpen = false">
                 <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Periodicidade *</label>
-                <select name="periodicity" x-model="periodicity" required
-                    class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                    <option value="monthly">Mensal</option>
-                    <option value="quarterly">Trimestral</option>
-                    <option value="semiannual">Semestral</option>
-                    <option value="annual">Anual</option>
-                    <option value="custom">Personalizado</option>
-                </select>
+                <input type="hidden" name="periodicity" :value="periodicity">
+                <div class="relative">
+                    <button type="button" @click="periodicityOpen = !periodicityOpen"
+                        class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm text-slate-100 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-colors">
+                        <span x-text="periodicityOpts.find(o => o.value === periodicity)?.label ?? 'Mensal'"></span>
+                        <svg class="w-4 h-4 text-slate-400 shrink-0 transition-transform" :class="periodicityOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="periodicityOpen" x-cloak class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                        <ul>
+                            <template x-for="o in periodicityOpts" :key="o.value">
+                                <li @click="periodicity = o.value; periodicityOpen = false"
+                                    :class="periodicity === o.value ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                    class="px-4 py-2.5 text-sm cursor-pointer transition-colors" x-text="o.label">
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
                 <div x-show="periodicity === 'custom'" x-cloak class="mt-3">
                     <label class="block text-xs text-slate-400 mb-1">Quantidade de dias *</label>
                     <input type="number" name="custom_days" value="{{ $old('custom_days') }}" min="1"

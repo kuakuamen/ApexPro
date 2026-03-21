@@ -44,12 +44,33 @@
     <div x-data="{
             isEdit: {{ $isEdit ? 'true' : 'false' }},
             periodicity: '{{ $old('periodicity','monthly') }}',
+            periodicityOpen: false,
+            periodicityOpts: [
+                {value:'monthly',    label:'Mensal'},
+                {value:'quarterly',  label:'Trimestral'},
+                {value:'semiannual', label:'Semestral'},
+                {value:'annual',     label:'Anual'},
+                {value:'custom',     label:'Personalizado'}
+            ],
+            statusOpen: false,
+            statusVal: '{{ $isEdit ? $sp->status : 'active' }}',
+            statusOpts: [
+                {value:'active',    label:'Ativo'},
+                {value:'overdue',   label:'Atrasado'},
+                {value:'suspended', label:'Suspenso'}
+            ],
             startDate: '{{ $old('start_date', now()->format('Y-m-d')) }}',
             dueDate: '{{ old('due_date', $defaultDueDate) }}',
             showModal: false,
             payMethod: 'pix',
             skipPayment: false,
             discountType: 'none',
+            discountTypeOpen: false,
+            discountTypeOpts: [
+                {value:'none',    label:'Sem desconto'},
+                {value:'fixed',   label:'R$ fixo'},
+                {value:'percent', label:'Percentual'}
+            ],
             discountValue: '',
 
             init() {
@@ -95,14 +116,55 @@
 
             {{-- Aluno --}}
             @if(!$isEdit)
-            <div>
+            <script>window._fmStudents = {!! json_encode($students->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->values()) !!};</script>
+            <div x-data="{
+                    open: false,
+                    search: '',
+                    selectedId: '{{ old('student_id') }}',
+                    selectedName: '{{ old('student_id') ? addslashes($students->firstWhere('id', old('student_id'))?->name ?? '') : '' }}',
+                    students: window._fmStudents,
+                    get filtered() {
+                        if (!this.search) return this.students;
+                        const q = this.search.toLowerCase();
+                        return this.students.filter(s => s.name.toLowerCase().includes(q));
+                    },
+                    select(s) {
+                        this.selectedId = s.id;
+                        this.selectedName = s.name;
+                        this.search = '';
+                        this.open = false;
+                    }
+                }" @click.outside="open = false">
                 <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Aluno *</label>
-                <select name="student_id" required class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                    <option value="">Selecione o aluno</option>
-                    @foreach($students as $student)
-                        <option value="{{ $student->id }}" {{ old('student_id') == $student->id ? 'selected' : '' }}>{{ $student->name }}</option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="student_id" :value="selectedId" required>
+                <div class="relative">
+                    <button type="button" @click="open = !open"
+                        :class="!selectedId ? 'text-slate-500' : 'text-slate-100'"
+                        class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-colors">
+                        <span x-text="selectedName || 'Selecione o aluno'"></span>
+                        <svg class="w-4 h-4 text-slate-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="open" x-cloak
+                        class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                        <div class="p-2 border-b border-slate-700/40">
+                            <input type="text" x-model="search" @click.stop x-ref="searchInput"
+                                x-init="$watch('open', v => v && $nextTick(() => $refs.searchInput.focus()))"
+                                placeholder="Buscar aluno..."
+                                class="w-full bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                        </div>
+                        <ul class="max-h-48 overflow-y-auto">
+                            <template x-if="filtered.length === 0">
+                                <li class="px-4 py-3 text-sm text-slate-500 text-center">Nenhum aluno encontrado</li>
+                            </template>
+                            <template x-for="s in filtered" :key="s.id">
+                                <li @click="select(s)"
+                                    :class="selectedId == s.id ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                    class="px-4 py-2.5 text-sm cursor-pointer transition-colors" x-text="s.name">
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
             </div>
             @else
             <div class="bg-slate-800/40 rounded-xl px-4 py-3">
@@ -112,16 +174,55 @@
             @endif
 
             {{-- Plano --}}
-            <div>
+            <script>window._fmPlans = {!! json_encode($plans->map(fn($p) => ['id' => $p->id, 'label' => $p->name . ' — R$ ' . number_format($p->price, 2, ',', '.') . ' (' . $p->periodicityLabel() . ')'])->values()) !!};</script>
+            <div x-data="{
+                    open: false,
+                    search: '',
+                    selectedId: '{{ $old('financial_plan_id', $isEdit ? $sp->financial_plan_id : '') }}',
+                    selectedLabel: '{{ collect($plans)->firstWhere('id', $old('financial_plan_id', $isEdit ? $sp->financial_plan_id ?? '' : ''))?->name ?? '' }}',
+                    plans: window._fmPlans,
+                    get filtered() {
+                        if (!this.search) return this.plans;
+                        const q = this.search.toLowerCase();
+                        return this.plans.filter(p => p.label.toLowerCase().includes(q));
+                    },
+                    select(p) {
+                        this.selectedId = p.id;
+                        this.selectedLabel = p.label;
+                        this.search = '';
+                        this.open = false;
+                    }
+                }" @click.outside="open = false">
                 <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Plano *</label>
-                <select name="financial_plan_id" required class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                    <option value="">Selecione o plano</option>
-                    @foreach($plans as $p)
-                        <option value="{{ $p->id }}" {{ $old('financial_plan_id', $isEdit ? $sp->financial_plan_id : '') == $p->id ? 'selected' : '' }}>
-                            {{ $p->name }} — R$ {{ number_format($p->price, 2, ',', '.') }} ({{ $p->periodicityLabel() }})
-                        </option>
-                    @endforeach
-                </select>
+                <input type="hidden" name="financial_plan_id" :value="selectedId" required>
+                <div class="relative">
+                    <button type="button" @click="open = !open"
+                        :class="!selectedId ? 'text-slate-500' : 'text-slate-100'"
+                        class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-colors">
+                        <span x-text="selectedLabel || 'Selecione o plano'"></span>
+                        <svg class="w-4 h-4 text-slate-400 shrink-0 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="open" x-cloak
+                        class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                        <div class="p-2 border-b border-slate-700/40">
+                            <input type="text" x-model="search" @click.stop x-ref="planSearchInput"
+                                x-init="$watch('open', v => v && $nextTick(() => $refs.planSearchInput.focus()))"
+                                placeholder="Buscar plano..."
+                                class="w-full bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                        </div>
+                        <ul class="max-h-48 overflow-y-auto">
+                            <template x-if="filtered.length === 0">
+                                <li class="px-4 py-3 text-sm text-slate-500 text-center">Nenhum plano encontrado</li>
+                            </template>
+                            <template x-for="p in filtered" :key="p.id">
+                                <li @click="select(p)"
+                                    :class="selectedId == p.id ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                    class="px-4 py-2.5 text-sm cursor-pointer transition-colors" x-text="p.label">
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             {{-- Data de Início + Periodicidade --}}
@@ -133,14 +234,24 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Periodicidade *</label>
-                    <select name="periodicity" x-model="periodicity" required
-                        class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                        <option value="monthly">Mensal</option>
-                        <option value="quarterly">Trimestral</option>
-                        <option value="semiannual">Semestral</option>
-                        <option value="annual">Anual</option>
-                        <option value="custom">Personalizado</option>
-                    </select>
+                    <input type="hidden" name="periodicity" :value="periodicity">
+                    <div class="relative" @click.outside="periodicityOpen = false">
+                        <button type="button" @click="periodicityOpen = !periodicityOpen"
+                            class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm text-slate-100 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-colors">
+                            <span x-text="periodicityOpts.find(o => o.value === periodicity)?.label ?? 'Mensal'"></span>
+                            <svg class="w-4 h-4 text-slate-400 shrink-0 transition-transform" :class="periodicityOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="periodicityOpen" x-cloak class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                            <ul>
+                                <template x-for="o in periodicityOpts" :key="o.value">
+                                    <li @click="periodicity = o.value; periodicityOpen = false"
+                                        :class="periodicity === o.value ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                        class="px-4 py-2.5 text-sm cursor-pointer transition-colors" x-text="o.label">
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -163,11 +274,24 @@
             @if($isEdit)
             <div>
                 <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Status *</label>
-                <select name="status" required class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                    <option value="active"    {{ $sp->status === 'active'    ? 'selected' : '' }}>Ativo</option>
-                    <option value="overdue"   {{ $sp->status === 'overdue'   ? 'selected' : '' }}>Atrasado</option>
-                    <option value="suspended" {{ $sp->status === 'suspended' ? 'selected' : '' }}>Suspenso</option>
-                </select>
+                <input type="hidden" name="status" :value="statusVal">
+                <div class="relative" @click.outside="statusOpen = false">
+                    <button type="button" @click="statusOpen = !statusOpen"
+                        class="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm text-slate-100 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-colors">
+                        <span x-text="statusOpts.find(o => o.value === statusVal)?.label ?? 'Ativo'"></span>
+                        <svg class="w-4 h-4 text-slate-400 shrink-0 transition-transform" :class="statusOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="statusOpen" x-cloak class="absolute z-20 mt-1 w-full bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                        <ul>
+                            <template x-for="o in statusOpts" :key="o.value">
+                                <li @click="statusVal = o.value; statusOpen = false"
+                                    :class="statusVal === o.value ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                    class="px-4 py-2.5 text-sm cursor-pointer transition-colors" x-text="o.label">
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
             </div>
             @endif
 
@@ -252,11 +376,22 @@
                 <div class="mb-5">
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Desconto</label>
                     <div class="flex gap-2">
-                        <select x-model="discountType" class="bg-slate-800/60 border border-slate-700/50 rounded-xl px-3 py-2 text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shrink-0">
-                            <option value="none">Sem desconto</option>
-                            <option value="fixed">R$ fixo</option>
-                            <option value="percent">Percentual</option>
-                        </select>
+                        <div class="relative shrink-0" @click.outside="discountTypeOpen = false">
+                            <button type="button" @click="discountTypeOpen = !discountTypeOpen"
+                                class="bg-slate-800/60 border border-slate-700/50 rounded-xl px-3 py-2 text-xs text-slate-100 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-colors whitespace-nowrap">
+                                <span x-text="discountTypeOpts.find(o => o.value === discountType)?.label ?? 'Sem desconto'"></span>
+                                <svg class="w-3 h-3 text-slate-400 transition-transform" :class="discountTypeOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div x-show="discountTypeOpen" x-cloak class="absolute z-30 mt-1 w-36 bg-[#0f1a2e] border border-slate-700/60 rounded-xl shadow-2xl overflow-hidden">
+                                <ul>
+                                    <template x-for="o in discountTypeOpts" :key="o.value">
+                                        <li @click="discountType = o.value; discountTypeOpen = false"
+                                            :class="discountType === o.value ? 'bg-emerald-600/20 text-emerald-300' : 'text-slate-200 hover:bg-slate-700/50'"
+                                            class="px-3 py-2 text-xs cursor-pointer transition-colors" x-text="o.label"></li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </div>
                         <input x-show="discountType !== 'none'" x-cloak
                             type="number" min="0" step="0.01"
                             x-model="discountValue"

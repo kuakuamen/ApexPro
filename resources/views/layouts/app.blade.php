@@ -13,6 +13,7 @@
     <link rel="manifest" href="{{ asset('site.webmanifest') }}">
     <meta name="theme-color" content="#06b6d4">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         html, body {
             margin: 0;
@@ -32,6 +33,30 @@
             height: 0;
             display: none;
         }
+        /* ── Flatpickr dark theme override ── */
+        .flatpickr-calendar { background:#0f1a2e; border:1px solid rgba(100,116,139,.35); border-radius:14px; box-shadow:0 20px 40px rgba(0,0,0,.5); padding:6px; font-family:inherit; }
+        .flatpickr-calendar.arrowTop:before,.flatpickr-calendar.arrowTop:after { display:none; }
+        .flatpickr-months { padding:4px 0 2px; }
+        .flatpickr-months .flatpickr-month { color:#e2e8f0; height:36px; }
+        .flatpickr-current-month { font-size:.85rem; font-weight:600; color:#e2e8f0; padding-top:5px; }
+        .flatpickr-current-month .flatpickr-monthDropdown-months { background:#0f1a2e; color:#e2e8f0; font-weight:600; }
+        .flatpickr-current-month input.cur-year { color:#e2e8f0; font-weight:600; }
+        .flatpickr-prev-month,.flatpickr-next-month { color:#94a3b8 !important; fill:#94a3b8 !important; padding:6px 10px; }
+        .flatpickr-prev-month:hover,.flatpickr-next-month:hover { color:#e2e8f0 !important; fill:#e2e8f0 !important; }
+        .flatpickr-weekdays { background:transparent; }
+        span.flatpickr-weekday { background:transparent; color:#64748b; font-size:.7rem; font-weight:600; text-transform:uppercase; }
+        .flatpickr-day { color:#cbd5e1; border-radius:8px; height:34px; line-height:34px; }
+        .flatpickr-day:hover { background:rgba(100,116,139,.2); border-color:transparent; color:#e2e8f0; }
+        .flatpickr-day.today { border-color:#14b8a6; color:#14b8a6; font-weight:600; }
+        .flatpickr-day.today:hover { background:rgba(20,184,166,.15); }
+        .flatpickr-day.selected,.flatpickr-day.selected:hover { background:#0d9488; border-color:#0d9488; color:#fff; font-weight:600; }
+        .flatpickr-day.flatpickr-disabled,.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay { color:#334155; }
+        .flatpickr-innerContainer { border:none; }
+        .flatpickr-rContainer { width:100%; }
+        .flatpickr-days,.dayContainer { width:100% !important; min-width:unset; max-width:unset; }
+        .numInputWrapper:hover { background:transparent; }
+        .numInputWrapper span { border-color:rgba(100,116,139,.3); }
+        .numInputWrapper span svg path { fill:#94a3b8; }
     </style>
 </head>
 <body class="{{ auth()->check() ? 'bg-personal-dark' : 'bg-stone-100' }} font-sans antialiased" x-data="{ sidebarOpen: false }">
@@ -328,6 +353,38 @@
             },
         };
     }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        function initDatepickers(root) {
+            (root || document).querySelectorAll('input[type="date"]:not(.flatpickr-input)').forEach(function (el) {
+                var val = el.value;
+                flatpickr(el, {
+                    locale: 'pt',
+                    dateFormat: 'Y-m-d',
+                    defaultDate: val || null,
+                    allowInput: true,
+                    disableMobile: true,
+                    onChange: function(dates, dateStr) {
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            });
+        }
+        initDatepickers();
+        // Re-init when Alpine adds new elements (modals, x-show etc.)
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(m) {
+                m.addedNodes.forEach(function(n) {
+                    if (n.nodeType === 1) initDatepickers(n);
+                });
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
     </script>
 </body>
 </html>

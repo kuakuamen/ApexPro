@@ -273,7 +273,17 @@
                             name="skip_skinfold_protocol"
                             type="checkbox"
                             value="1"
-                            {{ old('skip_skinfold_protocol', empty($measurement->selected_protocol)) ? 'checked' : '' }}
+                            {{ old('skip_skinfold_protocol',
+                                empty($measurement->subescapular) &&
+                                empty($measurement->tricipital) &&
+                                empty($measurement->bicipital) &&
+                                empty($measurement->toracica) &&
+                                empty($measurement->abdominal_fold) &&
+                                empty($measurement->axilar_media) &&
+                                empty($measurement->suprailiaca) &&
+                                empty($measurement->coxa_fold) &&
+                                empty($measurement->panturrilha_fold)
+                            ) ? 'checked' : '' }}
                             class="ios-skinfold-switch"
                         >
                         <span class="ios-skinfold-track">
