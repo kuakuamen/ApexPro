@@ -189,8 +189,8 @@
 
     <!-- Footer -->
     <div class="mt-16 text-center border-t border-gray-700 pt-6 pb-8">
-        <p class="text-xs text-gray-500 mb-1">Este documento foi gerado automaticamente pelo sistema FitManager AI.</p>
-        <p class="text-xs text-gray-600">© {{ date('Y') }} FitManager - Todos os direitos reservados.</p>
+        <p class="text-xs text-gray-500 mb-1">Este documento foi gerado automaticamente pelo sistema ApexPro AI.</p>
+        <p class="text-xs text-gray-600">© {{ date('Y') }} ApexPro - Todos os direitos reservados.</p>
     </div>
 
     <script>

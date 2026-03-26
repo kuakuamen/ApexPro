@@ -166,7 +166,7 @@
 @endif
 
 <div class="footer">
-    FitManager — Relatório gerado automaticamente em {{ now()->format('d/m/Y \à\s H:i') }}
+    ApexPro — Relatório gerado automaticamente em {{ now()->format('d/m/Y \à\s H:i') }}
 </div>
 
 </body>

@@ -347,7 +347,7 @@
     <div class="bg-gray-800/50 backdrop-blur-sm border-t border-gray-700 px-6 py-4">
         <div class="flex justify-between items-center">
             <div class="text-sm text-gray-400">
-                <p>© {{ date('Y') }} FitManager - Todos os direitos reservados</p>
+                <p>© {{ date('Y') }} ApexPro - Todos os direitos reservados</p>
             </div>
             <div class="text-sm text-gray-400">
                 <p>Desenvolvido com ❤️ para personal trainers</p>
