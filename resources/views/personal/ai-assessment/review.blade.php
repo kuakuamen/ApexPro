@@ -230,12 +230,73 @@
         const originalTarget = form.target;
         
         form.action = "{{ route('personal.ai-assessment.pdf') }}";
-        form.target = "_blank"; // Abre em nova aba
+        form.target = "_blank";
         form.submit();
-        
-        // Restaura o formulário
         form.action = originalAction;
         form.target = originalTarget;
     }
+</script>
+
+<!-- Loading Overlay (Refinar) -->
+<div id="refine-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+    <div class="text-center max-w-md mx-auto p-6">
+        <div class="relative w-24 h-24 mx-auto mb-8">
+            <div class="absolute inset-0 border-t-4 border-indigo-500 border-solid rounded-full animate-spin"></div>
+            <div class="absolute inset-2 border-t-4 border-purple-500 border-solid rounded-full" style="animation: spin-reverse 1s linear infinite;"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <svg class="w-8 h-8 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+            </div>
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-2 animate-pulse">Refinando com IA...</h3>
+        <p id="refine-message" class="text-gray-300 text-lg transition-all duration-300">Processando seu feedback...</p>
+        <div class="w-full bg-gray-700 rounded-full h-2.5 mt-6 overflow-hidden">
+            <div id="refine-progress" class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+        <p class="text-sm text-gray-500 mt-4">Por favor, não feche esta janela.</p>
+    </div>
+</div>
+
+<style>
+    @keyframes spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const refineForm = document.querySelector('form[action*="refine"]');
+        if (!refineForm) return;
+
+        const overlay     = document.getElementById('refine-overlay');
+        const messageEl   = document.getElementById('refine-message');
+        const progressEl  = document.getElementById('refine-progress');
+        const messages = [
+            "Processando seu feedback...",
+            "Ajustando recomendações posturais...",
+            "Recalculando proporções musculares...",
+            "Gerando novos exercícios...",
+            "Finalizando análise refinada..."
+        ];
+
+        refineForm.addEventListener('submit', function () {
+            overlay.classList.remove('hidden');
+            void overlay.offsetWidth;
+            overlay.classList.remove('opacity-0');
+
+            let progress = 0, messageIndex = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 5;
+                if (progress > 95) progress = 95;
+                progressEl.style.width = `${progress}%`;
+                const newIndex = Math.floor(progress / 20);
+                if (newIndex !== messageIndex && newIndex < messages.length) {
+                    messageIndex = newIndex;
+                    messageEl.style.opacity = '0';
+                    setTimeout(() => { messageEl.textContent = messages[messageIndex]; messageEl.style.opacity = '1'; }, 300);
+                }
+            }, 500);
+            setTimeout(() => clearInterval(interval), 30000);
+        });
+    });
 </script>
 @endsection
