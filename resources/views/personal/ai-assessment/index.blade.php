@@ -443,10 +443,6 @@
                 }, 500);
                 setTimeout(() => {
                     clearInterval(interval);
-                    if (!document.hidden) {
-                        messageEl.textContent = "O processamento está demorando mais que o esperado...";
-                        messageEl.classList.add('text-yellow-400');
-                    }
                 }, 30000);
             });
         });
