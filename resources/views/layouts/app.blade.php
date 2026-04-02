@@ -185,12 +185,20 @@
             <div class="border-t bg-[#0b1220] p-4" style="border-top-color: rgba(51, 65, 85, 0.65);">
                 <div class="flex items-center gap-3">
                     <div class="flex-shrink-0">
-                        <div class="h-10 w-10 rounded-full bg-cyan-500/15 flex items-center justify-center text-cyan-200 font-semibold text-base border border-cyan-400/30">
-                            {{ substr(auth()->user()->name, 0, 1) }}
-                        </div>
+                        @if(auth()->user()->profile_photo_url)
+                            <img src="{{ auth()->user()->profile_photo_url }}" alt="Foto de perfil de {{ auth()->user()->name }}" class="h-10 w-10 rounded-full object-cover border border-cyan-400/30 shadow-lg shadow-cyan-950/30">
+                        @else
+                            <div class="h-10 w-10 rounded-full bg-cyan-500/15 flex items-center justify-center text-cyan-200 font-semibold text-base border border-cyan-400/30">
+                                {{ substr(auth()->user()->name, 0, 1) }}
+                            </div>
+                        @endif
                     </div>
                     <div class="flex-1 min-w-0">
+                        @if(auth()->user()->role === 'personal')
+                        <a href="{{ route('personal.profile') }}" class="text-sm font-medium text-slate-100 hover:text-cyan-300 transition-colors truncate block">{{ auth()->user()->name }}</a>
+                        @else
                         <p class="text-sm font-medium text-slate-100 truncate">{{ auth()->user()->name }}</p>
+                        @endif
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" class="text-xs font-medium text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1 mt-0.5">

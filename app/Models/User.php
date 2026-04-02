@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -42,7 +43,9 @@ class User extends Authenticatable
         'max_students',
         'subscription_expires_at',
         'plan_name',
+        'mp_customer_id',
         'assessment_frequency',
+        'profile_photo_path',
         // 'injuries', 'medications', 'surgeries', 'availability_time', 'frequency' // Removidos conforme solicitado
     ];
 // ... (resto do arquivo igual)
@@ -120,5 +123,31 @@ class User extends Authenticatable
     public function studentPlan()
     {
         return $this->hasOne(StudentPlan::class, 'student_id');
+    }
+
+    public function professionalSubscription()
+    {
+        return $this->hasOne(ProfessionalSubscription::class);
+    }
+
+    public function subscriptionTransactions()
+    {
+        return $this->hasMany(SubscriptionTransaction::class);
+    }
+
+    public function hasActiveSubscription(): bool
+    {
+        $sub = $this->professionalSubscription;
+        if (!$sub) return false;
+        return $sub->isActive() || $sub->isInGrace();
+    }
+
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        if (empty($this->profile_photo_path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->profile_photo_path);
     }
 }

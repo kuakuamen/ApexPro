@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use App\Rules\Cpf;
+use App\Http\Controllers\SubscriptionController;
 
 class PersonalController extends Controller
 {
@@ -93,6 +95,8 @@ class PersonalController extends Controller
             ->take(5)
             ->values();
 
+        $subscriptionPlans = app(SubscriptionController::class)->getPlans();
+
         return view('personal.dashboard', compact(
             'students',
             'totalStudents',
@@ -101,7 +105,8 @@ class PersonalController extends Controller
             'pendingAssessmentsCount',
             'pendingAssessmentsList',
             'studentsWithoutAssessmentCount',
-            'studentsWithoutFirstAssessmentList'
+            'studentsWithoutFirstAssessmentList',
+            'subscriptionPlans'
         ));
     }
 
@@ -121,6 +126,64 @@ class PersonalController extends Controller
             ->get();
 
         return view('personal.students.index', compact('students'));
+    }
+
+    // ── Perfil do Personal ────────────────────────────────────────────────────
+
+    public function showProfile()
+    {
+        return view('personal.profile', ['user' => Auth::user()]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name'                 => ['required', 'string', 'max:255'],
+            'email'                => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone'                => ['nullable', 'string', 'max:20'],
+            'birth_date'           => ['nullable', 'date'],
+            'gender'               => ['nullable', 'in:M,F,O'],
+            'cpf'                  => ['nullable', 'string', 'max:14'],
+            'profession'           => ['nullable', 'string', 'max:255'],
+            'cref'                 => ['nullable', 'string', 'max:30'],
+            'address_cep'          => ['nullable', 'string', 'max:9'],
+            'address_street'       => ['nullable', 'string', 'max:255'],
+            'address_number'       => ['nullable', 'string', 'max:30'],
+            'address_neighborhood' => ['nullable', 'string', 'max:255'],
+            'address_city'         => ['nullable', 'string', 'max:255'],
+            'address_state'        => ['nullable', 'string', 'max:2'],
+            'password'             => ['nullable', 'string', 'min:8', 'confirmed'],
+            'profile_photo'        => ['nullable', 'image', 'max:5120'],
+            'remove_profile_photo' => ['nullable', 'boolean'],
+        ]);
+
+        $data = collect($validated)
+            ->except('password', 'password_confirmation', 'profile_photo', 'remove_profile_photo')
+            ->toArray();
+
+        if (!empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
+        }
+
+        if (!empty($validated['remove_profile_photo']) && !empty($user->profile_photo_path)) {
+            Storage::disk('public')->delete($user->profile_photo_path);
+            $data['profile_photo_path'] = null;
+        }
+
+        if ($request->hasFile('profile_photo')) {
+            if (!empty($user->profile_photo_path)) {
+                Storage::disk('public')->delete($user->profile_photo_path);
+            }
+
+            $data['profile_photo_path'] = $request->file('profile_photo')->store('profile-photos', 'public');
+        }
+
+        $user->update($data);
+
+        return redirect()->route('personal.profile')->with('success', 'Perfil atualizado com sucesso!');
     }
 
     /**
@@ -314,31 +377,56 @@ class PersonalController extends Controller
             ->with('success', 'Perfil do aluno atualizado com sucesso!');
     }
 
+    public function updateStudentPhoto(Request $request, User $student)
+    {
+        $this->validateStudentBelongsToPersonal($student);
+
+        $validated = $request->validate([
+            'profile_photo' => ['required', 'image', 'max:5120'],
+        ]);
+
+        if (!empty($student->profile_photo_path)) {
+            Storage::disk('public')->delete($student->profile_photo_path);
+        }
+
+        $student->update([
+            'profile_photo_path' => $request->file('profile_photo')->store('profile-photos', 'public'),
+        ]);
+
+        return redirect()->route('personal.students.show', $student)
+            ->with('success', 'Foto do aluno atualizada com sucesso!');
+    }
+
     /**
      * Perfil do Aluno (Visão do Personal).
      */
     public function showStudent(User $student)
     {
-        // Verificar se o aluno pertence a este personal
         $this->validateStudentBelongsToPersonal($student);
 
-        // Carregar dados relacionados
         $measurements = BodyMeasurement::where('student_id', $student->id)->latest()->get();
         $workouts = $student->workoutPlans()->latest()->get();
         $diets = $student->dietPlans()->latest()->get();
 
-        // Dados para os gráficos de evolução (ordem cronológica)
         $measurementsChronological = BodyMeasurement::where('student_id', $student->id)
             ->orderBy('date')
             ->get();
-        $evolutionDates       = $measurementsChronological->pluck('date')->map(fn($d) => $d ? $d->format('d/m/Y') : null)->filter()->values()->toArray();
-        $evolutionWeights     = $measurementsChronological->pluck('weight')->toArray();
+        $evolutionDates        = $measurementsChronological->pluck('date')->map(fn($d) => $d ? $d->format('d/m/Y') : null)->filter()->values()->toArray();
+        $evolutionWeights      = $measurementsChronological->pluck('weight')->toArray();
         $evolutionMuscleMasses = $measurementsChronological->pluck('muscle_mass')->toArray();
-        $evolutionBodyFats    = $measurementsChronological->pluck('body_fat')->toArray();
+        $evolutionBodyFats     = $measurementsChronological->pluck('body_fat')->toArray();
+
+        $aiAssessments = \App\Models\Assessment::where('student_id', $student->id)
+            ->where('personal_id', auth()->id())
+            ->where('status', 'approved')
+            ->with('workoutPlan')
+            ->latest()
+            ->get();
 
         return view('personal.students.show', compact(
             'student', 'measurements', 'workouts', 'diets',
-            'measurementsChronological', 'evolutionDates', 'evolutionWeights', 'evolutionMuscleMasses', 'evolutionBodyFats'
+            'measurementsChronological', 'evolutionDates', 'evolutionWeights', 'evolutionMuscleMasses', 'evolutionBodyFats',
+            'aiAssessments'
         ));
     }
 
@@ -930,7 +1018,7 @@ class PersonalController extends Controller
     public function evolutionIndex()
     {
         $user = Auth::user();
-        $students = $user->students()->orderBy('users.name')->get(['users.id', 'users.name']);
+        $students = $user->students()->orderBy('users.name')->get(['users.id', 'users.name', 'users.profile_photo_path']);
         return view('personal.evolution.index', compact('students'));
     }
 

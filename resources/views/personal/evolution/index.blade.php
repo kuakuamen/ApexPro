@@ -40,14 +40,18 @@
             @forelse($students as $student)
             <button
                 type="button"
-                @click="selectStudent({{ $student->id }}, '{{ addslashes($student->name) }}')"
+                @click="selectStudent({{ $student->id }}, '{{ addslashes($student->name) }}', '{{ $student->profile_photo_url ?? '' }}')"
                 :class="selectedId === {{ $student->id }} ? 'bg-cyan-500/15 border-cyan-400/60 text-cyan-100' : 'bg-slate-800/40 border-slate-700/40 text-slate-300 hover:bg-slate-700/50 hover:text-slate-100'"
                 x-show="search === '' || '{{ strtolower($student->name) }}'.includes(search.toLowerCase())"
                 class="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all duration-150 text-left"
             >
-                <div class="w-7 h-7 rounded-full bg-cyan-500/15 flex items-center justify-center text-cyan-200 font-semibold text-xs shrink-0 border border-cyan-400/20">
-                    {{ strtoupper(substr($student->name, 0, 1)) }}
-                </div>
+                @if($student->profile_photo_url)
+                    <img src="{{ $student->profile_photo_url }}" alt="Foto de {{ $student->name }}" class="w-7 h-7 rounded-full object-cover shrink-0 border border-cyan-400/20">
+                @else
+                    <div class="w-7 h-7 rounded-full bg-cyan-500/15 flex items-center justify-center text-cyan-200 font-semibold text-xs shrink-0 border border-cyan-400/20">
+                        {{ strtoupper(substr($student->name, 0, 1)) }}
+                    </div>
+                @endif
                 <span class="truncate">{{ $student->name }}</span>
             </button>
             @empty
@@ -81,7 +85,12 @@
 
         <!-- Nome do aluno -->
         <div class="flex items-center gap-2 pt-1">
-            <div class="w-9 h-9 rounded-full bg-cyan-500/15 flex items-center justify-center text-cyan-200 font-bold text-sm border border-cyan-400/20" x-text="selectedName.charAt(0).toUpperCase()"></div>
+            <template x-if="selectedPhoto">
+                <img :src="selectedPhoto" :alt="'Foto de ' + selectedName" class="w-9 h-9 rounded-full object-cover border border-cyan-400/20">
+            </template>
+            <template x-if="!selectedPhoto">
+                <div class="w-9 h-9 rounded-full bg-cyan-500/15 flex items-center justify-center text-cyan-200 font-bold text-sm border border-cyan-400/20" x-text="selectedName.charAt(0).toUpperCase()"></div>
+            </template>
             <h2 class="text-lg font-semibold text-slate-100" x-text="selectedName"></h2>
             <span class="ml-auto text-xs text-slate-500" x-text="summary ? summary.total + ' registros' : ''"></span>
         </div>
@@ -329,6 +338,7 @@ function evolutionPage() {
         search: '',
         selectedId: null,
         selectedName: '',
+        selectedPhoto: '',
         loading: false,
         noData: false,
         summary: null,
@@ -340,10 +350,11 @@ function evolutionPage() {
 
         init() {},
 
-        selectStudent(id, name) {
+        selectStudent(id, name, photo) {
             if (this.selectedId === id) return;
             this.selectedId = id;
             this.selectedName = name;
+            this.selectedPhoto = photo || '';
             this.loadData(id);
         },
 

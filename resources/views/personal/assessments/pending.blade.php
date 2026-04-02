@@ -40,9 +40,13 @@
                 <div class="relative bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-md hover:shadow-indigo-500/20 hover:border-indigo-500 transition-all duration-300 group p-5 flex flex-col h-full">
                     
                     <div class="flex items-center mb-4">
-                        <div class="flex-shrink-0 h-14 w-14 rounded-full bg-gray-700 border-2 border-gray-600 flex items-center justify-center text-indigo-400 font-bold text-2xl">
-                            {{ substr($student->name, 0, 1) }}
-                        </div>
+                        @if($student->profile_photo_url)
+                            <img src="{{ $student->profile_photo_url }}" alt="Foto de {{ $student->name }}" class="flex-shrink-0 h-14 w-14 rounded-full object-cover border-2 border-gray-600 shadow-lg">
+                        @else
+                            <div class="flex-shrink-0 h-14 w-14 rounded-full bg-gray-700 border-2 border-gray-600 flex items-center justify-center text-indigo-400 font-bold text-2xl">
+                                {{ substr($student->name, 0, 1) }}
+                            </div>
+                        @endif
                         <div class="ml-4 truncate">
                             <a href="{{ route('personal.students.show', $student) }}" class="text-lg font-bold text-white truncate group-hover:text-indigo-400 transition-colors block hover:text-indigo-300">
                                 {{ $student->name }}

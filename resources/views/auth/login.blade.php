@@ -98,19 +98,13 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center">
                         <div class="flex items-center">
                             <input id="remember" name="remember" type="checkbox" @checked(old('remember', true)) 
                                 class="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-600 rounded bg-gray-700">
                             <label for="remember" class="ml-2 block text-sm text-gray-300">
                                 Lembrar de mim
                             </label>
-                        </div>
-
-                        <div class="text-sm">
-                            <a href="#" class="font-medium text-cyan-400 hover:text-cyan-300 transition-colors">
-                                Esqueceu a senha?
-                            </a>
                         </div>
                     </div>
 

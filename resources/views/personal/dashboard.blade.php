@@ -80,6 +80,141 @@
         </div>
     </div>
 
+    {{-- Card Minha Assinatura --}}
+    @php
+        $sub = auth()->user()->professionalSubscription;
+        $showPixRenew = $sub && in_array($sub->status, ['active','overdue']) &&
+            ($sub->last_payment_method === 'pix' || ($sub->expires_at && $sub->expires_at->diffInDays(now(), false) >= -7));
+    @endphp
+    @if($sub)
+    <div class="rounded-2xl border border-gray-700 bg-gray-800/50 backdrop-blur-md p-6 shadow-lg">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="p-3 rounded-xl bg-teal-500/10 text-teal-400">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                </div>
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wide text-gray-400">Minha Assinatura</p>
+                    <p class="mt-0.5 text-base font-bold text-white">{{ $sub->plan_name }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">
+                        @if($sub->status === 'active')
+                            <span class="text-green-400 font-semibold">Ativa</span>
+                            &mdash; vence em {{ $sub->expires_at ? $sub->expires_at->format('d/m/Y') : '—' }}
+                        @elseif($sub->status === 'cancelled')
+                            <span class="text-red-400 font-semibold">Cancelada</span>
+                            @if($sub->expires_at && $sub->expires_at->isFuture())
+                                &mdash; acesso até {{ $sub->expires_at->format('d/m/Y') }}
+                            @endif
+                        @elseif($sub->status === 'overdue')
+                            <span class="text-yellow-400 font-semibold">Vencida</span>
+                        @else
+                            <span class="text-gray-400 font-semibold">{{ ucfirst($sub->status) }}</span>
+                        @endif
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <a href="{{ route('subscription.history') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-gray-600 bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-white px-4 py-2 text-sm font-medium transition-all">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    Histórico
+                </a>
+
+                @if(in_array($sub->status, ['active','overdue']))
+                    {{-- Renovar com PIX (só quando assinou via PIX ou está vencendo em ≤7 dias) --}}
+                    @if($showPixRenew)
+                    <form method="POST" action="{{ route('subscription.renew.process', $sub->plan_id) }}">
+                        @csrf
+                        <input type="hidden" name="payment_method" value="pix">
+                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 px-4 py-2 text-sm font-medium transition-all">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M11.354 2.646a1 1 0 011.292 0l8 7A1 1 0 0121 11v9a1 1 0 01-1 1h-5v-5H9v5H4a1 1 0 01-1-1v-9a1 1 0 01.354-.762l8-6.592z"/></svg>
+                            Renovar com PIX
+                        </button>
+                    </form>
+                    @endif
+
+                    {{-- Mudar Plano --}}
+                    <button onclick="document.getElementById('modal-change-plan').classList.remove('hidden')"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 px-4 py-2 text-sm font-medium transition-all">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                        Mudar Plano
+                    </button>
+
+                    {{-- Cancelar --}}
+                    @if($sub->status === 'active')
+                    <button onclick="document.getElementById('modal-cancel-sub').classList.remove('hidden')"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 px-4 py-2 text-sm font-medium transition-all">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Cancelar Plano
+                    </button>
+                    @endif
+                @endif
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal: Mudar Plano --}}
+    <div id="modal-change-plan" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 py-8 overflow-y-auto">
+        <div class="w-full max-w-3xl rounded-2xl border border-gray-700 bg-gray-900 p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-white">Escolher Plano</h3>
+                <button onclick="document.getElementById('modal-change-plan').classList.add('hidden')" class="text-gray-500 hover:text-gray-300 transition-colors">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                @foreach($subscriptionPlans as $plan)
+                <div class="rounded-xl border {{ $sub->plan_id === $plan['id'] ? 'border-teal-500/50 bg-teal-500/5' : 'border-gray-700 bg-gray-800/50' }} p-5 flex flex-col gap-4">
+                    <div>
+                        @if($sub->plan_id === $plan['id'])
+                            <span class="inline-block mb-2 text-xs font-bold text-teal-400 uppercase tracking-wide">Plano atual</span>
+                        @endif
+                        <p class="font-bold text-white">{{ $plan['name'] }}</p>
+                        <p class="text-2xl font-extrabold text-white mt-1">R$ {{ number_format($plan['price'], 2, ',', '.') }}<span class="text-sm font-normal text-gray-400">/mês</span></p>
+                        <p class="text-xs text-gray-400 mt-1">Até {{ $plan['max_students'] }} alunos</p>
+                    </div>
+                    <div class="flex flex-col gap-2 mt-auto">
+                        <a href="{{ route('subscription.renew.checkout', $plan['id']) }}?method=pix"
+                            class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 px-3 py-2 text-sm font-medium transition-all">
+                            <svg class="h-4 w-4" viewBox="0 0 512 512" fill="currentColor"><path d="M242.4 292.5C247.8 287.1 256.1 287.1 261.5 292.5L353.6 384.6C368.7 399.7 368.7 424.6 353.6 439.7C338.5 454.8 313.6 454.8 298.5 439.7L256 397.3L213.5 439.7C198.4 454.8 173.5 454.8 158.4 439.7C143.3 424.6 143.3 399.7 158.4 384.6L250.5 292.5C250.5 292.5 242.4 292.5 242.4 292.5zM261.5 219.5C256.1 224.9 247.8 224.9 242.4 219.5L150.3 127.4C135.2 112.3 135.2 87.4 150.3 72.3C165.4 57.2 190.3 57.2 205.4 72.3L247.9 114.7L290.4 72.3C305.5 57.2 330.4 57.2 345.5 72.3C360.6 87.4 360.6 112.3 345.5 127.4L253.4 219.5C253.4 219.5 261.5 219.5 261.5 219.5z"/></svg>
+                            Pagar com PIX
+                        </a>
+                        <a href="{{ route('subscription.renew.checkout', $plan['id']) }}?method=credit_card"
+                            class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 px-3 py-2 text-sm font-medium transition-all">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                            Pagar com Cartão
+                        </a>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            <p class="mt-4 text-xs text-gray-500 text-center">Ao mudar de plano, o novo período começa imediatamente após o pagamento.</p>
+        </div>
+    </div>
+
+    {{-- Modal de confirmação de cancelamento --}}
+    <div id="modal-cancel-sub" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+        <div class="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-900 p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-white">Cancelar assinatura?</h3>
+            <p class="mt-2 text-sm text-gray-400">
+                Seu acesso permanece ativo até <strong class="text-white">{{ $sub->expires_at ? $sub->expires_at->format('d/m/Y') : 'o fim do período' }}</strong>.
+                Após essa data, o sistema será bloqueado e <strong class="text-red-400">não haverá cobranças futuras</strong>.
+            </p>
+            <div class="mt-6 flex gap-3 justify-end">
+                <button onclick="document.getElementById('modal-cancel-sub').classList.add('hidden')"
+                    class="rounded-lg border border-gray-600 bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 px-4 py-2 text-sm font-medium transition-all">
+                    Voltar
+                </button>
+                <form method="POST" action="{{ route('subscription.cancel') }}">
+                    @csrf
+                    <button type="submit" class="rounded-lg bg-red-600 hover:bg-red-500 text-white px-4 py-2 text-sm font-semibold transition-all">
+                        Confirmar Cancelamento
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @if($students->isEmpty())
         <section class="rounded-2xl border border-dashed border-teal-800/50 bg-gray-800/30 p-12 text-center">
             <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-teal-900/30 text-teal-500 mb-4">
@@ -110,9 +245,13 @@
                         <a href="{{ route('personal.students.show', $student) }}" class="group block px-6 py-4 hover:bg-gray-700/30 transition-colors">
                             <div class="flex items-center justify-between gap-4">
                                 <div class="flex items-center gap-4 min-w-0">
-                                    <div class="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg">
-                                        {{ substr($student->name, 0, 1) }}
-                                    </div>
+                                    @if($student->profile_photo_url)
+                                        <img src="{{ $student->profile_photo_url }}" alt="Foto de {{ $student->name }}" class="h-10 w-10 rounded-full object-cover border border-white/10 shadow-lg">
+                                    @else
+                                        <div class="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg">
+                                            {{ substr($student->name, 0, 1) }}
+                                        </div>
+                                    @endif
                                     <div class="min-w-0">
                                         <p class="truncate text-sm font-bold text-white group-hover:text-teal-400 transition-colors">{{ $student->name }}</p>
                                         <p class="text-xs text-gray-500">

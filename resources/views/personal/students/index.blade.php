@@ -40,9 +40,13 @@
 
                     <div class="p-6 pb-0 flex-grow">
                         <div class="flex items-center mb-6">
-                            <div class="flex-shrink-0 h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-4 ring-gray-800/50">
-                                {{ substr($student->name, 0, 1) }}
-                            </div>
+                            @if($student->profile_photo_url)
+                                <img src="{{ $student->profile_photo_url }}" alt="Foto de {{ $student->name }}" class="flex-shrink-0 h-16 w-16 rounded-full object-cover shadow-lg ring-4 ring-gray-800/50 border border-white/10">
+                            @else
+                                <div class="flex-shrink-0 h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-4 ring-gray-800/50">
+                                    {{ substr($student->name, 0, 1) }}
+                                </div>
+                            @endif
                             <div class="ml-4 min-w-0 flex-1">
                                 <a href="{{ route('personal.students.show', $student) }}" class="text-lg font-bold text-white truncate group-hover:text-indigo-400 transition-colors block">
                                     {{ $student->name }}

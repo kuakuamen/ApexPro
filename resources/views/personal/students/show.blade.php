@@ -11,9 +11,23 @@
             <div class="flex items-center gap-6">
                 <!-- Avatar -->
                 <div class="relative flex-shrink-0">
-                    <div class="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl sm:text-4xl shadow-2xl ring-4 ring-gray-800/50">
-                        {{ substr($student->name, 0, 1) }}
-                    </div>
+                    <form action="{{ route('personal.students.photo', $student) }}" method="POST" enctype="multipart/form-data" id="student-photo-form" class="contents">
+                        @csrf
+                        @method('PATCH')
+                        <input type="file" name="profile_photo" id="student-profile-photo-input" accept="image/*" class="hidden">
+                    </form>
+
+                    @if($student->profile_photo_url)
+                        <img src="{{ $student->profile_photo_url }}" alt="Foto de perfil de {{ $student->name }}" class="h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover shadow-2xl ring-4 ring-gray-800/50">
+                    @else
+                        <div class="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl sm:text-4xl shadow-2xl ring-4 ring-gray-800/50">
+                            {{ substr($student->name, 0, 1) }}
+                        </div>
+                    @endif
+
+                    <button type="button" id="student-photo-trigger" class="absolute -top-1 -right-1 inline-flex h-9 w-9 items-center justify-center rounded-full border border-indigo-400/30 bg-gray-900/95 text-indigo-300 shadow-lg transition hover:border-indigo-300 hover:text-white hover:bg-indigo-600" title="Alterar foto do aluno">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.768-6.768a2.5 2.5 0 113.536 3.536L12.536 16.536A4 4 0 019.707 17.707L6 19l1.293-3.707A4 4 0 018.464 12.536z"></path></svg>
+                    </button>
                     <div class="absolute bottom-1 right-1">
                         <span class="flex h-4 w-4 sm:h-5 sm:w-5 relative">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 {{ $student->is_active ? 'bg-green-400' : 'bg-red-400' }}"></span>
@@ -122,6 +136,15 @@
                         class="whitespace-nowrap py-4 border-b-2 font-medium text-sm transition-all duration-200">
                     Comparativo
                 </button>
+                @if($aiAssessments->isNotEmpty())
+                <button @click="activeTab = 'ai_assessments'"
+                        :class="activeTab === 'ai_assessments' ? 'border-purple-500 text-purple-400' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-600'"
+                        class="whitespace-nowrap py-4 border-b-2 font-medium text-sm transition-all duration-200 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Avaliações IA
+                    <span class="bg-purple-600/30 text-purple-300 text-xs rounded-full px-1.5 py-0.5">{{ $aiAssessments->count() }}</span>
+                </button>
+                @endif
 
             </nav>
         </div>
@@ -199,16 +222,26 @@
                                         height: '{{ $measurement->height }}',
                                         body_fat: '{{ $measurement->body_fat }}',
                                         muscle_mass: '{{ $measurement->muscle_mass }}',
-                                        chest: '{{ $measurement->chest }}',
-                                        left_arm: '{{ $measurement->left_arm }}',
-                                        right_arm: '{{ $measurement->right_arm }}',
+                                        ombro: '{{ $measurement->ombro }}',
+                                        torax: '{{ $measurement->torax }}',
                                         waist: '{{ $measurement->waist }}',
                                         abdomen: '{{ $measurement->abdomen }}',
+                                        abdomen_inferior: '{{ $measurement->abdomen_inferior }}',
                                         hips: '{{ $measurement->hips }}',
-                                        left_thigh: '{{ $measurement->left_thigh }}',
-                                        right_thigh: '{{ $measurement->right_thigh }}',
+                                        right_thigh_proximal: '{{ $measurement->right_thigh_proximal }}',
+                                        right_thigh_medial: '{{ $measurement->right_thigh_medial }}',
+                                        right_thigh_distal: '{{ $measurement->right_thigh_distal }}',
+                                        left_thigh_proximal: '{{ $measurement->left_thigh_proximal }}',
+                                        left_thigh_medial: '{{ $measurement->left_thigh_medial }}',
+                                        left_thigh_distal: '{{ $measurement->left_thigh_distal }}',
                                         left_calf: '{{ $measurement->left_calf }}',
                                         right_calf: '{{ $measurement->right_calf }}',
+                                        left_arm: '{{ $measurement->left_arm }}',
+                                        right_arm: '{{ $measurement->right_arm }}',
+                                        left_arm_contracted: '{{ $measurement->left_arm_contracted }}',
+                                        right_arm_contracted: '{{ $measurement->right_arm_contracted }}',
+                                        left_forearm: '{{ $measurement->left_forearm }}',
+                                        right_forearm: '{{ $measurement->right_forearm }}',
                                         injuries: '{{ addslashes($measurement->injuries ?? 'Nenhuma') }}',
                                         medications: '{{ addslashes($measurement->medications ?? 'Nenhum') }}',
                                         surgeries: '{{ addslashes($measurement->surgeries ?? 'Nenhuma') }}',
@@ -481,16 +514,26 @@
                                             height: '{{ $measurement->height }}',
                                             body_fat: '{{ $measurement->body_fat }}',
                                             muscle_mass: '{{ $measurement->muscle_mass }}',
-                                            chest: '{{ $measurement->chest }}',
-                                            left_arm: '{{ $measurement->left_arm }}',
-                                            right_arm: '{{ $measurement->right_arm }}',
+                                            ombro: '{{ $measurement->ombro }}',
+                                            torax: '{{ $measurement->torax }}',
                                             waist: '{{ $measurement->waist }}',
                                             abdomen: '{{ $measurement->abdomen }}',
+                                            abdomen_inferior: '{{ $measurement->abdomen_inferior }}',
                                             hips: '{{ $measurement->hips }}',
-                                            left_thigh: '{{ $measurement->left_thigh }}',
-                                            right_thigh: '{{ $measurement->right_thigh }}',
+                                            right_thigh_proximal: '{{ $measurement->right_thigh_proximal }}',
+                                            right_thigh_medial: '{{ $measurement->right_thigh_medial }}',
+                                            right_thigh_distal: '{{ $measurement->right_thigh_distal }}',
+                                            left_thigh_proximal: '{{ $measurement->left_thigh_proximal }}',
+                                            left_thigh_medial: '{{ $measurement->left_thigh_medial }}',
+                                            left_thigh_distal: '{{ $measurement->left_thigh_distal }}',
                                             left_calf: '{{ $measurement->left_calf }}',
                                             right_calf: '{{ $measurement->right_calf }}',
+                                            left_arm: '{{ $measurement->left_arm }}',
+                                            right_arm: '{{ $measurement->right_arm }}',
+                                            left_arm_contracted: '{{ $measurement->left_arm_contracted }}',
+                                            right_arm_contracted: '{{ $measurement->right_arm_contracted }}',
+                                            left_forearm: '{{ $measurement->left_forearm }}',
+                                            right_forearm: '{{ $measurement->right_forearm }}',
                                             injuries: '{{ addslashes($measurement->injuries ?? 'Nenhuma') }}',
                                             medications: '{{ addslashes($measurement->medications ?? 'Nenhum') }}',
                                             surgeries: '{{ addslashes($measurement->surgeries ?? 'Nenhuma') }}',
@@ -1054,6 +1097,158 @@
 
     </div>
 
+    <!-- ══ Avaliações com IA ══════════════════════════════════════════════════ -->
+    @if($aiAssessments->isNotEmpty())
+    <div x-show="activeTab === 'ai_assessments'" x-cloak class="space-y-4">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="text-base font-semibold text-white flex items-center gap-2">
+                <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Histórico de Avaliações com IA
+            </h3>
+            <span class="text-xs text-gray-500">{{ $aiAssessments->count() }} {{ $aiAssessments->count() === 1 ? 'avaliação' : 'avaliações' }}</span>
+        </div>
+
+        @foreach($aiAssessments as $ai)
+        @php
+            $data    = $ai->ai_analysis_data ?? [];
+            $posture = $data['posture_analysis'] ?? [];
+            $body    = $data['body_composition'] ?? [];
+            $obs     = $data['observations'] ?? [];
+            $rec     = $data['recommendations'] ?? [];
+        @endphp
+        <div x-data="{ expanded: false }" class="bg-zinc-900 border border-zinc-700/60 rounded-2xl overflow-hidden">
+            <button type="button" @click="expanded = !expanded"
+                class="w-full flex items-center justify-between px-5 py-4 hover:bg-zinc-800/50 transition-colors text-left">
+                <div class="flex items-center gap-4">
+                    <div class="w-9 h-9 rounded-xl bg-purple-600/20 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    </div>
+                    @php
+                        $postureLabels = [
+                            'lordosis' => 'Lordose',
+                            'scoliosis' => 'Escoliose',
+                            'shoulders' => 'Ombros',
+                            'head_position' => 'Cabeça',
+                            'knees' => 'Joelhos',
+                            'feet' => 'Pés',
+                        ];
+                    @endphp
+                    <div>
+                        <p class="text-sm font-semibold text-white">{{ $ai->created_at->format('d/m/Y \à\s H:i') }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">
+                            @if($ai->goal)<span class="text-purple-400">{{ $ai->goal }}</span>@endif
+                            @if($ai->experience_level) · {{ $ai->experience_level }}@endif
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    @if($ai->workoutPlan)
+                    <span class="hidden sm:inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-400/10 rounded-full px-2.5 py-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        {{ $ai->workoutPlan->name }}
+                    </span>
+                    @endif
+                    <a href="{{ route('personal.ai-assessment.saved-pdf', $ai) }}"
+                       target="_blank"
+                       @click.stop
+                       class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg px-2.5 py-1.5 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        PDF
+                    </a>
+                    <svg class="w-4 h-4 text-gray-500 transition-transform" :class="expanded ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </button>
+
+            <div x-show="expanded" x-cloak
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                <div class="border-t border-zinc-700/50 px-5 py-5 space-y-5">
+
+                    {{-- Análise Postural --}}
+                    @if(!empty($posture))
+                    <div>
+                        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            Análise Postural
+                        </h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            @foreach($posture as $key => $value)
+                            @if($value && strtolower((string)$value) !== 'normal')
+                            <div class="bg-zinc-800/60 rounded-xl px-3 py-2">
+                                <p class="text-xs text-gray-500">{{ $postureLabels[$key] ?? str_replace('_', ' ', $key) }}</p>
+                                <p class="text-xs text-orange-300 font-medium mt-0.5">{{ is_array($value) ? implode(', ', $value) : $value }}</p>
+                            </div>
+                            @endif
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- Composição Corporal --}}
+                    @if(!empty($body))
+                    <div>
+                        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Composição Corporal</h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            @foreach($body as $key => $value)
+                            @if($value)
+                            <div class="bg-zinc-800/60 rounded-xl px-3 py-2">
+                                <p class="text-xs text-gray-500 capitalize">{{ str_replace('_', ' ', $key) }}</p>
+                                <p class="text-xs text-white font-medium mt-0.5">{{ is_array($value) ? implode(', ', $value) : $value }}</p>
+                            </div>
+                            @endif
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- Observações --}}
+                    @if(!empty($obs))
+                    <div>
+                        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Observações</h4>
+                        <ul class="space-y-1.5">
+                            @foreach((is_array($obs) ? $obs : [$obs]) as $o)
+                            <li class="flex items-start gap-2 text-xs text-gray-300">
+                                <span class="text-purple-400 mt-0.5 shrink-0">•</span>{{ $o }}
+                            </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+
+                    {{-- Recomendações --}}
+                    @if(!empty($rec))
+                    <div>
+                        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Recomendações</h4>
+                        <ul class="space-y-1.5">
+                            @foreach((is_array($rec) ? $rec : [$rec]) as $r)
+                            <li class="flex items-start gap-2 text-xs text-gray-300">
+                                <span class="text-emerald-400 mt-0.5 shrink-0">✓</span>{{ $r }}
+                            </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+
+                    {{-- Treino vinculado --}}
+                    @if($ai->workoutPlan)
+                    <div class="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+                        <div>
+                            <p class="text-xs text-emerald-400 font-semibold">Treino vinculado</p>
+                            <p class="text-xs text-gray-300 mt-0.5">{{ $ai->workoutPlan->name }}</p>
+                        </div>
+                        <a href="{{ route('workouts.show', $ai->workoutPlan) }}"
+                           class="text-xs text-emerald-400 hover:text-emerald-300 underline transition-colors">
+                            Ver treino →
+                        </a>
+                    </div>
+                    @endif
+
+                </div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+    @endif
+
 
 
     <!-- Image Modal (Reutilizado do Alpine acima, mas precisa estar fora do x-data de tabs para funcionar em tudo ou duplicado) -->
@@ -1327,7 +1522,15 @@
     </script>
 
     <!-- Modal de Detalhes da Avaliação -->
-    <div x-data="{ open: false, data: {} }" 
+    <div x-data="{ 
+            open: false, 
+            data: {},
+            fmtCirc(value) {
+                if (value === null || value === undefined || value === '') return '-';
+                const parsed = Number(String(value).replace(',', '.'));
+                return Number.isFinite(parsed) ? parsed.toFixed(2) : '-';
+            }
+        }" 
          @open-measurement-modal.window="open = true; data = $event.detail"
          x-show="open" 
          class="fixed inset-0 overflow-y-auto" 
@@ -1383,17 +1586,27 @@
                             <!-- Circunferências -->
                             <div>
                                 <h4 class="text-sm font-bold text-teal-300 mb-2 border-b border-zinc-700 pb-1">Circunferências (cm)</h4>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-sm">
-                                    <div><span class="text-stone-400">Peito:</span> <span class="font-medium text-stone-100" x-text="data.chest || '-'"></span></div>
-                                    <div><span class="text-stone-400">Braço Esq:</span> <span class="font-medium text-stone-100" x-text="data.left_arm || '-'"></span></div>
-                                    <div><span class="text-stone-400">Braço Dir:</span> <span class="font-medium text-stone-100" x-text="data.right_arm || '-'"></span></div>
-                                    <div><span class="text-stone-400">Cintura:</span> <span class="font-medium text-stone-100" x-text="data.waist || '-'"></span></div>
-                                    <div><span class="text-stone-400">Abdômen:</span> <span class="font-medium text-stone-100" x-text="data.abdomen || '-'"></span></div>
-                                    <div><span class="text-stone-400">Quadril:</span> <span class="font-medium text-stone-100" x-text="data.hips || '-'"></span></div>
-                                    <div><span class="text-stone-400">Coxa Esq:</span> <span class="font-medium text-stone-100" x-text="data.left_thigh || '-'"></span></div>
-                                    <div><span class="text-stone-400">Coxa Dir:</span> <span class="font-medium text-stone-100" x-text="data.right_thigh || '-'"></span></div>
-                                    <div><span class="text-stone-400">Pant. Esq:</span> <span class="font-medium text-stone-100" x-text="data.left_calf || '-'"></span></div>
-                                    <div><span class="text-stone-400">Pant. Dir:</span> <span class="font-medium text-stone-100" x-text="data.right_calf || '-'"></span></div>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Ombro (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.ombro)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Tórax (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.torax)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Cintura (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.waist)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Abdômen (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.abdomen)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Abdômen inferior (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.abdomen_inferior)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Quadril (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.hips)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Coxa proximal D (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.right_thigh_proximal)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Coxa medial D (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.right_thigh_medial)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Coxa distal D (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.right_thigh_distal)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Coxa proximal E (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.left_thigh_proximal)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Coxa medial E (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.left_thigh_medial)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Coxa distal E (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.left_thigh_distal)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Panturrilha D (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.right_calf)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Panturrilha E (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.left_calf)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Braço relaxado D (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.right_arm)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Braço contraído D (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.right_arm_contracted)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Braço relaxado E (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.left_arm)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Braço contraído E (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.left_arm_contracted)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Antebraço D (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.right_forearm)"></p></div>
+                                    <div class="rounded-lg border border-zinc-700 bg-zinc-800/50 p-3"><p class="text-xs text-stone-400">Antebraço E (cm)</p><p class="mt-1 font-semibold text-stone-100" x-text="fmtCirc(data.left_forearm)"></p></div>
                                 </div>
                             </div>
 
@@ -1588,6 +1801,24 @@
     </div>
 
     <script>
+        (function () {
+            const photoTrigger = document.getElementById('student-photo-trigger');
+            const photoInput = document.getElementById('student-profile-photo-input');
+            const photoForm = document.getElementById('student-photo-form');
+
+            if (photoTrigger && photoInput && photoForm) {
+                photoTrigger.addEventListener('click', function () {
+                    photoInput.click();
+                });
+
+                photoInput.addEventListener('change', function () {
+                    if (photoInput.files && photoInput.files[0]) {
+                        photoForm.submit();
+                    }
+                });
+            }
+        })();
+
         function openMeasurementPhotosModal(measurementId) {
             const payloadElement = document.getElementById(`photos-payload-${measurementId}`);
             if (!payloadElement) {
