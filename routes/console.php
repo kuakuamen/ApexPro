@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Verifica inadimplência e suspende alunos com +5 dias de atraso — roda diariamente à meia-noite
 Schedule::command('financial:suspend-overdue')->dailyAt('00:00');
+
+// Verifica assinaturas de profissionais vencidas e suspende após grace period
+Schedule::command('subscription:check-overdue')->dailyAt('06:00');

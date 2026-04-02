@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         'role' => \App\Http\Middleware\RoleMiddleware::class,
         'subscription' => \App\Http\Middleware\CheckSubscription::class,
     ]);
+    $middleware->validateCsrfTokens(except: [
+        'webhooks/*',
+    ]);
+    // Confiar em todos os proxies reversos (ngrok, Cloudflare, etc.)
+    $middleware->trustProxies(at: '*');
 })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -14,7 +14,7 @@
             <p class="mt-6 text-lg leading-8 text-text-secondary max-w-2xl mx-auto">Potencialize seus resultados com a plataforma completa para personal trainers e nutricionistas. Cancele quando quiser.</p>
         </div>
         
-        <div class="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-y-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-4 lg:gap-x-8">
+        <div class="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-y-8 sm:mt-20 lg:mx-auto lg:max-w-5xl lg:grid-cols-3 lg:gap-x-8">
             @foreach($plans as $plan)
                 @php
                     $isPopular = $plan['id'] === 'plan_50'; // Plano Profissional como destaque

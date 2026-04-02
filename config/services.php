@@ -39,4 +39,15 @@ return [
         'api_key' => env('GEMINI_API_KEY'),
     ],
 
+    'mercadopago' => [
+        'access_token'      => env('MP_ACCESS_TOKEN'),
+        'public_key'        => env('MP_PUBLIC_KEY'),
+        'test_access_token' => env('MP_TEST_ACCESS_TOKEN'),
+        'test_public_key'   => env('MP_TEST_PUBLIC_KEY'),
+        'mode'              => env('MP_MODE', 'live'),
+        'webhook_secret'    => env('MP_WEBHOOK_SECRET'),
+        'grace_period_days' => 5,
+        'back_url'          => env('MP_BACK_URL'),
+    ],
+
 ];

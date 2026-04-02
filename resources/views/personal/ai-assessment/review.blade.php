@@ -105,15 +105,16 @@
                 <h4 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
                     <span>🤖</span> Ajustar Análise com IA
                 </h4>
-                <form action="{{ route('personal.ai-assessment.refine') }}" method="POST" class="flex flex-col sm:flex-row gap-3">
+                <form id="refine-form" action="{{ route('personal.ai-assessment.refine') }}" method="POST" class="flex flex-col sm:flex-row gap-3">
                     @csrf
                     <input type="hidden" name="student_id" value="{{ $student->id }}">
                     <input type="hidden" name="goal" value="{{ $request->goal }}">
                     
                     <input type="text" name="feedback" placeholder="Ex: O aluno não tem lordose. Remova isso e ajuste o treino." class="flex-1 bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" required>
                     
-                    <button type="submit" class="inline-flex items-center justify-center px-6 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-colors">
-                        Refinar
+                    <button id="refine-btn" type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-colors">
+                        <span id="refine-btn-text">Refinar</span>
+                        <svg id="refine-spinner" class="hidden animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
                     </button>
                 </form>
                 <p class="text-xs text-gray-500 mt-2">Escreva o que você quer mudar e a IA vai refazer a análise e o treino.</p>
@@ -128,8 +129,13 @@
     <!-- Sugestão de Treino (Editável) -->
     <form action="{{ route('personal.ai-assessment.store') }}" method="POST" id="workoutForm">
         @csrf
-        <input type="hidden" name="student_id" value="{{ $student->id }}">
-        <input type="hidden" name="goal" value="{{ $request->goal }}">
+        <input type="hidden" name="student_id"       value="{{ $student->id }}">
+        <input type="hidden" name="goal"             value="{{ $request->goal }}">
+        <input type="hidden" name="experience_level" value="{{ $request->experience_level }}">
+        <input type="hidden" name="front_path"       value="{{ $frontPath }}">
+        <input type="hidden" name="side_path"        value="{{ $sidePath }}">
+        <input type="hidden" name="back_path"        value="{{ $backPath }}">
+        <input type="hidden" name="ai_analysis_data" value="{{ htmlspecialchars(json_encode($analysisResult), ENT_QUOTES, 'UTF-8') }}">
 
         <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden">
             <div class="p-6 border-b border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -235,6 +241,49 @@
         form.action = originalAction;
         form.target = originalTarget;
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const refineForm = document.getElementById('refine-form');
+        if (!refineForm) return;
+
+        const overlay    = document.getElementById('refine-overlay');
+        const messageEl  = document.getElementById('refine-message');
+        const progressEl = document.getElementById('refine-progress');
+        const btnText    = document.getElementById('refine-btn-text');
+        const spinner    = document.getElementById('refine-spinner');
+        const messages = [
+            "Processando seu feedback...",
+            "Ajustando recomendações posturais...",
+            "Recalculando proporções musculares...",
+            "Gerando novos exercícios...",
+            "Finalizando análise refinada..."
+        ];
+
+        refineForm.addEventListener('submit', function () {
+            // Loading no botão
+            btnText.textContent = 'Refinando...';
+            spinner.classList.remove('hidden');
+
+            // Overlay fullscreen
+            overlay.classList.remove('hidden');
+            void overlay.offsetWidth;
+            overlay.classList.remove('opacity-0');
+
+            let progress = 0, messageIndex = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 5;
+                if (progress > 95) progress = 95;
+                progressEl.style.width = `${progress}%`;
+                const newIndex = Math.floor(progress / 20);
+                if (newIndex !== messageIndex && newIndex < messages.length) {
+                    messageIndex = newIndex;
+                    messageEl.style.opacity = '0';
+                    setTimeout(() => { messageEl.textContent = messages[messageIndex]; messageEl.style.opacity = '1'; }, 300);
+                }
+            }, 500);
+            setTimeout(() => clearInterval(interval), 30000);
+        });
+    });
 </script>
 
 <!-- Loading Overlay (Refinar) -->
@@ -262,41 +311,4 @@
     @keyframes spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
 </style>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const refineForm = document.querySelector('form[action*="refine"]');
-        if (!refineForm) return;
-
-        const overlay     = document.getElementById('refine-overlay');
-        const messageEl   = document.getElementById('refine-message');
-        const progressEl  = document.getElementById('refine-progress');
-        const messages = [
-            "Processando seu feedback...",
-            "Ajustando recomendações posturais...",
-            "Recalculando proporções musculares...",
-            "Gerando novos exercícios...",
-            "Finalizando análise refinada..."
-        ];
-
-        refineForm.addEventListener('submit', function () {
-            overlay.classList.remove('hidden');
-            void overlay.offsetWidth;
-            overlay.classList.remove('opacity-0');
-
-            let progress = 0, messageIndex = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 5;
-                if (progress > 95) progress = 95;
-                progressEl.style.width = `${progress}%`;
-                const newIndex = Math.floor(progress / 20);
-                if (newIndex !== messageIndex && newIndex < messages.length) {
-                    messageIndex = newIndex;
-                    messageEl.style.opacity = '0';
-                    setTimeout(() => { messageEl.textContent = messages[messageIndex]; messageEl.style.opacity = '1'; }, 300);
-                }
-            }, 500);
-            setTimeout(() => clearInterval(interval), 30000);
-        });
-    });
-</script>
 @endsection

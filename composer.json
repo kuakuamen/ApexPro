@@ -11,7 +11,8 @@
         "google-gemini-php/client": "^2.7",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "maatwebsite/excel": "3.1.68"
+        "maatwebsite/excel": "3.1.68",
+        "mercadopago/dx-php": "^3.8"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

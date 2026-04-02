@@ -379,6 +379,24 @@ class AiAssessmentController extends Controller
     }
 
     /**
+     * Exporta uma avaliação IA salva como PDF (via impressão do browser).
+     */
+    public function exportSavedPdf(\App\Models\Assessment $assessment)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if ($assessment->personal_id !== $user->id) {
+            abort(403);
+        }
+
+        $student     = \App\Models\User::findOrFail($assessment->student_id);
+        $workoutPlan = $assessment->workoutPlan?->load('days.exercises');
+
+        return view('personal.ai-assessment.saved-pdf', compact('assessment', 'student', 'workoutPlan'));
+    }
+
+    /**
      * Refina a análise com base no feedback do personal.
      */
     public function refine(Request $request)
@@ -468,30 +486,31 @@ class AiAssessmentController extends Controller
         DB::transaction(function () use ($request, $user) {
             $student = User::find($request->student_id);
 
-            // 0. Salvar a Avaliação na Tabela Assessments
-            $student->assessments()->create([
-                'personal_id' => $user->id,
-                'front_image_path' => session('last_front_path'), // Pega da sessão pois o form não reenvia arquivo
-                'side_image_path' => session('last_side_path'),
-                'back_image_path' => session('last_back_path'),
-                'ai_analysis_data' => session('last_analysis_result'), // Salva o JSON da análise
-                'status' => 'approved',
-                // Removidos campos de anamnese pois não existem mais no form
-                'goal' => $request->goal,
-            ]);
+            // Resolver dados da IA — prioriza hidden field (mais confiável que sessão)
+            $aiData = null;
+            if ($request->filled('ai_analysis_data')) {
+                $decoded = json_decode(htmlspecialchars_decode($request->input('ai_analysis_data')), true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $aiData = $decoded;
+                }
+            }
+            $aiData = $aiData ?? session('last_analysis_result', []);
 
-            // 1. Criar o Plano de Treino
+            // Resolver caminhos das imagens — prioriza hidden fields
+            $frontPath = $request->input('front_path') ?: session('last_front_path');
+            $sidePath  = $request->input('side_path')  ?: session('last_side_path');
+            $backPath  = $request->input('back_path')  ?: session('last_back_path');
+            $extraPaths = session('last_extra_paths', []);
+
+            // 1. Criar o Plano de Treino primeiro para obter o ID
             $plan = $student->workoutPlans()->create([
                 'name' => $request->workout_name,
                 'goal' => $request->goal,
                 'start_date' => now(),
-                'end_date' => now()->addWeeks(8), // Padrão 8 semanas
+                'end_date' => now()->addWeeks(8),
                 'is_active' => true,
                 'personal_id' => $user->id,
             ]);
-
-            // Desativar planos anteriores?
-            // $student->workoutPlans()->where('id', '!=', $plan->id)->update(['is_active' => false]);
 
             // 2. Criar os Dias e Exercícios
             if ($request->has('days')) {
@@ -499,27 +518,40 @@ class AiAssessmentController extends Controller
                     if (empty($dayData['name'])) continue;
 
                     $workoutDay = $plan->days()->create([
-                        'name' => $dayData['name'], // "Treino A", "Treino B"
-                        'day_of_week' => null, // Opcional
+                        'name' => $dayData['name'],
+                        'day_of_week' => null,
                     ]);
 
                     if (isset($dayData['exercises'])) {
                         foreach ($dayData['exercises'] as $exIndex => $exData) {
                             if (empty($exData['name'])) continue;
 
-                            // 2.2. Criar o exercício diretamente vinculado ao dia
                             $workoutDay->exercises()->create([
                                 'name' => $exData['name'],
                                 'sets' => $exData['sets'] ?? 3,
                                 'reps' => $exData['reps'] ?? '10-12',
                                 'observation' => $exData['notes'] ?? null,
-                                'rest_time' => 60, // Default 60s
+                                'rest_time' => 60,
                                 'order' => $exIndex
                             ]);
                         }
                     }
                 }
             }
+
+            // 3. Salvar Avaliação completa com workout_plan_id vinculado
+            $student->assessments()->create([
+                'personal_id'       => $user->id,
+                'workout_plan_id'   => $plan->id,
+                'front_image_path'  => $frontPath,
+                'side_image_path'   => $sidePath,
+                'back_image_path'   => $backPath,
+                'extra_image_paths' => $extraPaths ?: null,
+                'ai_analysis_data'  => $aiData,
+                'status'            => 'approved',
+                'goal'              => $request->goal,
+                'experience_level'  => $request->input('experience_level'),
+            ]);
         });
 
         return redirect()->route('workouts.index')
