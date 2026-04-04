@@ -22,7 +22,7 @@ class SubscriptionController extends Controller
         'plan_starter' => [
             'id'           => 'plan_starter',
             'name'         => 'Starter',
-            'price'        => 49.00,
+            'price'        => 3.00,
             'max_students' => 15,
             'color'        => '#3b82f6',
             'features'     => [
@@ -39,7 +39,7 @@ class SubscriptionController extends Controller
         'plan_pro' => [
             'id'           => 'plan_pro',
             'name'         => 'Pro',
-            'price'        => 89.00,
+            'price'        => 4.00,
             'max_students' => 50,
             'color'        => '#8b5cf6',
             'features'     => [
@@ -58,7 +58,7 @@ class SubscriptionController extends Controller
         'plan_elite' => [
             'id'           => 'plan_elite',
             'name'         => 'Elite',
-            'price'        => 149.00,
+            'price'        => 5.00,
             'max_students' => 100,
             'color'        => '#f59e0b',
             'features'     => [
