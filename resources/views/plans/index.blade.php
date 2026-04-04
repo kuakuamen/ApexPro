@@ -888,7 +888,14 @@
           </div>
 
           <div class="plan-price">
-            <span class="price-from">A partir de</span>
+            @if(!empty($plan['discount_percent']))
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <span style="font-size:13px; color:rgba(255,255,255,0.4); text-decoration:line-through;">R$ {{ number_format($plan['original_price'], 2, ',', '.') }}</span>
+                <span style="background:#ef4444; color:white; font-size:11px; font-weight:700; padding:2px 8px; border-radius:100px;">-{{ $plan['discount_percent'] }}%</span>
+              </div>
+            @else
+              <span class="price-from">A partir de</span>
+            @endif
             <span class="price-value">R$ {{ number_format($plan['price'], 2, ',', '.') }}</span>
             <span class="price-period">/mês</span>
           </div>
