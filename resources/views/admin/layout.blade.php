@@ -491,6 +491,11 @@
                 </a>
             </li>
             <li class="sidebar-menu-item">
+                <a href="{{ route('admin.plans.index') }}" class="sidebar-menu-link {{ str_starts_with(request()->route()->getName(), 'admin.plans') ? 'active' : '' }}">
+                    <i class="fas fa-tags"></i> Planos
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
                 <a href="{{ route('admin.users.index') }}" class="sidebar-menu-link {{ str_starts_with(request()->route()->getName(), 'admin.users') ? 'active' : '' }}">
                     <i class="fas fa-users"></i> Usuários
                 </a>

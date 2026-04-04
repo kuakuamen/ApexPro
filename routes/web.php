@@ -161,6 +161,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/personals/{user}', [AdminController::class, 'deletePersonal'])->name('personals.delete');
     Route::get('/personals/{user}/alunos', [AdminController::class, 'personalStudents'])->name('personals.students');
     
+    // Gestão de Planos
+    Route::get('/planos', [AdminController::class, 'plansIndex'])->name('plans.index');
+    Route::get('/planos/{planId}/editar', [AdminController::class, 'plansEdit'])->name('plans.edit');
+    Route::put('/planos/{planId}', [AdminController::class, 'plansUpdate'])->name('plans.update');
+    Route::patch('/planos/{planId}/desconto', [AdminController::class, 'plansDiscount'])->name('plans.discount');
+    Route::patch('/planos/{planId}/remover-desconto', [AdminController::class, 'plansRemoveDiscount'])->name('plans.remove-discount');
+    Route::patch('/planos/{planId}/toggle', [AdminController::class, 'plansToggle'])->name('plans.toggle');
+
     // Gerenciamento Geral de UsuÃƒÂ¡rios
     Route::get('/usuarios', [AdminController::class, 'allUsers'])->name('users.index');
     

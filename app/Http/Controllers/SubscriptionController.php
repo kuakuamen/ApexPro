@@ -18,6 +18,34 @@ use Illuminate\Validation\Rules;
 
 class SubscriptionController extends Controller
 {
+    public function __construct()
+    {
+        $this->loadPlans();
+    }
+
+    private function loadPlans(): void
+    {
+        try {
+            $dbPlans = \App\Models\PlanConfig::where('is_active', true)->get();
+            if ($dbPlans->isNotEmpty()) {
+                foreach ($dbPlans as $plan) {
+                    $this->plans[$plan->plan_id] = [
+                        'id'               => $plan->plan_id,
+                        'name'             => $plan->name,
+                        'price'            => (float) $plan->effectivePrice(),
+                        'original_price'   => (float) $plan->price,
+                        'max_students'     => $plan->max_students,
+                        'color'            => $plan->color,
+                        'features'         => $plan->features,
+                        'discount_percent' => $plan->hasActiveDiscount() ? $plan->discount_percent : null,
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            // fallback to hardcoded plans
+        }
+    }
+
     protected $plans = [
         'plan_starter' => [
             'id'           => 'plan_starter',

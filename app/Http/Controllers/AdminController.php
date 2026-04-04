@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Assessment;
 use App\Models\WorkoutPlan;
 use App\Models\DietPlan;
+use App\Models\PlanConfig;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rules;
@@ -272,5 +273,70 @@ class AdminController extends Controller
     public function logs()
     {
         return view('admin.logs');
+    }
+
+    /**
+     * Gestão de Planos
+     */
+    public function plansIndex()
+    {
+        $plans = PlanConfig::all();
+        return view('admin.plans.index', compact('plans'));
+    }
+
+    public function plansEdit($planId)
+    {
+        $plan = PlanConfig::where('plan_id', $planId)->firstOrFail();
+        return view('admin.plans.edit', compact('plan'));
+    }
+
+    public function plansUpdate(Request $request, $planId)
+    {
+        $plan = PlanConfig::where('plan_id', $planId)->firstOrFail();
+        $validated = $request->validate([
+            'name'         => 'required|string|max:100',
+            'price'        => 'required|numeric|min:0',
+            'max_students' => 'required|integer|min:1',
+            'features'     => 'required|string',
+        ]);
+        $features = array_filter(array_map('trim', explode("\n", $validated['features'])));
+        $plan->update([
+            'name'         => $validated['name'],
+            'price'        => $validated['price'],
+            'max_students' => $validated['max_students'],
+            'features'     => array_values($features),
+        ]);
+        return redirect()->route('admin.plans.index')->with('success', 'Plano atualizado com sucesso!');
+    }
+
+    public function plansDiscount(Request $request, $planId)
+    {
+        $plan = PlanConfig::where('plan_id', $planId)->firstOrFail();
+        $validated = $request->validate([
+            'discount_percent'    => 'required|integer|min:1|max:99',
+            'discount_expires_at' => 'nullable|date|after:now',
+        ]);
+        $plan->update([
+            'discount_percent'    => $validated['discount_percent'],
+            'discount_expires_at' => $validated['discount_expires_at'] ?? null,
+        ]);
+        return redirect()->route('admin.plans.index')->with('success', 'Desconto aplicado com sucesso!');
+    }
+
+    public function plansRemoveDiscount($planId)
+    {
+        $plan = PlanConfig::where('plan_id', $planId)->firstOrFail();
+        $plan->update([
+            'discount_percent'    => null,
+            'discount_expires_at' => null,
+        ]);
+        return redirect()->route('admin.plans.index')->with('success', 'Desconto removido com sucesso!');
+    }
+
+    public function plansToggle($planId)
+    {
+        $plan = PlanConfig::where('plan_id', $planId)->firstOrFail();
+        $plan->update(['is_active' => !$plan->is_active]);
+        return redirect()->route('admin.plans.index')->with('success', 'Status do plano atualizado!');
     }
 }
