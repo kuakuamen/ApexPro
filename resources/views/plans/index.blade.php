@@ -862,7 +862,7 @@
         $planIcons = ['🌱', '⚡', '🚀'];
         $planIndex = 0;
         $planKeys = array_keys($plans);
-        $featuredKey = 'plan_100';
+        $featuredKey = 'plan_pro';
       @endphp
 
       @foreach($plans as $planId => $plan)
@@ -879,7 +879,13 @@
 
           <span class="plan-icon">{{ $icon }}</span>
           <div class="plan-name">{{ $plan['name'] }}</div>
-          <div class="plan-desc">Para gerenciar até <strong style="color: white;">{{ $plan['max_students'] }} alunos</strong> de consultoria.</div>
+          <div class="plan-desc">
+            @if($planId === 'plan_elite')
+              Para gerenciar <strong style="color: white;">100+ alunos</strong> de consultoria.
+            @else
+              Para gerenciar até <strong style="color: white;">{{ $plan['max_students'] }} alunos</strong> de consultoria.
+            @endif
+          </div>
 
           <div class="plan-price">
             <span class="price-from">A partir de</span>
@@ -950,6 +956,56 @@
     <h2 class="cta-title">Você quer faturar mais.<br>Atender mais alunos.<br>Trabalhar menos.</h2>
     <p class="cta-sub">A Apex é a única plataforma que torna isso possível para o personal trainer.</p>
     <a href="#pricing" class="btn-white">Quero escalar minha consultoria agora</a>
+  </div>
+</section>
+
+<!-- WHATSAPP COMMUNITY -->
+<section id="whatsapp-community" style="padding: 80px 24px; background: #0d1117; position: relative; overflow: hidden;">
+  <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(37,211,102,0.12) 0%, transparent 70%); pointer-events: none;"></div>
+  <div style="max-width: 760px; margin: 0 auto; position: relative; z-index: 1;">
+    <div style="background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(37,211,102,0.25); border-radius: 28px; padding: 56px 48px; text-align: center; box-shadow: 0 0 60px rgba(37,211,102,0.07);">
+      <!-- Badge -->
+      <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(37,211,102,0.1); border: 1px solid rgba(37,211,102,0.3); color: #25d366; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 8px 18px; border-radius: 100px; margin-bottom: 28px;">
+        <span style="width: 7px; height: 7px; background: #25d366; border-radius: 50%; animation: pulse 1.5s infinite;"></span>
+        Oferta exclusiva para membros
+      </div>
+
+      <!-- Icon -->
+      <div style="display: flex; justify-content: center; margin-bottom: 24px;">
+        <div style="width: 76px; height: 76px; background: linear-gradient(135deg, #25d366, #128c7e); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 32px rgba(37,211,102,0.35);">
+          <svg width="42" height="42" fill="white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <h2 style="font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; color: #fff; margin-bottom: 16px; line-height: 1.25;">
+        Entre na comunidade e garanta<br>
+        <span style="color: #25d366;">50% de desconto</span> nos 3 primeiros meses
+      </h2>
+
+      <!-- Description -->
+      <p style="color: rgba(255,255,255,0.5); font-size: 1.05rem; margin-bottom: 32px; max-width: 520px; margin-left: auto; margin-right: auto; line-height: 1.7;">
+        Quem entrar agora na nossa comunidade garante acesso antecipado com <strong style="color: rgba(255,255,255,0.85);">metade do preço nos 3 primeiros meses.</strong>
+      </p>
+
+      <!-- Perks -->
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 36px;">
+        <span style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); font-size: 13px; padding: 8px 16px; border-radius: 100px;">✅ Acesso antecipado</span>
+        <span style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); font-size: 13px; padding: 8px 16px; border-radius: 100px;">✅ 50% de desconto nos 3 primeiros meses</span>
+        <span style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); font-size: 13px; padding: 8px 16px; border-radius: 100px;">✅ Conteúdos exclusivos</span>
+      </div>
+
+      <!-- CTA Button -->
+      <a href="https://chat.whatsapp.com/IOs16RItrZNL2HcPsez7sL" target="_blank" rel="noopener noreferrer"
+         style="display: inline-flex; align-items: center; gap: 12px; background: #25d366; color: white; font-weight: 700; font-size: 1.05rem; padding: 18px 40px; border-radius: 16px; text-decoration: none; box-shadow: 0 8px 30px rgba(37,211,102,0.35); transition: all 0.3s ease;"
+         onmouseover="this.style.background='#20bd5a'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 40px rgba(37,211,102,0.45)'"
+         onmouseout="this.style.background='#25d366'; this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 30px rgba(37,211,102,0.35)'">
+        <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Entrar na comunidade grátis
+      </a>
+
+      <p style="color: rgba(255,255,255,0.25); font-size: 13px; margin-top: 18px;">Grátis para entrar. Desconto garantido para quem entrar agora.</p>
+    </div>
   </div>
 </section>
 

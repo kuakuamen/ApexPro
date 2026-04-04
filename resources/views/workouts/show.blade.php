@@ -138,6 +138,18 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
                                                     </svg>
                                                 </div>
+                                                @if($exercise->embed_video_url)
+                                                    <div class="mt-4 rounded-xl overflow-hidden border border-teal-900/30 bg-black">
+                                                        <div class="aspect-video">
+                                                            <iframe class="w-full h-full"
+                                                                    src="{{ $exercise->embed_video_url }}"
+                                                                    title="Execucao de {{ $exercise->name }}"
+                                                                    loading="lazy"
+                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                    allowfullscreen></iframe>
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
 
@@ -156,6 +168,27 @@
                                                 <span class="block text-lg font-bold text-teal-300">{{ $exercise->rest_time ?? '-' }}</span>
                                             </div>
                                         </div>
+
+                                        @if($exercise->embed_video_url)
+                                            <div class="mb-4">
+                                                <button type="button"
+                                                        @click="showVideo = !showVideo"
+                                                        class="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-cyan-700/40 bg-cyan-900/20 text-cyan-200 hover:bg-cyan-900/30 transition-colors">
+                                                    <span class="font-semibold">Ver execucao do exercicio</span>
+                                                    <span class="text-xs" x-text="showVideo ? 'Ocultar' : 'Abrir video'"></span>
+                                                </button>
+                                                <div x-show="showVideo" x-transition class="mt-3 rounded-xl overflow-hidden border border-cyan-700/30 bg-black">
+                                                    <div class="aspect-video">
+                                                        <iframe class="w-full h-full"
+                                                                src="{{ $exercise->embed_video_url }}"
+                                                                title="Execucao de {{ $exercise->name }}"
+                                                                loading="lazy"
+                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                allowfullscreen></iframe>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
 
                                         <!-- Ações (Timer) -->
                                         <template x-if="restSeconds > 0 && !completed">
@@ -256,6 +289,7 @@
             restSeconds: seconds,
             timeLeft: seconds,
             timerRunning: false,
+            showVideo: false,
             interval: null,
             storageKey: storageKey,
             storageKeyExpire: storageKeyExpire,

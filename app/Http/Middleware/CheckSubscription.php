@@ -53,7 +53,11 @@ class CheckSubscription
             }
 
             // Assinatura pendente (aguardando pagamento)
+            // Se o período pago ainda está válido, permite acesso normalmente
             if ($subscription->status === 'pending') {
+                if ($subscription->expires_at && $subscription->expires_at->isFuture()) {
+                    return $next($request);
+                }
                 return redirect()->route('subscription.renew');
             }
 

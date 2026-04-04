@@ -272,6 +272,15 @@ class PersonalController extends Controller
      */
     public function storeStudent(Request $request)
     {
+        // Verifica limite de alunos do plano
+        $user = Auth::user();
+        $maxStudents = $user->max_students ?? 0;
+        $currentStudents = $user->students()->count();
+
+        if ($currentStudents >= $maxStudents) {
+            return redirect()->back()->with('error', "Você atingiu o limite de {$maxStudents} alunos do seu plano. Faça upgrade para adicionar mais alunos.");
+        }
+
         // Limpa CPF e Telefone antes da validação para garantir unicidade correta
         $request->merge([
             'cpf' => preg_replace('/[^0-9]/', '', $request->cpf),

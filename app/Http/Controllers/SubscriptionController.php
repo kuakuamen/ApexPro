@@ -19,51 +19,59 @@ use Illuminate\Validation\Rules;
 class SubscriptionController extends Controller
 {
     protected $plans = [
-        'plan_50' => [
-            'id' => 'plan_50',
-            'name' => 'Plano Profissional',
-            'price' => 5.00,
+        'plan_starter' => [
+            'id'           => 'plan_starter',
+            'name'         => 'Starter',
+            'price'        => 49.00,
+            'max_students' => 15,
+            'color'        => '#3b82f6',
+            'features'     => [
+                'Até 15 alunos ativos',
+                'Prescrição de treinos completa',
+                'Medidas e avaliações corporais',
+                'Acompanhamento de evolução com gráficos',
+                'App exclusivo para o aluno',
+                'Geração de treinos com IA',
+                'Avaliação postural com IA',
+                'Suporte por e-mail',
+            ],
+        ],
+        'plan_pro' => [
+            'id'           => 'plan_pro',
+            'name'         => 'Pro',
+            'price'        => 89.00,
             'max_students' => 50,
-            'color' => '#3b82f6',
-            'features' => [
-                'Gerencie ate 50 alunos',
-                'Organize e prescreva treinos',
-                'Gere treinos instantaneos com IA',
-                'Avalie a postura via IA',
-                'Tenha suporte prioritario',
-                'Controle o financeiro dos alunos',
+            'color'        => '#8b5cf6',
+            'features'     => [
+                'Até 50 alunos ativos',
+                'Prescrição de treinos completa',
+                'Medidas e avaliações corporais',
+                'Acompanhamento de evolução com gráficos',
+                'App exclusivo para o aluno',
+                'Controle financeiro dos alunos',
+                'Geração de treinos com IA',
+                'Avaliação postural com IA',
+                'Relatórios em PDF e Excel',
+                'Suporte prioritário',
             ],
         ],
-        'plan_100' => [
-            'id' => 'plan_100',
-            'name' => 'Plano Elite',
-            'price' => 10.00,
+        'plan_elite' => [
+            'id'           => 'plan_elite',
+            'name'         => 'Elite',
+            'price'        => 149.00,
             'max_students' => 100,
-            'color' => '#8b5cf6',
-            'features' => [
-                'Gerencie ate 100 alunos',
-                'Organize e prescreva treinos',
-                'Gere treinos instantaneos com IA',
-                'Avalie a postura via IA',
-                'Tenha suporte prioritario',
-                'Controle o financeiro dos alunos',
-                'Acesse suporte VIP exclusivo',
-            ],
-        ],
-        'plan_500' => [
-            'id' => 'plan_500',
-            'name' => 'Plano Studio',
-            'price' => 15.00,
-            'max_students' => 500,
-            'color' => '#f59e0b',
-            'features' => [
-                'Gerencie ate 500 alunos',
-                'Gerencie todo o seu negocio',
-                'Organize e prescreva treinos',
-                'Analise a evolucao visual com IA',
-                'Gere treinos instantaneos com IA',
-                'Acesse suporte VIP exclusivo',
-                'Acompanhe relatorios detalhados',
+            'color'        => '#f59e0b',
+            'features'     => [
+                'A partir de 100 alunos ativos',
+                'Prescrição de treinos completa',
+                'Medidas e avaliações corporais',
+                'Acompanhamento de evolução com gráficos',
+                'App exclusivo para o aluno',
+                'Controle financeiro dos alunos',
+                'Geração de treinos com IA',
+                'Avaliação postural com IA',
+                'Relatórios em PDF e Excel',
+                'Suporte VIP exclusivo',
             ],
         ],
     ];
@@ -324,6 +332,9 @@ class SubscriptionController extends Controller
                 }
             }
 
+            $existingStatus = ProfessionalSubscription::where('user_id', $user->id)->value('status');
+            $keepActive     = $existingStatus === 'active';
+
             $subscription = ProfessionalSubscription::updateOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -331,7 +342,7 @@ class SubscriptionController extends Controller
                     'plan_name'             => $plan['name'],
                     'max_students'          => $plan['max_students'],
                     'price'                 => $plan['price'],
-                    'status'                => 'pending',
+                    'status'                => $keepActive ? 'active' : 'pending',
                     'mp_preapproval_id'     => null,
                     'mp_preapproval_status' => null,
                     'next_billing_at'       => null,

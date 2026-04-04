@@ -293,36 +293,38 @@
     const birthYear  = document.getElementById('birth_year');
     const birthInput = document.getElementById('birth_date_input');
 
-    function updateBirthDate() {
-        const d = birthDay.value, m = birthMonth.value, y = birthYear.value;
-        if (d && m && y) {
-            birthInput.value = y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-        } else {
-            birthInput.value = '';
+    if (birthDay && birthMonth && birthYear && birthInput) {
+        function updateBirthDate() {
+            const d = birthDay.value, m = birthMonth.value, y = birthYear.value;
+            if (d && m && y) {
+                birthInput.value = y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            } else {
+                birthInput.value = '';
+            }
         }
+
+        // Pré-popular se old() tiver valor
+        if (birthInput.value) {
+            const parts = birthInput.value.split('-');
+            if (parts.length === 3) {
+                birthYear.value  = parts[0];
+                birthMonth.value = parseInt(parts[1]).toString();
+                birthDay.value   = parseInt(parts[2]).toString();
+            }
+        }
+
+        [birthDay, birthMonth, birthYear].forEach(el => el.addEventListener('change', updateBirthDate));
+
+        form.addEventListener('submit', function(e) {
+            if (!birthInput.value) {
+                e.preventDefault();
+                birthDay.classList.add('border-red-500');
+                birthMonth.classList.add('border-red-500');
+                birthYear.classList.add('border-red-500');
+                birthDay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, true);
     }
-
-    // Pré-popular se old() tiver valor
-    if (birthInput.value) {
-        const parts = birthInput.value.split('-');
-        if (parts.length === 3) {
-            birthYear.value  = parts[0];
-            birthMonth.value = parseInt(parts[1]).toString();
-            birthDay.value   = parseInt(parts[2]).toString();
-        }
-    }
-
-    [birthDay, birthMonth, birthYear].forEach(el => el.addEventListener('change', updateBirthDate));
-
-    form.addEventListener('submit', function(e) {
-        if (!birthInput.value) {
-            e.preventDefault();
-            birthDay.classList.add('border-red-500');
-            birthMonth.classList.add('border-red-500');
-            birthYear.classList.add('border-red-500');
-            birthDay.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }, true);
 
     // ── CPF mask ──────────────────────────────────────────────────────────────
     const cpfField = document.getElementById('cpf_input');

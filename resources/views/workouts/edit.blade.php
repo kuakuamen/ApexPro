@@ -154,6 +154,19 @@
                                             Remover
                                         </button>
                                     </div>
+                                    <div class="col-span-10">
+                                        <label class="block text-xs font-medium text-stone-400">Video da execucao</label>
+                                        <input type="url"
+                                               x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][video_url]'"
+                                               x-model="exercise.video_url"
+                                               class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-3"
+                                               placeholder="https://youtube.com/watch?v=... ou Vimeo">
+                                    </div>
+                                    <div class="col-span-2 text-right">
+                                        <span class="inline-flex px-2 py-1 text-xs rounded text-teal-200 bg-teal-700/20 border border-teal-600/30">
+                                            Opcional
+                                        </span>
+                                    </div>
                                 </div>
                             </template>
 
@@ -225,7 +238,8 @@
                         name: ex.name,
                         sets: ex.sets,
                         reps: ex.reps,
-                        rest_time: ex.rest_time
+                        rest_time: ex.rest_time,
+                        video_url: ex.video_url ?? ''
                     }))
                 };
             }),
@@ -251,7 +265,7 @@
                     weekDay: '',
                     workoutType: '',
                     customName: '',
-                    exercises: [{ id: Date.now() + 1, name: '', sets: '', reps: '', rest_time: '' }]
+                    exercises: [{ id: Date.now() + 1, name: '', sets: '', reps: '', rest_time: '', video_url: '' }]
                 });
             },
             removeDay(index) {
@@ -263,7 +277,8 @@
                     name: '',
                     sets: '',
                     reps: '',
-                    rest_time: ''
+                    rest_time: '',
+                    video_url: ''
                 });
             },
             removeExercise(dayIndex, exerciseIndex) {

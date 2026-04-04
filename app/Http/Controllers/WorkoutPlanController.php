@@ -145,6 +145,7 @@ class WorkoutPlanController extends Controller
             'days.*.exercises.*.sets' => 'nullable|string',
             'days.*.exercises.*.reps' => 'nullable|string',
             'days.*.exercises.*.rest_time' => 'nullable|string',
+            'days.*.exercises.*.video_url' => 'nullable|url|max:500',
         ]);
 
         // Criar o Plano
@@ -170,6 +171,7 @@ class WorkoutPlanController extends Controller
                     'sets' => $exerciseData['sets'] ?? null,
                     'reps' => $exerciseData['reps'] ?? null,
                     'rest_time' => $exerciseData['rest_time'] ?? null,
+                    'video_url' => $exerciseData['video_url'] ?? null,
                     'order' => $exerciseIndex,
                 ]);
             }
@@ -218,6 +220,7 @@ class WorkoutPlanController extends Controller
             'days.*.exercises.*.sets' => 'nullable|string',
             'days.*.exercises.*.reps' => 'nullable|string',
             'days.*.exercises.*.rest_time' => 'nullable|string',
+            'days.*.exercises.*.video_url' => 'nullable|url|max:500',
         ]);
 
         // Atualizar dados básicos
@@ -249,6 +252,7 @@ class WorkoutPlanController extends Controller
                     'sets' => $exerciseData['sets'] ?? null,
                     'reps' => $exerciseData['reps'] ?? null,
                     'rest_time' => $exerciseData['rest_time'] ?? null,
+                    'video_url' => $exerciseData['video_url'] ?? null,
                     'order' => $exerciseIndex,
                 ]);
             }
