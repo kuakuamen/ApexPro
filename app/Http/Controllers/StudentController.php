@@ -31,16 +31,13 @@ class StudentController extends Controller
             $activeWorkout->load('days.exercises');
         }
 
-        // Última dieta
-        $activeDiet = $user->dietPlans()->latest()->first();
-
         // Histórico de peso (últimos 5 registros para o gráfico simples)
         $weightHistory = $user->measurements()
             ->orderBy('date', 'asc')
             ->take(5)
             ->get();
 
-        return view('student.dashboard', compact('user', 'professional', 'activeWorkout', 'activeDiet', 'weightHistory'));
+        return view('student.dashboard', compact('user', 'professional', 'activeWorkout', 'weightHistory'));
     }
 
     /**
