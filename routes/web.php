@@ -171,7 +171,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Gerenciamento Geral de UsuÃƒÂ¡rios
     Route::get('/usuarios', [AdminController::class, 'allUsers'])->name('users.index');
-    
+    Route::get('/usuarios/{user}', [AdminController::class, 'showUser'])->name('users.show');
+    Route::patch('/usuarios/{user}/reset-senha', [AdminController::class, 'resetUserPassword'])->name('users.reset-password');
+    Route::patch('/usuarios/{user}/assinatura/ativar', [AdminController::class, 'activateSubscription'])->name('users.subscription.activate');
+    Route::patch('/usuarios/{user}/assinatura/suspender', [AdminController::class, 'suspendSubscription'])->name('users.subscription.suspend');
+    Route::patch('/usuarios/{user}/assinatura/estender', [AdminController::class, 'extendSubscription'])->name('users.subscription.extend');
+
     // Logs
     Route::get('/logs', [AdminController::class, 'logs'])->name('logs');
 });

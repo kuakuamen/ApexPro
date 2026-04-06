@@ -7,6 +7,8 @@ use App\Models\Assessment;
 use App\Models\WorkoutPlan;
 use App\Models\DietPlan;
 use App\Models\PlanConfig;
+use App\Models\ProfessionalSubscription;
+use App\Models\SubscriptionTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rules;
@@ -262,9 +264,129 @@ class AdminController extends Controller
             });
         }
 
-        $users = $query->paginate(20);
+        $users = $query->with(['professionalSubscription'])->paginate(20);
 
         return view('admin.users.index', compact('users'));
+    }
+
+    /**
+     * Ver detalhes de um usuário
+     */
+    public function showUser(User $user)
+    {
+        $user->load('professionalSubscription');
+
+        $recentTransactions = collect();
+        $studentCount = 0;
+        $activeStudentCount = 0;
+
+        if ($user->role === 'personal') {
+            if ($user->professionalSubscription) {
+                $recentTransactions = SubscriptionTransaction::where('subscription_id', $user->professionalSubscription->id)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get();
+            }
+
+            $studentCount = User::whereHas('professionalStudents', function ($query) use ($user) {
+                $query->where('professional_id', $user->id);
+            })->count();
+
+            $activeStudentCount = User::whereHas('professionalStudents', function ($query) use ($user) {
+                $query->where('professional_id', $user->id);
+            })->where('is_active', true)->count();
+        }
+
+        return view('admin.users.show', compact('user', 'recentTransactions', 'studentCount', 'activeStudentCount'));
+    }
+
+    /**
+     * Resetar senha de um usuário
+     */
+    public function resetUserPassword(Request $request, User $user)
+    {
+        $request->validate([
+            'password' => ['required', 'string', 'min:6'],
+        ]);
+
+        $user->update(['password' => bcrypt($request->password)]);
+
+        return redirect()->back()->with('success', 'Senha do usuário redefinida com sucesso!');
+    }
+
+    /**
+     * Ativar assinatura do personal
+     */
+    public function activateSubscription(Request $request, User $user)
+    {
+        $subscription = ProfessionalSubscription::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'plan_id'     => 'basic',
+                'plan_name'   => 'Básico',
+                'max_students' => 10,
+                'price'        => 0,
+                'status'       => 'pending',
+            ]
+        );
+
+        $subscription->update([
+            'status'     => 'active',
+            'starts_at'  => now(),
+            'expires_at' => now()->addDays(30),
+            'grace_until' => now()->addDays(35),
+        ]);
+
+        $user->update([
+            'is_active'    => true,
+            'max_students' => $subscription->max_students,
+        ]);
+
+        return redirect()->back()->with('success', 'Assinatura ativada com sucesso por 30 dias!');
+    }
+
+    /**
+     * Suspender assinatura do personal
+     */
+    public function suspendSubscription(User $user)
+    {
+        $subscription = ProfessionalSubscription::where('user_id', $user->id)->first();
+
+        if ($subscription) {
+            $subscription->update(['status' => 'suspended']);
+        }
+
+        return redirect()->back()->with('success', 'Assinatura suspensa com sucesso!');
+    }
+
+    /**
+     * Estender assinatura do personal
+     */
+    public function extendSubscription(Request $request, User $user)
+    {
+        $request->validate([
+            'days' => ['required', 'integer', 'min:1', 'max:365'],
+        ]);
+
+        $days = (int) $request->days;
+
+        $subscription = ProfessionalSubscription::where('user_id', $user->id)->firstOrFail();
+
+        $baseExpiry = ($subscription->expires_at && $subscription->expires_at->isFuture())
+            ? $subscription->expires_at
+            : now();
+
+        $baseGrace = ($subscription->grace_until && $subscription->grace_until->isFuture())
+            ? $subscription->grace_until
+            : $baseExpiry->copy()->addDays(5);
+
+        $subscription->update([
+            'expires_at'  => $baseExpiry->addDays($days),
+            'grace_until' => $baseGrace->addDays($days),
+            'status'      => in_array($subscription->status, ['suspended', 'overdue']) ? 'active' : $subscription->status,
+        ]);
+
+        return redirect()->back()->with('success', "Acesso estendido em {$days} dia(s) com sucesso!");
     }
 
     /**
