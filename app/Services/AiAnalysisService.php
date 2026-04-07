@@ -127,12 +127,18 @@ class AiAnalysisService
                     }
                 }";
 
+            $promptSize = strlen($prompt);
+            Log::info("Gemini diagnóstico — prompt_bytes: {$promptSize}, imagens: " . count($imagePaths) . ", caminhos: " . implode(', ', $imagePaths));
+
             $parts[] = $prompt;
 
+            $totalImageBytes = 0;
             foreach ($imagePaths as $path) {
                 if (Storage::disk('private')->exists($path)) {
                     $imageData = Storage::disk('private')->get($path);
                     $mimeType = Storage::disk('private')->mimeType($path);
+                    $totalImageBytes += strlen($imageData);
+                    Log::info("Gemini imagem — path: {$path}, mime: {$mimeType}, bytes: " . strlen($imageData));
                     
                     // Tenta converter string para Enum MimeType
                     $enumMimeType = MimeType::tryFrom($mimeType);
@@ -151,6 +157,7 @@ class AiAnalysisService
                 throw new \RuntimeException('Nenhuma imagem válida foi encontrada para análise.');
             }
 
+            Log::info("Gemini diagnóstico — total_image_bytes: {$totalImageBytes}, total_parts: " . count($parts));
             Log::info('Enviando requisição para Gemini 2.5-flash com ' . (count($parts) - 1) . ' imagem(ns)');
 
             $maxAttempts = 3;
