@@ -654,10 +654,15 @@ class AiAssessmentController extends Controller
         return view('personal.ai-assessment.review', array_merge(
             compact('student', 'allExercises', 'analysisResult'),
             [
-                'images' => [
+                'frontPath'    => null,
+                'sidePath'     => null,
+                'sideLeftPath' => null,
+                'backPath'     => null,
+                'extraPaths'   => [],
+                'images'       => [
                     'front' => null,
-                    'side' => null,
-                    'back' => null,
+                    'side'  => null,
+                    'back'  => null,
                 ],
             ],
             ['request' => $request]
