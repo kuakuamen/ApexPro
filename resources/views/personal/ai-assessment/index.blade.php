@@ -10,6 +10,19 @@
         </h2>
     </div>
 
+    {{-- Erro da IA --}}
+    @if ($errors->has('ai'))
+        <div class="rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300 flex items-start gap-3">
+            <svg class="h-5 w-5 flex-shrink-0 text-red-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+            </svg>
+            <div>
+                <p class="font-semibold text-red-300">Erro ao processar com IA</p>
+                <p class="mt-1">{{ $errors->first('ai') }}</p>
+            </div>
+        </div>
+    @endif
+
     <!-- Tabs para alternar entre dois modos -->
     <div class="border-b border-gray-700">
         <nav class="-mb-px flex space-x-8" aria-label="Tabs">

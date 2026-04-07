@@ -151,38 +151,58 @@ class AiAnalysisService
                 throw new \RuntimeException('Nenhuma imagem válida foi encontrada para análise.');
             }
 
-            // Tenta o modelo mais recente e estável listado na conta do usuário (Gemini 2.5)
             Log::info('Enviando requisição para Gemini 2.5-flash com ' . (count($parts) - 1) . ' imagem(ns)');
-            
-            $response = $this->client->generativeModel('gemini-2.5-flash')->generateContent($parts);
-            $textResult = $response->text();
-            
-            Log::info('Resposta Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
-            
-            $textResult = preg_replace('/^```json\s*|\s*```$/', '', $textResult); // Limpa markdown
-            
-            $jsonResult = json_decode($textResult, true);
 
-            if (json_last_error() === JSON_ERROR_NONE) {
-                Log::info('Análise Gemini processada com sucesso');
-                return $jsonResult;
-            } else {
-                Log::error('Erro JSON Gemini: ' . $textResult);
-                throw new \RuntimeException('A IA retornou uma resposta inválida. Tente novamente.');
+            $maxAttempts = 3;
+            $lastException = null;
+
+            for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+                try {
+                    $response   = $this->client->generativeModel('gemini-2.5-flash')->generateContent($parts);
+                    $textResult = $response->text();
+
+                    Log::info("Resposta Gemini recebida (tentativa {$attempt}, primeiros 500 chars): " . substr($textResult, 0, 500));
+
+                    $textResult = preg_replace('/^```json\s*|\s*```$/', '', $textResult);
+                    $jsonResult = json_decode($textResult, true);
+
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        Log::info('Análise Gemini processada com sucesso');
+                        return $jsonResult;
+                    }
+
+                    Log::error('Erro JSON Gemini: ' . $textResult);
+                    throw new \RuntimeException('A IA retornou uma resposta inválida. Tente novamente.');
+
+                } catch (\RuntimeException $e) {
+                    throw $e; // Erros de JSON não fazem retry
+                } catch (\Exception $e) {
+                    $lastException = $e;
+                    $isRetryable   = str_contains($e->getMessage(), 'high demand')
+                                  || str_contains($e->getMessage(), 'temporarily')
+                                  || str_contains($e->getMessage(), '503');
+
+                    if ($isRetryable && $attempt < $maxAttempts) {
+                        Log::warning("Gemini alta demanda — tentativa {$attempt}/{$maxAttempts}. Aguardando 4s...");
+                        sleep(4);
+                        continue;
+                    }
+
+                    if (str_contains($e->getMessage(), 'Quota exceeded') || str_contains($e->getMessage(), '429')) {
+                        throw new \RuntimeException('Limite da API Gemini atingido. Aguarde alguns instantes e tente novamente.');
+                    }
+                    if ($isRetryable) {
+                        throw new \RuntimeException('A IA está com alta demanda no momento. Aguarde alguns instantes e tente novamente.');
+                    }
+                    throw new \RuntimeException('Erro ao processar análise com IA: ' . $e->getMessage());
+                }
             }
+
+            throw new \RuntimeException('A IA está com alta demanda no momento. Aguarde alguns instantes e tente novamente.');
 
         } catch (\Exception $e) {
             Log::error('Erro API Gemini: ' . $e->getMessage());
-            
-            // Verifica se é erro de cota
-            if (str_contains($e->getMessage(), 'Quota exceeded') || str_contains($e->getMessage(), '429')) {
-                throw new \RuntimeException('Limite da API Gemini atingido. Aguarde alguns instantes e tente novamente.');
-            }
-            
-            if (str_contains($e->getMessage(), 'high demand') || str_contains($e->getMessage(), 'temporarily')) {
-                throw new \RuntimeException('A IA está com alta demanda no momento. Aguarde alguns instantes e tente novamente.');
-            }
-            throw new \RuntimeException('Erro ao processar análise com IA: ' . $e->getMessage());
+            throw $e instanceof \RuntimeException ? $e : new \RuntimeException('Erro ao processar análise com IA: ' . $e->getMessage());
         }
     }
 
