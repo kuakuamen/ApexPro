@@ -12,19 +12,54 @@ use Illuminate\Support\Facades\Storage;
 class AiAnalysisService
 {
     protected $client;
+    protected array $apiKeys = [];
 
     public function __construct()
     {
-        // Inicializa o cliente Gemini com a chave via config (compatível com config:cache)
-        $apiKey = config('services.gemini.api_key');
-        
-        if (!$apiKey) {
+        // Suporte a múltiplas keys para fallback em caso de cota esgotada
+        $keys = array_filter([
+            config('services.gemini.api_key'),
+            config('services.gemini.api_key_2'),
+            config('services.gemini.api_key_3'),
+        ]);
+
+        if (empty($keys)) {
             Log::error('GEMINI_API_KEY não está configurada no arquivo .env');
             $this->client = null;
         } else {
-            Log::info('Cliente Gemini inicializado com sucesso');
-            $this->client = \Gemini::client($apiKey);
+            $this->apiKeys = array_values($keys);
+            Log::info('Cliente Gemini inicializado com sucesso (' . count($this->apiKeys) . ' key(s) disponível(is))');
+            $this->client = \Gemini::client($this->apiKeys[0]);
         }
+    }
+
+    /**
+     * Tenta executar uma chamada Gemini com fallback entre keys disponíveis.
+     */
+    protected function callWithFallback(callable $fn): mixed
+    {
+        $lastException = null;
+
+        foreach ($this->apiKeys as $index => $key) {
+            try {
+                $client = \Gemini::client($key);
+                return $fn($client);
+            } catch (\Exception $e) {
+                $isQuota = str_contains($e->getMessage(), 'Quota exceeded')
+                        || str_contains($e->getMessage(), '429')
+                        || str_contains($e->getMessage(), 'RESOURCE_EXHAUSTED');
+
+                if ($isQuota && isset($this->apiKeys[$index + 1])) {
+                    Log::warning("Gemini key #{$index} com cota esgotada, tentando key #" . ($index + 1));
+                    $lastException = $e;
+                    continue;
+                }
+
+                throw $e;
+            }
+        }
+
+        throw new \RuntimeException('Todas as chaves Gemini atingiram o limite de cota. Tente novamente mais tarde.');
     }
 
     /**
@@ -165,7 +200,9 @@ class AiAnalysisService
 
             for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
                 try {
-                    $response   = $this->client->generativeModel('gemini-2.5-flash')->generateContent($parts);
+                    $response = $this->callWithFallback(
+                        fn($client) => $client->generativeModel('gemini-2.5-flash')->generateContent($parts)
+                    );
                     $textResult = $response->text();
 
                     Log::info("Resposta Gemini recebida (tentativa {$attempt}, primeiros 500 chars): " . substr($textResult, 0, 500));
