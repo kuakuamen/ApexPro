@@ -59,7 +59,7 @@ class AiAnalysisService
 
         if (!$this->client) {
             Log::error('GEMINI_API_KEY não está configurada!');
-            dd('ERRO: Chave API do Gemini não está configurada. Verifique o arquivo .env no diretório raiz do projeto.');
+            throw new \RuntimeException('Chave API do Gemini não está configurada.');
         }
 
         try {
@@ -148,7 +148,7 @@ class AiAnalysisService
 
             if (count($parts) <= 1) {
                 Log::warning('Nenhuma imagem válida foi processada para o Gemini.');
-                dd('ERRO: Nenhuma imagem válida foi encontrada. Verifique se as imagens foram enviadas corretamente.');
+                throw new \RuntimeException('Nenhuma imagem válida foi encontrada para análise.');
             }
 
             // Tenta o modelo mais recente e estável listado na conta do usuário (Gemini 2.5)
@@ -168,7 +168,7 @@ class AiAnalysisService
                 return $jsonResult;
             } else {
                 Log::error('Erro JSON Gemini: ' . $textResult);
-                dd('A IA retornou uma resposta inválida. Tente novamente.', 'Resposta: ' . substr($textResult, 0, 1000));
+                throw new \RuntimeException('A IA retornou uma resposta inválida. Tente novamente.');
             }
 
         } catch (\Exception $e) {
@@ -176,10 +176,13 @@ class AiAnalysisService
             
             // Verifica se é erro de cota
             if (str_contains($e->getMessage(), 'Quota exceeded') || str_contains($e->getMessage(), '429')) {
-                dd('LIMITE DA IA ATINGIDO (Quota Exceeded).', 'O plano gratuito da Google tem um limite de requisições por minuto. Aguarde 30 segundos e tente novamente.');
+                throw new \RuntimeException('Limite da API Gemini atingido. Aguarde alguns instantes e tente novamente.');
             }
             
-            dd('ERRO API GEMINI:', $e->getMessage());
+            if (str_contains($e->getMessage(), 'high demand') || str_contains($e->getMessage(), 'temporarily')) {
+                throw new \RuntimeException('A IA está com alta demanda no momento. Aguarde alguns instantes e tente novamente.');
+            }
+            throw new \RuntimeException('Erro ao processar análise com IA: ' . $e->getMessage());
         }
     }
 
@@ -245,17 +248,19 @@ class AiAnalysisService
                 return $jsonResult;
             } else {
                 Log::error('Erro JSON Gemini Refine: ' . substr($textResult, 0, 1000));
-                dd('Erro ao refinar resposta da IA. Resposta: ' . substr($textResult, 0, 500));
+                throw new \RuntimeException('A IA retornou uma resposta inválida ao refinar. Tente novamente.');
             }
 
         } catch (\Exception $e) {
             Log::error('Erro API Gemini Refine: ' . $e->getMessage());
             
-            if (str_contains($e->getMessage(), 'Quota exceeded')) {
-                dd('ERRO: Limite da API Gemini atingido. Aguarde um momento e tente novamente.');
+            if (str_contains($e->getMessage(), 'Quota exceeded') || str_contains($e->getMessage(), '429')) {
+                throw new \RuntimeException('Limite da API Gemini atingido. Aguarde alguns instantes e tente novamente.');
             }
-            
-            dd('ERRO API GEMINI REFINE:', $e->getMessage());
+            if (str_contains($e->getMessage(), 'high demand') || str_contains($e->getMessage(), 'temporarily')) {
+                throw new \RuntimeException('A IA está com alta demanda no momento. Aguarde alguns instantes e tente novamente.');
+            }
+            throw new \RuntimeException('Erro ao refinar análise com IA: ' . $e->getMessage());
         }
     }
 
@@ -304,7 +309,7 @@ class AiAnalysisService
 
         if (!$this->client) {
             Log::error('GEMINI_API_KEY não configurada!');
-            dd('ERRO: Chave API do Gemini não está configurada. Verifique o arquivo .env');
+            throw new \RuntimeException('Chave API do Gemini não está configurada.');
         }
 
         try {
@@ -380,17 +385,19 @@ Retorne SOMENTE o JSON, sem markdown ou explicações adicionais.";
                 return $jsonResult;
             } else {
                 Log::error('Erro JSON Gemini (no images): ' . substr($textResult, 0, 1000));
-                dd('A IA retornou um JSON inválido. Resposta: ' . substr($textResult, 0, 500));
+                throw new \RuntimeException('A IA retornou uma resposta inválida. Tente novamente.');
             }
 
         } catch (\Exception $e) {
             Log::error('Erro API Gemini (no images): ' . $e->getMessage());
             
             if (str_contains($e->getMessage(), 'Quota exceeded') || str_contains($e->getMessage(), '429')) {
-                dd('ERRO: Limite da API Gemini atingido. Aguarde alguns minutos e tente novamente.');
+                throw new \RuntimeException('Limite da API Gemini atingido. Aguarde alguns instantes e tente novamente.');
             }
-            
-            dd('ERRO API GEMINI:', $e->getMessage());
+            if (str_contains($e->getMessage(), 'high demand') || str_contains($e->getMessage(), 'temporarily')) {
+                throw new \RuntimeException('A IA está com alta demanda no momento. Aguarde alguns instantes e tente novamente.');
+            }
+            throw new \RuntimeException('Erro ao processar análise com IA: ' . $e->getMessage());
         }
     }
 }

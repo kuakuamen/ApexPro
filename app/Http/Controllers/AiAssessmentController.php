@@ -310,10 +310,14 @@ class AiAssessmentController extends Controller
         ];
 
         // Chamar o serviço de IA
-        $analysisResult = $this->aiService->analyzeImages(
-            array_merge([$frontPath, $sideRightPath, $sideLeftPath, $backPath], $extraPaths), 
-            $studentData
-        );
+        try {
+            $analysisResult = $this->aiService->analyzeImages(
+                array_merge([$frontPath, $sideRightPath, $sideLeftPath, $backPath], $extraPaths),
+                $studentData
+            );
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['ai' => $e->getMessage()]);
+        }
 
         // Retornar a view de revisão com os dados preenchidos
         // Buscamos todos os exercícios para o select de edição
@@ -430,12 +434,16 @@ class AiAssessmentController extends Controller
         ];
 
         // Chamar o serviço de IA para refinamento
-        $analysisResult = $this->aiService->refineAnalysis(
-            $previousAnalysis,
-            $request->feedback,
-            array_merge(array_filter([$frontPath, $sidePath, $sideLeftPath, $backPath]), is_array($extraPaths) ? $extraPaths : []),
-            $studentData
-        );
+        try {
+            $analysisResult = $this->aiService->refineAnalysis(
+                $previousAnalysis,
+                $request->feedback,
+                array_merge(array_filter([$frontPath, $sidePath, $sideLeftPath, $backPath]), is_array($extraPaths) ? $extraPaths : []),
+                $studentData
+            );
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['ai' => $e->getMessage()]);
+        }
 
         // Atualizar sessão
         session(['last_analysis_result' => $analysisResult]);
@@ -624,7 +632,11 @@ class AiAssessmentController extends Controller
         ];
 
         // Chamar o serviço de IA (sem imagens)
-        $analysisResult = $this->aiService->generateWorkoutWithoutImages($studentData);
+        try {
+            $analysisResult = $this->aiService->generateWorkoutWithoutImages($studentData);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['ai' => $e->getMessage()]);
+        }
 
         // Buscamos todos os exercícios para o select de edição
         $allExercises = Exercise::orderBy('name')->get();
