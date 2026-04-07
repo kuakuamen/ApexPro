@@ -34,23 +34,52 @@ class AiAnalysisService
     }
 
     /**
-     * Tenta executar uma chamada Gemini com fallback entre keys disponíveis.
+     * Tenta executar uma chamada Gemini com fallback entre combinações de key+modelo.
+     * Ordem de tentativa:
+     *   key1 + gemini-2.5-flash
+     *   key2 + gemini-2.5-flash
+     *   key2 + gemini-2.5-flash-lite
+     *   key2 + gemini-3.1-flash-lite-preview
      */
     protected function callWithFallback(callable $fn): mixed
     {
+        $combinations = [];
+
+        // Monta combinações: todas as keys com modelo principal
+        foreach ($this->apiKeys as $key) {
+            $combinations[] = ['key' => $key, 'model' => 'gemini-2.5-flash'];
+        }
+
+        // Adiciona modelos alternativos com a última key disponível
+        if (!empty($this->apiKeys)) {
+            $lastKey = end($this->apiKeys);
+            $combinations[] = ['key' => $lastKey, 'model' => 'gemini-2.5-flash-lite'];
+            $combinations[] = ['key' => $lastKey, 'model' => 'gemini-3.1-flash-lite-preview'];
+        }
+
         $lastException = null;
 
-        foreach ($this->apiKeys as $index => $key) {
+        foreach ($combinations as $i => $combo) {
             try {
-                $client = \Gemini::client($key);
-                return $fn($client);
+                $client = \Gemini::client($combo['key']);
+                $result = $fn($client, $combo['model']);
+                if ($i > 0) {
+                    Log::info("Gemini fallback bem-sucedido com combinação #{$i} (model: {$combo['model']})");
+                }
+                return $result;
             } catch (\Exception $e) {
                 $isQuota = str_contains($e->getMessage(), 'Quota exceeded')
+                        || str_contains($e->getMessage(), 'quota')
                         || str_contains($e->getMessage(), '429')
-                        || str_contains($e->getMessage(), 'RESOURCE_EXHAUSTED');
+                        || str_contains($e->getMessage(), 'RESOURCE_EXHAUSTED')
+                        || str_contains($e->getMessage(), 'exceeded your current quota');
 
-                if ($isQuota && isset($this->apiKeys[$index + 1])) {
-                    Log::warning("Gemini key #{$index} com cota esgotada, tentando key #" . ($index + 1));
+                $isHighDemand = str_contains($e->getMessage(), 'high demand')
+                             || str_contains($e->getMessage(), 'temporarily')
+                             || str_contains($e->getMessage(), '503');
+
+                if (($isQuota || $isHighDemand) && isset($combinations[$i + 1])) {
+                    Log::warning("Gemini combo #{$i} (model: {$combo['model']}) falhou — tentando próximo...");
                     $lastException = $e;
                     continue;
                 }
@@ -59,7 +88,7 @@ class AiAnalysisService
             }
         }
 
-        throw new \RuntimeException('Todas as chaves Gemini atingiram o limite de cota. Tente novamente mais tarde.');
+        throw new \RuntimeException('Todos os modelos Gemini disponíveis atingiram o limite. Tente novamente mais tarde.');
     }
 
     /**
@@ -201,7 +230,7 @@ class AiAnalysisService
             for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
                 try {
                     $response = $this->callWithFallback(
-                        fn($client) => $client->generativeModel('gemini-3.1-flash-lite')->generateContent($parts)
+                        fn($client, $model) => $client->generativeModel($model)->generateContent($parts)
                     );
                     $textResult = $response->text();
 
@@ -298,9 +327,11 @@ class AiAnalysisService
             // Usa o mesmo modelo estável
             Log::info('Enviando requisição de refinamento para Gemini 1.5-flash');
 
-            $response = $this->client->generativeModel('gemini-3.1-flash-lite')->generateContent($parts);
+            $response = $this->callWithFallback(
+                fn($client, $model) => $client->generativeModel($model)->generateContent($parts)
+            );
             $textResult = $response->text();
-            
+
             Log::info('Resposta de refinamento Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
             
             $textResult = preg_replace('/^```json\s*|\s*```$/', '', $textResult);
@@ -434,8 +465,10 @@ RETORNE UM JSON ESTRUTURADO com:
 Retorne SOMENTE o JSON, sem markdown ou explicações adicionais.";
 
             Log::info('Enviando requisição para Gemini 2.5-flash (sem imagens)');
-            
-            $response = $this->client->generativeModel('gemini-3.1-flash-lite')->generateContent($prompt);
+
+            $response = $this->callWithFallback(
+                fn($client, $model) => $client->generativeModel($model)->generateContent($prompt)
+            );
             $textResult = $response->text();
             
             Log::info('Resposta Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
