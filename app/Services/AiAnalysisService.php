@@ -201,7 +201,7 @@ class AiAnalysisService
             for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
                 try {
                     $response = $this->callWithFallback(
-                        fn($client) => $client->generativeModel('gemini-2.5-flash')->generateContent($parts)
+                        fn($client) => $client->generativeModel('gemini-3.1-flash-lite')->generateContent($parts)
                     );
                     $textResult = $response->text();
 
@@ -298,7 +298,7 @@ class AiAnalysisService
             // Usa o mesmo modelo estável
             Log::info('Enviando requisição de refinamento para Gemini 1.5-flash');
 
-            $response = $this->client->generativeModel('gemini-2.5-flash')->generateContent($parts);
+            $response = $this->client->generativeModel('gemini-3.1-flash-lite')->generateContent($parts);
             $textResult = $response->text();
             
             Log::info('Resposta de refinamento Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
@@ -435,7 +435,7 @@ Retorne SOMENTE o JSON, sem markdown ou explicações adicionais.";
 
             Log::info('Enviando requisição para Gemini 2.5-flash (sem imagens)');
             
-            $response = $this->client->generativeModel('gemini-2.5-flash')->generateContent($prompt);
+            $response = $this->client->generativeModel('gemini-3.1-flash-lite')->generateContent($prompt);
             $textResult = $response->text();
             
             Log::info('Resposta Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
