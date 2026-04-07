@@ -110,11 +110,29 @@
                         <h4 class="text-md font-bold text-white mb-4">Contexto do Treino</h4>
                         <div>
                             <label for="additional_notes" class="block text-sm font-medium text-gray-300 mb-2">Observações Específicas para este Treino</label>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                @foreach([
+                                    '💪 Foco em hipertrofia de membros superiores',
+                                    '🍑 Priorizar glúteos e posterior de coxa',
+                                    '🧘 Treino funcional com foco em mobilidade',
+                                    '⚡ Alta intensidade — aluno bem condicionado',
+                                    '🦵 Evitar agachamentos — dor no joelho',
+                                    '🔄 Reabilitação pós-lesão no ombro',
+                                    '🏃 Treino aeróbico + musculação',
+                                    '😓 Aluno cansado — treino mais leve hoje',
+                                ] as $sugestao)
+                                    <button type="button"
+                                        onclick="appendPrompt('additional_notes', '{{ $sugestao }}')"
+                                        class="text-xs px-3 py-1.5 rounded-full bg-gray-700 hover:bg-indigo-600 text-gray-300 hover:text-white border border-gray-600 hover:border-indigo-500 transition-all duration-200 cursor-pointer">
+                                        {{ $sugestao }}
+                                    </button>
+                                @endforeach
+                            </div>
                             <div class="mt-1">
                                 <textarea id="additional_notes" name="additional_notes" rows="3" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: Focar em glúteos hoje. O aluno reclamou de cansaço..."></textarea>
                             </div>
                             <p class="mt-2 text-sm text-gray-400">
-                                Use este campo para dar instruções pontuais à IA sobre o treino.
+                                Clique nas sugestões acima ou escreva suas próprias instruções para a IA.
                             </p>
                         </div>
                     </div>
@@ -318,8 +336,28 @@
 
                             <div>
                                 <label for="notes_noimg" class="block text-sm font-medium text-gray-300 mb-2">Objetivos e Observações Específicas</label>
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    @foreach([
+                                        '💪 Ganho de massa muscular — iniciante',
+                                        '🔥 Emagrecimento + definição muscular',
+                                        '🧘 Melhorar postura e mobilidade',
+                                        '🏋️ Força máxima — aluno avançado',
+                                        '🦵 Evitar impacto — problema no joelho',
+                                        '🔄 Reabilitação pós-lesão no ombro',
+                                        '❤️ Condicionamento cardiovascular',
+                                        '🧓 Treino para terceira idade — baixo impacto',
+                                        '🤰 Gestante — treino adaptado',
+                                        '⚡ Treino funcional completo',
+                                    ] as $sugestao)
+                                        <button type="button"
+                                            onclick="appendPrompt('notes_noimg', '{{ $sugestao }}')"
+                                            class="text-xs px-3 py-1.5 rounded-full bg-gray-700 hover:bg-indigo-600 text-gray-300 hover:text-white border border-gray-600 hover:border-indigo-500 transition-all duration-200 cursor-pointer">
+                                            {{ $sugestao }}
+                                        </button>
+                                    @endforeach
+                                </div>
                                 <textarea id="notes_noimg" name="additional_notes" rows="4" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: Quer melhorar postura para trabalho. Dor em ombros. Quer ganhar massa em peito e costas. Tem lesão no joelho esquerdo..."></textarea>
-                                <p class="mt-2 text-sm text-gray-400">Inclua lesões, dores, restrições, prioridades e qualquer contexto importante.</p>
+                                <p class="mt-2 text-sm text-gray-400">Clique nas sugestões acima ou escreva suas próprias instruções para a IA.</p>
                             </div>
                         </div>
                     </div>
@@ -394,6 +432,15 @@
 </style>
 
 <script>
+    function appendPrompt(fieldId, text) {
+        const textarea = document.getElementById(fieldId);
+        if (!textarea) return;
+        const current = textarea.value.trim();
+        textarea.value = current ? current + '. ' + text : text;
+        textarea.focus();
+        textarea.scrollTop = textarea.scrollHeight;
+    }
+
     const LAST_IMAGES_URL = "{{ route('personal.ai-assessment.last-images', ['student' => '__ID__']) }}";
 
     // ===================== ABA =====================
