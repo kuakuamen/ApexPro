@@ -227,7 +227,7 @@ class AiAssessmentController extends Controller
         // Resolver imagens: arquivo novo ou reutilizar path existente
         $resolveImage = function(string $slot, string $inputName) use ($request, $isReusing, $reuseSourceType, $reuseSourceId, $personalId): string {
             if ($request->hasFile($inputName)) {
-                return $request->file($inputName)->store('assessments', 'private');
+                return \App\Helpers\ImageHelper::compressAndStore($request->file($inputName), 'assessments', 'private');
             }
             if ($isReusing && $request->input('reuse_' . $slot)) {
                 $existing = $this->resolveReusePath($reuseSourceType, $reuseSourceId, $slot, $personalId);
@@ -275,7 +275,7 @@ class AiAssessmentController extends Controller
         // Novos uploads extras são adicionados além das reutilizadas (sem limite fixo no merge)
         if ($request->hasFile('photo_extra')) {
             foreach ($request->file('photo_extra') as $extraPhoto) {
-                $extraPaths[] = $extraPhoto->store('assessments', 'private');
+                $extraPaths[] = \App\Helpers\ImageHelper::compressAndStore($extraPhoto, 'assessments', 'private');
             }
         }
 

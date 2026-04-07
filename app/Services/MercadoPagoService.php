@@ -321,6 +321,11 @@ class MercadoPagoService
         // Salvar no banco para reuso
         if ($planConfig) {
             $planConfig->update(['mp_plan_id' => $mpPlanId]);
+        } else {
+            \App\Models\PlanConfig::create([
+                'plan_id'    => $plan['id'],
+                'mp_plan_id' => $mpPlanId,
+            ]);
         }
 
         return $mpPlanId;
