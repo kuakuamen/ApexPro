@@ -1172,7 +1172,7 @@
                         </h4>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                             @foreach($posture as $key => $value)
-                            @if($value && strtolower((string)$value) !== 'normal')
+                            @if($value && strtolower(is_array($value) ? implode(', ', $value) : (string)$value) !== 'normal')
                             <div class="bg-zinc-800/60 rounded-xl px-3 py-2">
                                 <p class="text-xs text-gray-500">{{ $postureLabels[$key] ?? str_replace('_', ' ', $key) }}</p>
                                 <p class="text-xs text-orange-300 font-medium mt-0.5">{{ is_array($value) ? implode(', ', $value) : $value }}</p>
