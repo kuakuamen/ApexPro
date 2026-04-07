@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Models\ProfessionalStudent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use App\Models\WorkoutLog;
 
 class WorkoutPlanController extends Controller
@@ -61,6 +63,168 @@ class WorkoutPlanController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Erro ao processing: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function exerciseYoutubeVideo(Request $request)
+    {
+        if (Auth::user()?->role !== 'aluno') {
+            abort(403);
+        }
+
+        $exerciseName = trim((string) $request->query('name'));
+
+        if ($exerciseName === '') {
+            return response()->json(['message' => 'Nome do exercicio nao informado.'], 422);
+        }
+
+        $apiKey = env('YOUTUBE_API_KEY');
+
+        if (!$apiKey) {
+            return response()->json(['message' => 'Configure YOUTUBE_API_KEY no .env.'], 503);
+        }
+
+        $cacheKey = 'youtube_exercise_video_v4_' . md5(mb_strtolower($exerciseName));
+
+        $video = Cache::get($cacheKey);
+
+        if (!$video) {
+            $video = $this->searchYoutubeExerciseVideo($apiKey, $exerciseName);
+
+            if ($video) {
+                Cache::put($cacheKey, $video, now()->addYear());
+            }
+        }
+
+        if (!$video) {
+            return response()->json(['message' => 'Nao encontrei um video para este exercicio.'], 404);
+        }
+
+        return response()->json($video);
+    }
+
+    private function searchYoutubeExerciseVideo(string $apiKey, string $exerciseName): ?array
+    {
+        $query = $exerciseName . ' execução exercício musculação';
+
+        $response = Http::timeout(8)->get('https://www.googleapis.com/youtube/v3/search', [
+            'part' => 'snippet',
+            'q' => $query,
+            'key' => $apiKey,
+            'type' => 'video',
+            'videoEmbeddable' => 'true',
+            'videoDuration' => 'short',
+            'safeSearch' => 'strict',
+            'maxResults' => 15,
+            'relevanceLanguage' => 'pt',
+        ]);
+
+        if (!$response->successful()) {
+            return null;
+        }
+
+        $items = collect($response->json('items', []))
+            ->filter(fn ($item) => $this->youtubeResultMatchesExercise($exerciseName, $item));
+
+        $durations = $this->youtubeVideoDurations($apiKey, $items->pluck('id.videoId')->filter()->values()->all());
+
+        $item = $items->first(function ($item) use ($durations) {
+            $videoId = $item['id']['videoId'] ?? null;
+
+            return $videoId && isset($durations[$videoId]) && $durations[$videoId] <= 30;
+        });
+
+        $videoId = $item['id']['videoId'] ?? null;
+
+        if (!$videoId) {
+            return null;
+        }
+
+        return [
+            'video_id' => $videoId,
+            'title' => $item['snippet']['title'] ?? $exerciseName,
+            'channel_title' => $item['snippet']['channelTitle'] ?? null,
+        ];
+    }
+
+    private function youtubeResultMatchesExercise(string $exerciseName, array $item): bool
+    {
+        $text = $this->normalizeExerciseText(($item['snippet']['title'] ?? '') . ' ' . ($item['snippet']['description'] ?? ''));
+        $exercise = $this->normalizeExerciseText($exerciseName);
+
+        $tokens = collect(explode(' ', $exercise))
+            ->reject(fn ($term) => mb_strlen($term) < 4 || in_array($term, ['para', 'parede', 'porta', 'polia', 'corda', 'com', 'exercicio', 'execucao', 'musculacao'], true))
+            ->values();
+
+        if ($tokens->isNotEmpty() && !$tokens->contains(fn ($term) => str_contains($text, $term))) {
+            return false;
+        }
+
+        $conflicts = [
+            'reto' => ['inclinado', 'declinado'],
+            'inclinado' => ['reto', 'declinado'],
+            'declinado' => ['reto', 'inclinado'],
+            'barra' => ['halter', 'halteres', 'dumbbell'],
+            'halteres' => ['barra', 'barbell'],
+            'halter' => ['barra', 'barbell'],
+        ];
+
+        foreach ($conflicts as $term => $blockedTerms) {
+            if (str_contains($exercise, $term)) {
+                foreach ($blockedTerms as $blockedTerm) {
+                    if (str_contains($text, $blockedTerm)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private function youtubeVideoDurations(string $apiKey, array $videoIds): array
+    {
+        if ($videoIds === []) {
+            return [];
+        }
+
+        $response = Http::timeout(8)->get('https://www.googleapis.com/youtube/v3/videos', [
+            'part' => 'contentDetails',
+            'id' => implode(',', $videoIds),
+            'key' => $apiKey,
+        ]);
+
+        if (!$response->successful()) {
+            return [];
+        }
+
+        return collect($response->json('items', []))
+            ->mapWithKeys(function ($item) {
+                return [
+                    $item['id'] => $this->youtubeDurationToSeconds($item['contentDetails']['duration'] ?? ''),
+                ];
+            })
+            ->filter(fn ($seconds) => $seconds !== null)
+            ->all();
+    }
+
+    private function youtubeDurationToSeconds(string $duration): ?int
+    {
+        if (!preg_match('/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/', $duration, $matches)) {
+            return null;
+        }
+
+        return ((int) ($matches[1] ?? 0) * 3600)
+            + ((int) ($matches[2] ?? 0) * 60)
+            + (int) ($matches[3] ?? 0);
+    }
+
+    private function normalizeExerciseText(string $text): string
+    {
+        $text = mb_strtolower($text);
+        $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text) ?: $text;
+        $text = preg_replace('/[^a-z0-9]+/', ' ', $text) ?? $text;
+
+        return trim(preg_replace('/\s+/', ' ', $text) ?? $text);
     }
 
     /**

@@ -101,19 +101,29 @@
     </div>
     
     <div>
-        <div>
-            @foreach($workout->days as $day)
-                <div class="px-4 py-6 sm:px-6 border-b border-teal-900/30 last:border-b-0">
-                    <dt class="text-base font-bold text-teal-300 mb-4">
-                        {{ $day->name }}
-                    </dt>
-                    <dd class="text-sm text-stone-300 sm:col-span-3">
+	        <div class="space-y-4">
+	            @foreach($workout->days as $day)
+	                <div class="px-4 py-4 sm:px-6 border-b border-teal-900/30 last:border-b-0" x-data="{ open: false }">
+	                    <button type="button"
+	                            @click="open = !open"
+	                            class="w-full flex items-center justify-between rounded-2xl border border-teal-900/40 bg-zinc-900/70 px-4 py-4 text-left hover:border-teal-600/60 hover:bg-zinc-900 transition-colors">
+	                        <span class="text-base font-bold text-teal-300">
+	                            {{ $day->name }}
+	                        </span>
+	                        <span class="flex items-center gap-3 text-xs font-semibold text-stone-300">
+	                            <span>{{ $day->exercises->count() }} exercicios</span>
+	                            <svg class="h-5 w-5 text-teal-300 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+	                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+	                            </svg>
+	                        </span>
+	                    </button>
+	                    <dd x-show="open" x-transition class="mt-4 text-sm text-stone-300 sm:col-span-3">
                         <ul role="list" class="space-y-4">
                             @foreach($day->exercises as $exercise)
                                 @if(auth()->user()->role === 'aluno')
                                     <!-- Card Mobile-First (Aluno) -->
                                     <li class="bg-zinc-900/60 border border-teal-900/30 rounded-2xl shadow-md p-5 relative overflow-hidden transition-all duration-300" 
-                                        x-data="exerciseItem({{ $exercise->id }}, {{ in_array($exercise->id, $todayLogs ?? []) ? 'true' : 'false' }}, '{{ $exercise->rest_time }}')"
+                                        x-data="exerciseItem({{ $exercise->id }}, {{ in_array($exercise->id, $todayLogs ?? []) ? 'true' : 'false' }}, @js($exercise->rest_time), @js($exercise->name), @js($exercise->embed_video_url))"
                                         :class="{ 'bg-zinc-800/40 opacity-75': completed }">
                                         
                                         <!-- Header: Nome e Check -->
@@ -138,18 +148,6 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
                                                     </svg>
                                                 </div>
-                                                @if($exercise->embed_video_url)
-                                                    <div class="mt-4 rounded-xl overflow-hidden border border-teal-900/30 bg-black">
-                                                        <div class="aspect-video">
-                                                            <iframe class="w-full h-full"
-                                                                    src="{{ $exercise->embed_video_url }}"
-                                                                    title="Execucao de {{ $exercise->name }}"
-                                                                    loading="lazy"
-                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                                    allowfullscreen></iframe>
-                                                        </div>
-                                                    </div>
-                                                @endif
                                             </div>
                                         </div>
 
@@ -169,26 +167,42 @@
                                             </div>
                                         </div>
 
-                                        @if($exercise->embed_video_url)
-                                            <div class="mb-4">
-                                                <button type="button"
-                                                        @click="showVideo = !showVideo"
-                                                        class="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-cyan-700/40 bg-cyan-900/20 text-cyan-200 hover:bg-cyan-900/30 transition-colors">
-                                                    <span class="font-semibold">Ver execucao do exercicio</span>
-                                                    <span class="text-xs" x-text="showVideo ? 'Ocultar' : 'Abrir video'"></span>
-                                                </button>
-                                                <div x-show="showVideo" x-transition class="mt-3 rounded-xl overflow-hidden border border-cyan-700/30 bg-black">
-                                                    <div class="aspect-video">
+                                        <div class="mb-4">
+                                            <button type="button"
+                                                    @click="toggleVideo()"
+                                                    class="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-cyan-700/40 bg-cyan-900/20 text-cyan-200 hover:bg-cyan-900/30 transition-colors">
+                                                <span class="font-semibold">Ver execucao do exercicio</span>
+                                                <span class="text-xs" x-text="videoButtonLabel()"></span>
+                                            </button>
+
+                                            <div x-show="showVideo" x-transition class="mt-3 rounded-xl overflow-hidden border border-cyan-700/30 bg-zinc-950">
+                                                <template x-if="videoLoading">
+                                                    <div class="p-4 text-center text-sm text-cyan-200">Buscando video no YouTube...</div>
+                                                </template>
+
+                                                <template x-if="videoError">
+                                                    <div class="p-4 text-sm text-amber-200 bg-amber-950/30" x-text="videoError"></div>
+                                                </template>
+
+                                                <template x-if="videoUrl">
+                                                    <div class="aspect-video bg-black">
                                                         <iframe class="w-full h-full"
-                                                                src="{{ $exercise->embed_video_url }}"
-                                                                title="Execucao de {{ $exercise->name }}"
+                                                                :src="videoUrl"
+                                                                :title="'Execucao de ' + exerciseName"
                                                                 loading="lazy"
                                                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                                                 allowfullscreen></iframe>
                                                     </div>
-                                                </div>
+                                                </template>
+
+                                                <template x-if="videoTitle">
+                                                    <div class="px-4 py-3 border-t border-cyan-900/40">
+                                                        <p class="text-sm font-semibold text-stone-100" x-text="videoTitle"></p>
+                                                        <p class="text-xs text-stone-400" x-text="videoChannel"></p>
+                                                    </div>
+                                                </template>
                                             </div>
-                                        @endif
+                                        </div>
 
                                         <!-- Ações (Timer) -->
                                         <template x-if="restSeconds > 0 && !completed">
@@ -245,7 +259,7 @@
 </div>
 
 <script>
-    function exerciseItem(id, initialStatus, restTimeStr) {
+    function exerciseItem(id, initialStatus, restTimeStr, exerciseName, initialVideoUrl) {
         // Chave única para o LocalStorage: workout_log_{DATA}_{ID}
         const storageKey = `workout_log_${new Date().toISOString().split('T')[0]}_${id}`;
         const storageKeyExpire = `workout_log_expire_${id}`;
@@ -285,11 +299,18 @@
 
         return {
             id: id,
+            exerciseName: exerciseName,
             completed: status,
             restSeconds: seconds,
             timeLeft: seconds,
             timerRunning: false,
             showVideo: false,
+            videoLoaded: Boolean(initialVideoUrl),
+            videoLoading: false,
+            videoError: '',
+            videoUrl: initialVideoUrl || '',
+            videoTitle: '',
+            videoChannel: '',
             interval: null,
             storageKey: storageKey,
             storageKeyExpire: storageKeyExpire,
@@ -337,6 +358,53 @@
             },
             
             // updateGlobalCount removido pois agora usamos eventos delta (+1/-1)
+
+            videoButtonLabel() {
+                if (this.videoLoading) return 'Buscando...';
+                if (this.showVideo) return 'Ocultar';
+                return this.videoLoaded ? 'Abrir video' : 'Buscar no YouTube';
+            },
+
+            toggleVideo() {
+                this.showVideo = !this.showVideo;
+
+                if (this.showVideo && !this.videoLoaded && !this.videoLoading) {
+                    this.loadYoutubeVideo();
+                }
+            },
+
+            loadYoutubeVideo() {
+                this.videoLoading = true;
+                this.videoError = '';
+
+                fetch(`{{ route('student.exercise.youtube') }}?name=${encodeURIComponent(this.exerciseName)}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(async response => {
+                    const data = await response.json().catch(() => ({}));
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Nao encontrei video para este exercicio.');
+                    }
+
+                    return data;
+                })
+                .then(data => {
+                    this.videoUrl = `https://www.youtube.com/embed/${data.video_id}`;
+                    this.videoTitle = data.title || '';
+                    this.videoChannel = data.channel_title || '';
+                    this.videoLoaded = true;
+                })
+                .catch(error => {
+                    this.videoError = error.message || 'Nao foi possivel carregar o video agora.';
+                })
+                .finally(() => {
+                    this.videoLoading = false;
+                });
+            },
 
             startTimer() {
                 if (this.restSeconds <= 0) return;
