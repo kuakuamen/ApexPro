@@ -150,4 +150,9 @@ class User extends Authenticatable
 
         return '/fitmanager/public/storage/' . $this->profile_photo_path;
     }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
+    }
 }
