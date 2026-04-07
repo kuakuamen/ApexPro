@@ -382,6 +382,17 @@ Retorne SOMENTE o JSON, sem markdown ou explicações adicionais.";
 
             if (json_last_error() === JSON_ERROR_NONE) {
                 Log::info('Treino gerado com sucesso pela IA');
+                // Normalizar campos que devem ser arrays mas podem vir como string
+                foreach (['strengthen', 'stretch'] as $field) {
+                    if (isset($jsonResult['suggested_focus'][$field]) && is_string($jsonResult['suggested_focus'][$field])) {
+                        $jsonResult['suggested_focus'][$field] = array_map('trim', explode(',', $jsonResult['suggested_focus'][$field]));
+                    }
+                }
+                foreach (['low', 'medium', 'high'] as $level) {
+                    if (isset($jsonResult['risk_factors'][$level]) && is_string($jsonResult['risk_factors'][$level])) {
+                        $jsonResult['risk_factors'][$level] = array_map('trim', explode(',', $jsonResult['risk_factors'][$level]));
+                    }
+                }
                 return $jsonResult;
             } else {
                 Log::error('Erro JSON Gemini (no images): ' . substr($textResult, 0, 1000));
