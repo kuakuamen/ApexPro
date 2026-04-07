@@ -158,7 +158,7 @@ class AiAnalysisService
 
             for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
                 try {
-                    $response   = $this->client->generativeModel('gemini-2.5-flash')->generateContent($parts);
+                    $response   = $this->client->generativeModel('gemini-1.5-flash')->generateContent($parts);
                     $textResult = $response->text();
 
                     Log::info("Resposta Gemini recebida (tentativa {$attempt}, primeiros 500 chars): " . substr($textResult, 0, 500));
@@ -252,9 +252,9 @@ class AiAnalysisService
             }
 
             // Usa o mesmo modelo estável
-            Log::info('Enviando requisição de refinamento para Gemini 2.5-flash');
-            
-            $response = $this->client->generativeModel('gemini-2.5-flash')->generateContent($parts);
+            Log::info('Enviando requisição de refinamento para Gemini 1.5-flash');
+
+            $response = $this->client->generativeModel('gemini-1.5-flash')->generateContent($parts);
             $textResult = $response->text();
             
             Log::info('Resposta de refinamento Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
