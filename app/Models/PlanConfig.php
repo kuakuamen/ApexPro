@@ -17,6 +17,7 @@ class PlanConfig extends Model
         'discount_percent',
         'discount_expires_at',
         'color',
+        'mp_plan_id',
     ];
 
     protected $casts = [

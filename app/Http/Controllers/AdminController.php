@@ -9,7 +9,9 @@ use App\Models\DietPlan;
 use App\Models\PlanConfig;
 use App\Models\ProfessionalSubscription;
 use App\Models\SubscriptionTransaction;
+use App\Services\MercadoPagoService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rules;
 use App\Rules\Cpf;
@@ -208,13 +210,31 @@ class AdminController extends Controller
     /**
      * Deletar personal
      */
-    public function deletePersonal(User $user)
+    public function deletePersonal(User $user, MercadoPagoService $mpService)
     {
         if ($user->role !== 'personal') {
             abort(404);
         }
 
         $name = $user->name;
+
+        // Cancelar preapproval no MP antes de deletar
+        $subscription = $user->professionalSubscription;
+        if ($subscription && !empty($subscription->mp_preapproval_id)) {
+            try {
+                $mpService->cancelPreapproval($subscription->mp_preapproval_id);
+                Log::info('Admin: preapproval cancelado ao deletar usuario', [
+                    'user_id'        => $user->id,
+                    'preapproval_id' => $subscription->mp_preapproval_id,
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning('Admin: falha ao cancelar preapproval ao deletar usuario', [
+                    'user_id' => $user->id,
+                    'error'   => $e->getMessage(),
+                ]);
+            }
+        }
+
         $user->delete();
 
         return redirect()->route('admin.personals.index')
@@ -348,12 +368,29 @@ class AdminController extends Controller
     /**
      * Suspender assinatura do personal
      */
-    public function suspendSubscription(User $user)
+    public function suspendSubscription(User $user, MercadoPagoService $mpService)
     {
         $subscription = ProfessionalSubscription::where('user_id', $user->id)->first();
 
         if ($subscription) {
-            $subscription->update(['status' => 'suspended']);
+            // Cancelar preapproval no MP ao suspender
+            if (!empty($subscription->mp_preapproval_id)) {
+                try {
+                    $mpService->cancelPreapproval($subscription->mp_preapproval_id);
+                } catch (\Throwable $e) {
+                    Log::warning('Admin: falha ao cancelar preapproval ao suspender', [
+                        'user_id' => $user->id,
+                        'error'   => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            $subscription->update([
+                'status'                => 'suspended',
+                'mp_preapproval_status' => 'cancelled',
+            ]);
+
+            $user->update(['is_active' => false]);
         }
 
         return redirect()->back()->with('success', 'Assinatura suspensa com sucesso!');

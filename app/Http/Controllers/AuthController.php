@@ -30,10 +30,19 @@ class AuthController extends Controller
 
             // Verificar se o usuário está ativo
             if (!$user->is_active) {
+                if ($user->role === 'personal') {
+                    // Personal inativo: manter logado e redirecionar para renovação
+                    $subscription = \App\Models\ProfessionalSubscription::where('user_id', $user->id)->first();
+                    $planId = $subscription?->plan_id ?? 'basic';
+
+                    return redirect()->route('subscription.renew.checkout', ['plan' => $planId])
+                        ->with('warning', 'Sua assinatura está inativa. Renove para continuar usando o sistema.');
+                }
+
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-                
+
                 return back()->withErrors([
                     'email' => 'Sua conta está desativada. Entre em contato com seu Personal.',
                 ]);

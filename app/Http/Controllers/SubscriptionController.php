@@ -128,6 +128,9 @@ class SubscriptionController extends Controller
             'plan'          => $this->plans[$planId],
             'isRenewal'     => false,
             'defaultMethod' => 'pix',
+            'trialEnabled'  => true,
+            'trialDays'     => 7,
+            'trialAmount'   => 1.00,
             'mpPublicKey'   => ((string) config('services.mercadopago.mode', 'live') === 'test'
                 ? config('services.mercadopago.test_public_key')
                 : config('services.mercadopago.public_key')),
@@ -150,6 +153,11 @@ class SubscriptionController extends Controller
             $paymentMethod = 'credit_card';
         }
         $request->merge(['payment_method' => $paymentMethod]);
+
+        // Normalize CPF before validation so unique check matches stored format
+        if ($request->has('cpf')) {
+            $request->merge(['cpf' => preg_replace('/[^0-9]/', '', $request->input('cpf'))]);
+        }
 
         $rules = [
             'name'           => ['required', 'string', 'max:255'],
@@ -216,7 +224,7 @@ class SubscriptionController extends Controller
             }
 
             try {
-                return $this->processMP($mpService, $user, $plan, $transaction, $paymentMethod, $request);
+                return $this->processMP($mpService, $user, $plan, $transaction, $paymentMethod, $request, isTrial: true);
             } catch (\Exception $e) {
                 // Rollback em caso de falha na criação do pagamento/preapproval
                 if (Auth::check() && Auth::id() === $user->id) {
@@ -317,6 +325,9 @@ class SubscriptionController extends Controller
             'plan'            => $this->plans[$planId],
             'isRenewal'       => true,
             'defaultMethod'   => request()->query('method', 'pix'),
+            'trialEnabled'    => false,
+            'trialDays'       => 0,
+            'trialAmount'     => 0,
             'mpPublicKey'     => ((string) config('services.mercadopago.mode', 'live') === 'test'
                 ? config('services.mercadopago.test_public_key')
                 : config('services.mercadopago.public_key')),
@@ -348,15 +359,36 @@ class SubscriptionController extends Controller
 
         return DB::transaction(function () use ($user, $plan, $planId, $paymentMethod, $request, $mpService) {
             // Cancelar preapproval antigo se existir (troca de plano ou renovação manual)
+            // Exceção: se o preapproval é de um trial ainda ativo (next_billing_at no futuro
+            // e nenhum pagamento aprovado além do R$1 de validação), preservar o preapproval
             $existingSubscription = ProfessionalSubscription::where('user_id', $user->id)->first();
             if ($existingSubscription && !empty($existingSubscription->mp_preapproval_id)) {
-                try {
-                    $mpService->cancelPreapproval($existingSubscription->mp_preapproval_id);
-                } catch (\Throwable $e) {
-                    Log::warning('Falha ao cancelar preapproval antigo na renovacao', [
+                $isTrialActive = $existingSubscription->status === 'active'
+                    && $existingSubscription->next_billing_at
+                    && $existingSubscription->next_billing_at->isFuture()
+                    && SubscriptionTransaction::where('user_id', $user->id)
+                        ->where('status', 'approved')
+                        ->where('amount', '>', 1.50) // só conta pagamentos reais (> R$1,00 de validação)
+                        ->doesntExist();
+
+                if (!$isTrialActive) {
+                    try {
+                        $mpService->cancelPreapproval($existingSubscription->mp_preapproval_id);
+                    } catch (\Throwable $e) {
+                        Log::warning('Falha ao cancelar preapproval antigo na renovacao', [
+                            'preapproval_id' => $existingSubscription->mp_preapproval_id,
+                            'error'          => $e->getMessage(),
+                        ]);
+                    }
+                } else {
+                    Log::info('Trial ativo: preapproval preservado na tentativa de renovacao', [
+                        'user_id'        => $user->id,
                         'preapproval_id' => $existingSubscription->mp_preapproval_id,
-                        'error'          => $e->getMessage(),
+                        'next_billing_at'=> $existingSubscription->next_billing_at,
                     ]);
+                    // Retornar sem fazer nada — o trial já está ativo
+                    return redirect()->route('personal.dashboard')
+                        ->with('info', 'Você está no período de teste gratuito. A cobrança do plano inicia automaticamente em ' . $existingSubscription->next_billing_at->format('d/m/Y \à\s H:i') . '.');
                 }
             }
 
@@ -388,11 +420,11 @@ class SubscriptionController extends Controller
                 'mp_external_reference' => $externalRef,
             ]);
 
-            return $this->processMP($mpService, $user, $plan, $transaction, $paymentMethod, $request);
+            return $this->processMP($mpService, $user, $plan, $transaction, $paymentMethod, $request, isTrial: false);
         });
     }
 
-    protected function processMP(MercadoPagoService $mpService, User $user, array $plan, SubscriptionTransaction $transaction, string $paymentMethod, Request $request)
+    protected function processMP(MercadoPagoService $mpService, User $user, array $plan, SubscriptionTransaction $transaction, string $paymentMethod, Request $request, bool $isTrial = false)
     {
         // ── PIX ──────────────────────────────────────────────────────────────
         if ($paymentMethod === 'pix') {
@@ -409,116 +441,83 @@ class SubscriptionController extends Controller
             return redirect()->route('subscription.pix-waiting', ['ref' => $transaction->mp_external_reference]);
         }
 
-        // ── CARTÃO: fluxo híbrido ─────────────────────────────────────────────
-        $cardToken   = (string) $request->input('card_token');
-        $installments = (int) $request->input('installments', 1);
+        // ── CARTÃO: assinatura recorrente via MP Subscriptions API ──────────────
+        $cardToken = (string) $request->input('card_token');
+        $trialDays = 1; // TESTE: 1 dia. Em produção: 7
 
-        // 1. Criar/buscar customer no MP (best-effort; se falhar, segue sem customer)
-        $customerId = null;
-        $cardId     = null;
+        $preRef = 'sub-' . $transaction->mp_external_reference;
+
         try {
-            $customerId = $mpService->createOrGetCustomer($user->email);
-        } catch (\Throwable $e) {
-            Log::warning('MP: falha ao criar/buscar customer', [
-                'email' => $user->email,
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        // 2. Salvar cartão ao customer (best-effort)
-        if ($customerId) {
-            try {
-                $cardId = $mpService->saveCardToCustomer($customerId, $cardToken);
-            } catch (\Throwable $e) {
-                Log::warning('MP: falha ao salvar cartao no customer', [
-                    'customer_id' => $customerId,
-                    'error'       => $e->getMessage(),
-                ]);
+            if ($isTrial) {
+                // Criar/reutilizar plano com free_trial nativo do MP
+                $mpPlanId  = $mpService->createOrGetPlan($plan, $trialDays);
+                $subResult = $mpService->createSubscriptionWithPlan($user, $mpPlanId, $cardToken, $preRef);
+            } else {
+                // Renovação: assinatura sem trial
+                $subResult = $mpService->createSubscriptionWithToken($user, $plan, $cardToken, $preRef);
             }
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Erro ao criar assinatura: ' . $e->getMessage());
         }
 
-        // 3. Processar primeiro pagamento via /v1/payments (transparente)
-        $result = $mpService->createCardPayment(
-            $user,
-            $plan,
-            $cardToken,
-            $installments,
-            $transaction->mp_external_reference
-        );
-
+        // Atualizar transação com resultado
         $transaction->update([
-            'mp_payment_id'   => $result['mp_payment_id'],
-            'status'          => $result['status'],
-            'mp_status_detail' => $result['status_detail'] ?? null,
-            'mp_raw_response' => $result['raw_response'],
+            'status'           => $subResult['status'] === 'authorized' ? 'approved' : 'pending',
+            'mp_status_detail' => $subResult['status'],
+            'mp_raw_response'  => $subResult['raw_response'],
+            'paid_at'          => $subResult['status'] === 'authorized' ? Carbon::now() : null,
         ]);
 
-        if ($result['status'] === 'approved') {
-            // Pagamento aprovado imediatamente → ativar agora
-            $transaction->update(['paid_at' => Carbon::now()]);
-            $this->activateSubscription($transaction->fresh());
+        if ($subResult['status'] === 'authorized') {
+            // Ativar acesso: trial (N dias grátis) ou normal (30 dias)
+            if ($isTrial) {
+                $this->activateSubscriptionUntil($transaction->fresh(), Carbon::now()->addDays($trialDays));
+            } else {
+                $this->activateSubscription($transaction->fresh());
+            }
+
+            // Marcar transação como gratuita no trial
+            if ($isTrial) {
+                $transaction->update(['amount' => 0, 'status' => 'approved', 'paid_at' => Carbon::now()]);
+            }
+
             $user->refresh();
             Auth::login($user->fresh());
 
-            // [best-effort] Criar preapproval com card_id para recorrência automática
-            if ($customerId && $cardId) {
-                try {
-                    $preRef    = 'pre-' . $transaction->mp_external_reference;
-                    $preResult = $mpService->createPreapprovalWithCardId(
-                        $user,
-                        $plan,
-                        $customerId,
-                        $cardId,
-                        $preRef
-                    );
+            // Salvar dados do preapproval na assinatura
+            $subscription = $transaction->fresh()->subscription;
+            if ($subscription) {
+                $nextBilling = !empty($subResult['next_payment_date'])
+                    ? Carbon::parse($subResult['next_payment_date'])
+                    : ($isTrial ? Carbon::now()->addDays($trialDays) : Carbon::now()->addDays(30));
 
-                    $transaction->update(['mp_preapproval_id' => $preResult['preapproval_id']]);
-
-                    $subscription = $transaction->subscription;
-                    if ($subscription) {
-                        $subscription->update([
-                            'mp_preapproval_id'     => $preResult['preapproval_id'],
-                            'mp_preapproval_status' => $preResult['status'],
-                            'next_billing_at'       => !empty($preResult['next_payment_date'])
-                                ? Carbon::parse($preResult['next_payment_date'])
-                                : Carbon::now()->addDays(30),
-                        ]);
-                    }
-
-                    Log::info('MP: preapproval criado apos pagamento', [
-                        'preapproval_id' => $preResult['preapproval_id'],
-                        'status'         => $preResult['status'],
-                        'user_id'        => $user->id,
-                    ]);
-                } catch (\Throwable $e) {
-                    Log::warning('MP: falha ao criar preapproval pos-pagamento (best-effort)', [
-                        'user_id'     => $user->id,
-                        'customer_id' => $customerId,
-                        'card_id'     => $cardId,
-                        'error'       => $e->getMessage(),
-                    ]);
-                }
+                $subscription->update([
+                    'mp_preapproval_id'     => $subResult['preapproval_id'],
+                    'mp_preapproval_status' => $subResult['status'],
+                    'mp_card_id'            => $subResult['card_id'] ?? null,
+                    'next_billing_at'       => $nextBilling,
+                ]);
             }
 
-            return redirect()->route('personal.dashboard')
-                ->with('success', 'Assinatura ativada! Bem-vindo ao ApexPro.');
-        }
-
-        if ($result['status'] === 'in_process' || $result['status'] === 'pending') {
-            // Pagamento em análise (3DS / antifraude) → manter pendente, aguardar webhook
-            Auth::login($user);
-            Log::info('MP: pagamento em analise, aguardando webhook', [
-                'payment_id' => $result['mp_payment_id'],
-                'status'     => $result['status'],
-                'user_id'    => $user->id,
+            Log::info('MP: assinatura criada com sucesso', [
+                'preapproval_id' => $subResult['preapproval_id'],
+                'status'         => $subResult['status'],
+                'is_trial'       => $isTrial,
+                'next_payment'   => $subResult['next_payment_date'] ?? null,
+                'user_id'        => $user->id,
             ]);
-            return redirect()->route('subscription.payment-result', ['ref' => $transaction->mp_external_reference])
-                ->with('info', 'Seu pagamento está sendo analisado pelo banco. Você receberá acesso assim que for confirmado. Aguarde nesta tela.');
+
+            $successMsg = $isTrial
+                ? 'Seus 7 dias gratuitos estão liberados! A cobrança do plano inicia automaticamente no dia 8.'
+                : 'Assinatura ativada! Bem-vindo ao ApexPro.';
+
+            return redirect()->route('personal.dashboard')->with('success', $successMsg);
         }
 
-        // Qualquer outro status (rejected etc.) → rollback via exception
-        $detail = $result['status_detail'] ?? $result['status'];
-        throw new \RuntimeException('Pagamento com cartao nao aprovado: ' . $detail);
+        // Status pending: MP não autorizou imediatamente (raro com card_token_id)
+        Auth::login($user);
+        return redirect()->route('subscription.payment-result', ['ref' => $transaction->mp_external_reference])
+            ->with('info', 'Sua assinatura está sendo processada. Aguarde a confirmação.');
     }
 
     protected function activateSubscription(SubscriptionTransaction $transaction): void
@@ -526,7 +525,41 @@ class SubscriptionController extends Controller
         $this->activateSubscriptionPublic($transaction);
     }
 
-    public function activateSubscriptionPublic(SubscriptionTransaction $transaction): void
+    protected function activateSubscriptionForDays(SubscriptionTransaction $transaction, int $days): void
+    {
+        $this->activateSubscriptionPublic($transaction, $days);
+    }
+
+    protected function activateSubscriptionUntil(SubscriptionTransaction $transaction, Carbon $until): void
+    {
+        $subscription = $transaction->subscription;
+        if (!$subscription) return;
+
+        $now       = Carbon::now();
+        $graceDays = (int) config('services.mercadopago.grace_period_days', 5);
+
+        $subscription->update([
+            'status'              => 'active',
+            'starts_at'           => $now,
+            'expires_at'          => $until,
+            'grace_until'         => $until->copy()->addDays($graceDays),
+            'last_payment_method' => $transaction->payment_method,
+            'last_paid_at'        => $now,
+            'next_billing_at'     => $until,
+        ]);
+
+        $user = $subscription->user;
+        if ($user) {
+            $user->update([
+                'subscription_expires_at' => $until,
+                'is_active'               => true,
+                'plan_name'               => $subscription->plan_name,
+                'max_students'            => $subscription->max_students,
+            ]);
+        }
+    }
+
+    public function activateSubscriptionPublic(SubscriptionTransaction $transaction, int $days = 30): void
     {
         $subscription = $transaction->subscription;
         if (!$subscription) {
@@ -539,11 +572,11 @@ class SubscriptionController extends Controller
         $updateData = [
             'status'              => 'active',
             'starts_at'           => $now,
-            'expires_at'          => $now->copy()->addDays(30),
-            'grace_until'         => $now->copy()->addDays(30 + $graceDays),
+            'expires_at'          => $now->copy()->addDays($days),
+            'grace_until'         => $now->copy()->addDays($days + $graceDays),
             'last_payment_method' => $transaction->payment_method,
             'last_paid_at'        => $now,
-            'next_billing_at'     => $subscription->next_billing_at ?? $now->copy()->addDays(30),
+            'next_billing_at'     => $subscription->next_billing_at ?? $now->copy()->addDays($days),
         ];
 
         if ($transaction->payment_method === 'credit_card') {
