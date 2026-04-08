@@ -341,6 +341,11 @@ class WorkoutPlanController extends Controller
             'days.*.exercises.*.video_url' => 'nullable|url|max:500',
         ]);
 
+        // Inativar treinos anteriores do aluno
+        WorkoutPlan::where('student_id', $validated['student_id'])
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
         // Criar o Plano
         $plan = WorkoutPlan::create([
             'student_id' => $validated['student_id'],
@@ -457,6 +462,33 @@ class WorkoutPlanController extends Controller
     /**
      * Exibe um treino específico.
      */
+    public function toggleActive(WorkoutPlan $workout)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal' || $workout->personal_id !== $user->id) {
+            abort(403);
+        }
+
+        if (!$workout->is_active) {
+            // Ativando: inativa todos os outros treinos do aluno primeiro
+            WorkoutPlan::where('student_id', $workout->student_id)
+                ->where('id', '!=', $workout->id)
+                ->update(['is_active' => false]);
+
+            $workout->update(['is_active' => true]);
+            $msg = 'Treino ativado. Os outros treinos foram inativados.';
+        } else {
+            // Inativando
+            $workout->update(['is_active' => false]);
+            $msg = 'Treino inativado.';
+        }
+
+        return redirect()->route('personal.students.show', $workout->student_id)
+            ->with('success', $msg);
+    }
+
     public function destroy(WorkoutPlan $workout)
     {
         /** @var User $user */

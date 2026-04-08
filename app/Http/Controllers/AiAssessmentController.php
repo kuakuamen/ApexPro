@@ -510,7 +510,10 @@ class AiAssessmentController extends Controller
             $backPath  = $request->input('back_path')  ?: session('last_back_path');
             $extraPaths = session('last_extra_paths', []);
 
-            // 1. Criar o Plano de Treino primeiro para obter o ID
+            // 1. Inativar treinos anteriores antes de aprovar o novo
+            $student->workoutPlans()->where('is_active', true)->update(['is_active' => false]);
+
+            // 2. Criar o Plano de Treino ativo (este é o momento da aprovação)
             $plan = $student->workoutPlans()->create([
                 'name' => $request->workout_name,
                 'goal' => $request->goal,
