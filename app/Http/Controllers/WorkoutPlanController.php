@@ -71,7 +71,7 @@ class WorkoutPlanController extends Controller
             abort(403);
         }
 
-        $exerciseName = trim((string) $request->query('name'));
+        $exerciseName = $this->cleanExerciseName(trim((string) $request->query('name')));
 
         if ($exerciseName === '') {
             return response()->json(['message' => 'Nome do exercicio nao informado.'], 422);
@@ -83,7 +83,7 @@ class WorkoutPlanController extends Controller
             return response()->json(['message' => 'Configure YOUTUBE_API_KEY no .env.'], 503);
         }
 
-        $cacheKey = 'youtube_exercise_video_v4_' . md5(mb_strtolower($exerciseName));
+        $cacheKey = 'youtube_exercise_video_v5_' . md5(mb_strtolower($exerciseName));
 
         $video = Cache::get($cacheKey);
 
@@ -225,6 +225,35 @@ class WorkoutPlanController extends Controller
         $text = preg_replace('/[^a-z0-9]+/', ' ', $text) ?? $text;
 
         return trim(preg_replace('/\s+/', ' ', $text) ?? $text);
+    }
+
+    /**
+     * Remove termos em inglês do nome do exercício antes de buscar no YouTube.
+     * Ex: "Puxada Alta (Lat Pulldown) com Barra" → "Puxada Alta com Barra"
+     */
+    private function cleanExerciseName(string $name): string
+    {
+        // Remove conteúdo em parênteses que contém letras maiúsculas ou palavras em inglês
+        $name = preg_replace('/\s*\([^)]*[A-Z][^)]*\)/', '', $name) ?? $name;
+
+        // Remove termos técnicos em inglês comuns que a IA coloca
+        $englishTerms = [
+            'Lat Pulldown', 'Pull Down', 'Pulldown', 'Pull-down',
+            'Deadlift', 'Squat', 'Bench Press', 'Overhead Press',
+            'Romanian', 'Bulgarian', 'Goblet', 'Cable', 'Barbell',
+            'Dumbbell', 'Leg Press', 'Leg Curl', 'Leg Extension',
+            'Hip Thrust', 'Plank', 'Push Up', 'Push-Up', 'Pushup',
+            'Pull Up', 'Pull-Up', 'Pullup', 'Chin Up', 'Chin-Up',
+            'Crunch', 'Lunge', 'Row', 'Fly', 'Flye', 'Curl',
+            'Press', 'Raise', 'Extension', 'Kickback', 'Shrug',
+        ];
+
+        foreach ($englishTerms as $term) {
+            $name = preg_replace('/\b' . preg_quote($term, '/') . '\b/i', '', $name) ?? $name;
+        }
+
+        // Limpa espaços extras
+        return trim(preg_replace('/\s+/', ' ', $name) ?? $name);
     }
 
     /**
