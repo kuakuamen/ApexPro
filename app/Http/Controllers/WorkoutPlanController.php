@@ -457,6 +457,24 @@ class WorkoutPlanController extends Controller
     /**
      * Exibe um treino específico.
      */
+    public function destroy(WorkoutPlan $workout)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal' || $workout->personal_id !== $user->id) {
+            abort(403);
+        }
+
+        $studentId = $workout->student_id;
+        $workout->days()->each(fn($day) => $day->exercises()->delete());
+        $workout->days()->delete();
+        $workout->delete();
+
+        return redirect()->route('personal.students.show', $studentId)
+            ->with('success', 'Treino excluído com sucesso.');
+    }
+
     public function show(WorkoutPlan $workout)
     {
         // Verificar permissão
