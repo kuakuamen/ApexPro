@@ -59,7 +59,8 @@ class MercadoPagoService
                 'transaction_amount' => (float) $plan['price'],
                 'currency_id'        => 'BRL',
             ],
-            'back_url' => $backUrl,
+            'back_url'           => $backUrl,
+            'notification_url'   => $appUrl . '/webhooks/mercadopago',
         ];
 
         $response = Http::withToken($this->accessToken)
@@ -349,6 +350,7 @@ class MercadoPagoService
             'status'              => 'authorized',
             'external_reference'  => $externalRef,
             'back_url'            => $appUrl . '/assinatura/resultado-preapproval',
+            'notification_url'    => $appUrl . '/webhooks/mercadopago',
         ];
 
         $response = Http::withToken($this->accessToken)
@@ -408,6 +410,7 @@ class MercadoPagoService
             'auto_recurring'     => $autoRecurring,
             'back_url'           => $backUrl,
             'status'             => 'authorized',  // checkout transparente, sem redirect
+            'notification_url'   => $appUrl . '/webhooks/mercadopago',
         ];
 
         $response = Http::withToken($this->accessToken)

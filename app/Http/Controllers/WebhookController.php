@@ -185,8 +185,8 @@ class WebhookController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        // Idempotência: status já é o mesmo
-        if ($subscription->mp_preapproval_status === $mpStatus) {
+        // Idempotência: pula apenas se não for 'authorized' (renovações sempre precisam ser processadas)
+        if ($subscription->mp_preapproval_status === $mpStatus && $mpStatus !== 'authorized') {
             return response()->json(['ok' => true]);
         }
 
