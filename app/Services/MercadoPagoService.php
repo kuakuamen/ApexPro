@@ -95,6 +95,11 @@ class MercadoPagoService
 
         $json = $response->json();
         if (!$response->successful()) {
+            Log::warning('MP getPreapproval failed', [
+                'preapproval_id' => $preapprovalId,
+                'http_status'    => $response->status(),
+                'response_body'  => $json,
+            ]);
             $message = $json['message'] ?? $json['error'] ?? 'Erro ao consultar assinatura.';
             throw new \RuntimeException($message);
         }
