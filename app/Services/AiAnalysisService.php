@@ -433,7 +433,7 @@ Analisando APENAS os dados fornecidos (sem imagens), gere um treino estruturado 
 2. Seja apropriado para o nível de experiência
 3. Focalize no objetivo especificado
 4. Inclua recomendações de postura e técnica
-5. MUITO IMPORTANTE: Use SOMENTE nomes de exercícios em português. NUNCA coloque nomes em inglês entre parênteses ou qualquer termo em inglês no nome dos exercícios. Exemplo CORRETO: "Puxada Alta com Barra". Exemplo ERRADO: "Puxada Alta (Lat Pulldown) com Barra".
+5. MUITO IMPORTANTE: Use SOMENTE nomes de exercícios em português. NUNCA coloque nomes em inglês entre parênteses ou qualquer termo em inglês no nome dos exercícios. Exemplo CORRETO: Puxada Alta com Barra. Exemplo ERRADO: Puxada Alta (Lat Pulldown) com Barra.
 
 RETORNE UM JSON ESTRUTURADO com:
 {
