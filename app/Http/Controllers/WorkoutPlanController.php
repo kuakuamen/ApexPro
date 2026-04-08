@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Models\WorkoutLog;
 
 class WorkoutPlanController extends Controller
@@ -77,10 +78,10 @@ class WorkoutPlanController extends Controller
             return response()->json(['message' => 'Nome do exercicio nao informado.'], 422);
         }
 
-        $apiKey = env('YOUTUBE_API_KEY');
+        $apiKey = (string) config('services.youtube.api_key');
 
         if (!$apiKey) {
-            return response()->json(['message' => 'Configure YOUTUBE_API_KEY no .env.'], 503);
+            return response()->json(['message' => 'Busca de videos indisponivel: chave do YouTube nao configurada.'], 503);
         }
 
         $cacheKey = 'youtube_exercise_video_v5_' . md5(mb_strtolower($exerciseName));
@@ -88,10 +89,19 @@ class WorkoutPlanController extends Controller
         $video = Cache::get($cacheKey);
 
         if (!$video) {
-            $video = $this->searchYoutubeExerciseVideo($apiKey, $exerciseName);
+            try {
+                $video = $this->searchYoutubeExerciseVideo($apiKey, $exerciseName);
 
-            if ($video) {
-                Cache::put($cacheKey, $video, now()->addYear());
+                if ($video) {
+                    Cache::put($cacheKey, $video, now()->addYear());
+                }
+            } catch (\Throwable $e) {
+                Log::warning('YouTube exercise video lookup failed', [
+                    'exercise' => $exerciseName,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return response()->json(['message' => 'Nao foi possivel consultar o YouTube agora. Tente novamente em instantes.'], 503);
             }
         }
 
@@ -119,7 +129,7 @@ class WorkoutPlanController extends Controller
         ]);
 
         if (!$response->successful()) {
-            return null;
+            throw new \RuntimeException('YouTube search API returned HTTP ' . $response->status());
         }
 
         $items = collect($response->json('items', []))

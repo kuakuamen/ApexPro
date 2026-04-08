@@ -41,6 +41,10 @@ return [
         'api_key_3' => env('GEMINI_API_KEY_3'),
     ],
 
+    'youtube' => [
+        'api_key' => env('YOUTUBE_API_KEY'),
+    ],
+
     'mercadopago' => [
         'access_token'      => env('MP_ACCESS_TOKEN'),
         'public_key'        => env('MP_PUBLIC_KEY'),
