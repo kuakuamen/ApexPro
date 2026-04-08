@@ -508,7 +508,7 @@ class SubscriptionController extends Controller
             ]);
 
             $successMsg = $isTrial
-                ? 'Seus 7 dias gratuitos estão liberados! A cobrança do plano inicia automaticamente no dia 8.'
+                ? "Seu período gratuito de {$trialDays} dia(s) está liberado! A cobrança do plano inicia automaticamente após o trial."
                 : 'Assinatura ativada! Bem-vindo ao ApexPro.';
 
             return redirect()->route('personal.dashboard')->with('success', $successMsg);

@@ -66,13 +66,7 @@ class CheckSubscription
                 return $next($request);
             }
 
-            // Em grace period → acesso com warning
-            if ($subscription->isInGrace()) {
-                session(['subscription_grace_warning' => true]);
-                return $next($request);
-            }
-
-            // Expirado (grace venceu)
+            // Venceu → bloqueia imediatamente, sem grace period
             return redirect()->route('subscription.renew');
         }
 
