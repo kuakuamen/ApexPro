@@ -7,6 +7,9 @@ use App\Models\User;
 use App\Models\ProfessionalStudent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Models\WorkoutLog;
 
 class WorkoutPlanController extends Controller
@@ -61,6 +64,206 @@ class WorkoutPlanController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Erro ao processing: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function exerciseYoutubeVideo(Request $request)
+    {
+        if (Auth::user()?->role !== 'aluno') {
+            abort(403);
+        }
+
+        $exerciseName = $this->cleanExerciseName(trim((string) $request->query('name')));
+
+        if ($exerciseName === '') {
+            return response()->json(['message' => 'Nome do exercicio nao informado.'], 422);
+        }
+
+        $apiKey = (string) config('services.youtube.api_key');
+
+        if (!$apiKey) {
+            return response()->json(['message' => 'Busca de videos indisponivel: chave do YouTube nao configurada.'], 503);
+        }
+
+        $cacheKey = 'youtube_exercise_video_v5_' . md5(mb_strtolower($exerciseName));
+
+        $video = Cache::get($cacheKey);
+
+        if (!$video) {
+            try {
+                $video = $this->searchYoutubeExerciseVideo($apiKey, $exerciseName);
+
+                if ($video) {
+                    Cache::put($cacheKey, $video, now()->addYear());
+                }
+            } catch (\Throwable $e) {
+                Log::warning('YouTube exercise video lookup failed', [
+                    'exercise' => $exerciseName,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return response()->json(['message' => 'Nao foi possivel consultar o YouTube agora. Tente novamente em instantes.'], 503);
+            }
+        }
+
+        if (!$video) {
+            return response()->json(['message' => 'Nao encontrei um video para este exercicio.'], 404);
+        }
+
+        return response()->json($video);
+    }
+
+    private function searchYoutubeExerciseVideo(string $apiKey, string $exerciseName): ?array
+    {
+        $query = $exerciseName . ' execução exercício musculação';
+
+        $response = Http::timeout(8)->get('https://www.googleapis.com/youtube/v3/search', [
+            'part' => 'snippet',
+            'q' => $query,
+            'key' => $apiKey,
+            'type' => 'video',
+            'videoEmbeddable' => 'true',
+            'videoDuration' => 'short',
+            'safeSearch' => 'strict',
+            'maxResults' => 15,
+            'relevanceLanguage' => 'pt',
+        ]);
+
+        if (!$response->successful()) {
+            throw new \RuntimeException('YouTube search API returned HTTP ' . $response->status());
+        }
+
+        $items = collect($response->json('items', []))
+            ->filter(fn ($item) => $this->youtubeResultMatchesExercise($exerciseName, $item));
+
+        $durations = $this->youtubeVideoDurations($apiKey, $items->pluck('id.videoId')->filter()->values()->all());
+
+        $item = $items->first(function ($item) use ($durations) {
+            $videoId = $item['id']['videoId'] ?? null;
+
+            return $videoId && isset($durations[$videoId]) && $durations[$videoId] <= 30;
+        });
+
+        $videoId = $item['id']['videoId'] ?? null;
+
+        if (!$videoId) {
+            return null;
+        }
+
+        return [
+            'video_id' => $videoId,
+            'title' => $item['snippet']['title'] ?? $exerciseName,
+            'channel_title' => $item['snippet']['channelTitle'] ?? null,
+        ];
+    }
+
+    private function youtubeResultMatchesExercise(string $exerciseName, array $item): bool
+    {
+        $text = $this->normalizeExerciseText(($item['snippet']['title'] ?? '') . ' ' . ($item['snippet']['description'] ?? ''));
+        $exercise = $this->normalizeExerciseText($exerciseName);
+
+        $tokens = collect(explode(' ', $exercise))
+            ->reject(fn ($term) => mb_strlen($term) < 4 || in_array($term, ['para', 'parede', 'porta', 'polia', 'corda', 'com', 'exercicio', 'execucao', 'musculacao'], true))
+            ->values();
+
+        if ($tokens->isNotEmpty() && !$tokens->contains(fn ($term) => str_contains($text, $term))) {
+            return false;
+        }
+
+        $conflicts = [
+            'reto' => ['inclinado', 'declinado'],
+            'inclinado' => ['reto', 'declinado'],
+            'declinado' => ['reto', 'inclinado'],
+            'barra' => ['halter', 'halteres', 'dumbbell'],
+            'halteres' => ['barra', 'barbell'],
+            'halter' => ['barra', 'barbell'],
+        ];
+
+        foreach ($conflicts as $term => $blockedTerms) {
+            if (str_contains($exercise, $term)) {
+                foreach ($blockedTerms as $blockedTerm) {
+                    if (str_contains($text, $blockedTerm)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private function youtubeVideoDurations(string $apiKey, array $videoIds): array
+    {
+        if ($videoIds === []) {
+            return [];
+        }
+
+        $response = Http::timeout(8)->get('https://www.googleapis.com/youtube/v3/videos', [
+            'part' => 'contentDetails',
+            'id' => implode(',', $videoIds),
+            'key' => $apiKey,
+        ]);
+
+        if (!$response->successful()) {
+            return [];
+        }
+
+        return collect($response->json('items', []))
+            ->mapWithKeys(function ($item) {
+                return [
+                    $item['id'] => $this->youtubeDurationToSeconds($item['contentDetails']['duration'] ?? ''),
+                ];
+            })
+            ->filter(fn ($seconds) => $seconds !== null)
+            ->all();
+    }
+
+    private function youtubeDurationToSeconds(string $duration): ?int
+    {
+        if (!preg_match('/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/', $duration, $matches)) {
+            return null;
+        }
+
+        return ((int) ($matches[1] ?? 0) * 3600)
+            + ((int) ($matches[2] ?? 0) * 60)
+            + (int) ($matches[3] ?? 0);
+    }
+
+    private function normalizeExerciseText(string $text): string
+    {
+        $text = mb_strtolower($text);
+        $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text) ?: $text;
+        $text = preg_replace('/[^a-z0-9]+/', ' ', $text) ?? $text;
+
+        return trim(preg_replace('/\s+/', ' ', $text) ?? $text);
+    }
+
+    /**
+     * Remove termos em inglês do nome do exercício antes de buscar no YouTube.
+     * Ex: "Puxada Alta (Lat Pulldown) com Barra" → "Puxada Alta com Barra"
+     */
+    private function cleanExerciseName(string $name): string
+    {
+        // Remove conteúdo em parênteses que contém letras maiúsculas ou palavras em inglês
+        $name = preg_replace('/\s*\([^)]*[A-Z][^)]*\)/', '', $name) ?? $name;
+
+        // Remove termos técnicos em inglês comuns que a IA coloca
+        $englishTerms = [
+            'Lat Pulldown', 'Pull Down', 'Pulldown', 'Pull-down',
+            'Deadlift', 'Squat', 'Bench Press', 'Overhead Press',
+            'Romanian', 'Bulgarian', 'Goblet', 'Cable', 'Barbell',
+            'Dumbbell', 'Leg Press', 'Leg Curl', 'Leg Extension',
+            'Hip Thrust', 'Plank', 'Push Up', 'Push-Up', 'Pushup',
+            'Pull Up', 'Pull-Up', 'Pullup', 'Chin Up', 'Chin-Up',
+            'Crunch', 'Lunge', 'Row', 'Fly', 'Flye', 'Curl',
+            'Press', 'Raise', 'Extension', 'Kickback', 'Shrug',
+        ];
+
+        foreach ($englishTerms as $term) {
+            $name = preg_replace('/\b' . preg_quote($term, '/') . '\b/i', '', $name) ?? $name;
+        }
+
+        // Limpa espaços extras
+        return trim(preg_replace('/\s+/', ' ', $name) ?? $name);
     }
 
     /**
@@ -145,7 +348,13 @@ class WorkoutPlanController extends Controller
             'days.*.exercises.*.sets' => 'nullable|string',
             'days.*.exercises.*.reps' => 'nullable|string',
             'days.*.exercises.*.rest_time' => 'nullable|string',
+            'days.*.exercises.*.video_url' => 'nullable|url|max:500',
         ]);
+
+        // Inativar treinos anteriores do aluno
+        WorkoutPlan::where('student_id', $validated['student_id'])
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
 
         // Criar o Plano
         $plan = WorkoutPlan::create([
@@ -170,6 +379,7 @@ class WorkoutPlanController extends Controller
                     'sets' => $exerciseData['sets'] ?? null,
                     'reps' => $exerciseData['reps'] ?? null,
                     'rest_time' => $exerciseData['rest_time'] ?? null,
+                    'video_url' => $exerciseData['video_url'] ?? null,
                     'order' => $exerciseIndex,
                 ]);
             }
@@ -218,6 +428,7 @@ class WorkoutPlanController extends Controller
             'days.*.exercises.*.sets' => 'nullable|string',
             'days.*.exercises.*.reps' => 'nullable|string',
             'days.*.exercises.*.rest_time' => 'nullable|string',
+            'days.*.exercises.*.video_url' => 'nullable|url|max:500',
         ]);
 
         // Atualizar dados básicos
@@ -249,6 +460,7 @@ class WorkoutPlanController extends Controller
                     'sets' => $exerciseData['sets'] ?? null,
                     'reps' => $exerciseData['reps'] ?? null,
                     'rest_time' => $exerciseData['rest_time'] ?? null,
+                    'video_url' => $exerciseData['video_url'] ?? null,
                     'order' => $exerciseIndex,
                 ]);
             }
@@ -260,6 +472,51 @@ class WorkoutPlanController extends Controller
     /**
      * Exibe um treino específico.
      */
+    public function toggleActive(WorkoutPlan $workout)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal' || $workout->personal_id !== $user->id) {
+            abort(403);
+        }
+
+        if (!$workout->is_active) {
+            // Ativando: inativa todos os outros treinos do aluno primeiro
+            WorkoutPlan::where('student_id', $workout->student_id)
+                ->where('id', '!=', $workout->id)
+                ->update(['is_active' => false]);
+
+            $workout->update(['is_active' => true]);
+            $msg = 'Treino ativado. Os outros treinos foram inativados.';
+        } else {
+            // Inativando
+            $workout->update(['is_active' => false]);
+            $msg = 'Treino inativado.';
+        }
+
+        return redirect()->route('personal.students.show', $workout->student_id)
+            ->with('success', $msg);
+    }
+
+    public function destroy(WorkoutPlan $workout)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal' || $workout->personal_id !== $user->id) {
+            abort(403);
+        }
+
+        $studentId = $workout->student_id;
+        $workout->days()->each(fn($day) => $day->exercises()->delete());
+        $workout->days()->delete();
+        $workout->delete();
+
+        return redirect()->route('personal.students.show', $studentId)
+            ->with('success', 'Treino excluído com sucesso.');
+    }
+
     public function show(WorkoutPlan $workout)
     {
         // Verificar permissão

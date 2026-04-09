@@ -163,6 +163,19 @@
                                             Remover
                                         </button>
                                     </div>
+                                    <div class="col-span-10">
+                                        <label class="block text-xs font-medium text-gray-400 mb-1">Video da execucao</label>
+                                        <input type="url"
+                                               x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][video_url]'"
+                                               x-model="exercise.video_url"
+                                               class="block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                               placeholder="https://youtube.com/watch?v=... ou Vimeo">
+                                    </div>
+                                    <div class="col-span-2 text-right">
+                                        <span class="inline-flex px-2 py-1 text-xs rounded-md text-indigo-200 bg-indigo-500/10 border border-indigo-500/20">
+                                            Opcional
+                                        </span>
+                                    </div>
                                 </div>
                             </template>
 
@@ -212,7 +225,7 @@
                     weekDay: '',
                     workoutType: '',
                     customName: '',
-                    exercises: [{ id: Date.now() + 1, name: '', sets: '', reps: '', rest_time: '' }]
+                        exercises: [{ id: Date.now() + 1, name: '', sets: '', reps: '', rest_time: '', video_url: '' }]
                 }
             ],
             
@@ -243,7 +256,7 @@
                     weekDay: '',
                     workoutType: '',
                     customName: '',
-                    exercises: [{ id: Date.now() + 1, name: '', sets: '', reps: '', rest_time: '' }]
+                    exercises: [{ id: Date.now() + 1, name: '', sets: '', reps: '', rest_time: '', video_url: '' }]
                 });
             },
             removeDay(index) {
@@ -255,7 +268,8 @@
                     name: '',
                     sets: '',
                     reps: '',
-                    rest_time: ''
+                    rest_time: '',
+                    video_url: ''
                 });
             },
             removeExercise(dayIndex, exerciseIndex) {

@@ -50,8 +50,25 @@
                         </div>
 
                         <div class="mb-4">
+                            @php
+                                $birthDateIso     = old('birth_date', '');
+                                $birthDateDisplay = '';
+                                if ($birthDateIso && preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthDateIso)) {
+                                    [$y, $m, $d]      = explode('-', $birthDateIso);
+                                    $birthDateDisplay  = "$d/$m/$y";
+                                }
+                            @endphp
                             <label class="block text-sm font-medium text-gray-300 mb-2">Data de Nascimento <span class="text-red-400">*</span></label>
-                            <input type="date" name="birth_date" value="{{ old('birth_date') }}" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                            <input type="text" id="birth_date_display"
+                                   value="{{ $birthDateDisplay }}"
+                                   inputmode="numeric"
+                                   placeholder="DD/MM/AAAA"
+                                   maxlength="10"
+                                   autocomplete="bday"
+                                   required
+                                   class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                            <input type="hidden" name="birth_date" id="birth_date_hidden" value="{{ $birthDateIso }}">
+                            <p id="birth_date_error" class="hidden text-red-400 text-xs mt-1">Data inválida. Use DD/MM/AAAA.</p>
                             @error('birth_date') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
                     </div>
@@ -334,5 +351,40 @@ if (cpfEl) {
         e.target.value = value;
     });
 }
+
+// Data de nascimento — máscara DD/MM/AAAA + converte para ISO (YYYY-MM-DD) no campo hidden
+(function () {
+    var displayEl = document.getElementById('birth_date_display');
+    var hiddenEl  = document.getElementById('birth_date_hidden');
+    var errorEl   = document.getElementById('birth_date_error');
+    if (!displayEl || !hiddenEl) return;
+
+    function applyMask(e) {
+        var digits = e.target.value.replace(/\D/g, '').slice(0, 8);
+        var masked = digits;
+        if (digits.length > 4)      masked = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+        else if (digits.length > 2) masked = digits.slice(0, 2) + '/' + digits.slice(2);
+        if (masked !== e.target.value) e.target.value = masked;
+
+        e.target.setCustomValidity('');
+        if (errorEl) errorEl.classList.add('hidden');
+
+        if (digits.length === 8) {
+            hiddenEl.value = digits.slice(4) + '-' + digits.slice(2, 4) + '-' + digits.slice(0, 2);
+        } else {
+            hiddenEl.value = '';
+        }
+    }
+
+    displayEl.addEventListener('input', applyMask);
+
+    displayEl.addEventListener('blur', function (e) {
+        var digits = e.target.value.replace(/\D/g, '');
+        if (digits.length > 0 && digits.length < 8) {
+            e.target.setCustomValidity('Data incompleta. Use DD/MM/AAAA.');
+            if (errorEl) errorEl.classList.remove('hidden');
+        }
+    });
+})();
 </script>
 @endsection

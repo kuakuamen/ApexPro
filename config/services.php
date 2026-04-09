@@ -36,7 +36,13 @@ return [
     ],
 
     'gemini' => [
-        'api_key' => env('GEMINI_API_KEY'),
+        'api_key'   => env('GEMINI_API_KEY'),
+        'api_key_2' => env('GEMINI_API_KEY_2'),
+        'api_key_3' => env('GEMINI_API_KEY_3'),
+    ],
+
+    'youtube' => [
+        'api_key' => env('YOUTUBE_API_KEY'),
     ],
 
     'mercadopago' => [

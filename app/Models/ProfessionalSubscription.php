@@ -18,6 +18,8 @@ class ProfessionalSubscription extends Model
         'status',
         'mp_preapproval_id',
         'mp_preapproval_status',
+        'mp_customer_id',
+        'mp_card_id',
         'starts_at',
         'expires_at',
         'grace_until',

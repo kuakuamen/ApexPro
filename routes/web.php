@@ -161,9 +161,22 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/personals/{user}', [AdminController::class, 'deletePersonal'])->name('personals.delete');
     Route::get('/personals/{user}/alunos', [AdminController::class, 'personalStudents'])->name('personals.students');
     
+    // Gestão de Planos
+    Route::get('/planos', [AdminController::class, 'plansIndex'])->name('plans.index');
+    Route::get('/planos/{planId}/editar', [AdminController::class, 'plansEdit'])->name('plans.edit');
+    Route::put('/planos/{planId}', [AdminController::class, 'plansUpdate'])->name('plans.update');
+    Route::patch('/planos/{planId}/desconto', [AdminController::class, 'plansDiscount'])->name('plans.discount');
+    Route::patch('/planos/{planId}/remover-desconto', [AdminController::class, 'plansRemoveDiscount'])->name('plans.remove-discount');
+    Route::patch('/planos/{planId}/toggle', [AdminController::class, 'plansToggle'])->name('plans.toggle');
+
     // Gerenciamento Geral de UsuÃƒÂ¡rios
     Route::get('/usuarios', [AdminController::class, 'allUsers'])->name('users.index');
-    
+    Route::get('/usuarios/{user}', [AdminController::class, 'showUser'])->name('users.show');
+    Route::patch('/usuarios/{user}/reset-senha', [AdminController::class, 'resetUserPassword'])->name('users.reset-password');
+    Route::patch('/usuarios/{user}/assinatura/ativar', [AdminController::class, 'activateSubscription'])->name('users.subscription.activate');
+    Route::patch('/usuarios/{user}/assinatura/suspender', [AdminController::class, 'suspendSubscription'])->name('users.subscription.suspend');
+    Route::patch('/usuarios/{user}/assinatura/estender', [AdminController::class, 'extendSubscription'])->name('users.subscription.extend');
+
     // Logs
     Route::get('/logs', [AdminController::class, 'logs'])->name('logs');
 });
@@ -176,6 +189,8 @@ Route::middleware(['auth', 'subscription'])->group(function () {
     Route::post('/treinos', [WorkoutPlanController::class, 'store'])->name('workouts.store');
     Route::get('/treinos/{workout}/editar', [WorkoutPlanController::class, 'edit'])->name('workouts.edit');
     Route::put('/treinos/{workout}', [WorkoutPlanController::class, 'update'])->name('workouts.update');
+    Route::delete('/treinos/{workout}', [WorkoutPlanController::class, 'destroy'])->name('workouts.destroy');
+    Route::patch('/treinos/{workout}/toggle-active', [WorkoutPlanController::class, 'toggleActive'])->name('workouts.toggle-active');
     Route::get('/treinos/{workout}', [WorkoutPlanController::class, 'show'])->name('workouts.show');
 
     // Rotas de Dieta (NutriÃƒÂ§ÃƒÂ£o)
@@ -186,6 +201,7 @@ Route::middleware(['auth', 'subscription'])->group(function () {
     
     // Rota de Toggle de ExercÃƒÂ­cio (Aluno)
     Route::post('/aluno/exercicio/{exerciseId}/toggle', [WorkoutPlanController::class, 'toggleExercise'])->where('exerciseId', '[0-9]+')->name('student.exercise.toggle');
+    Route::get('/aluno/exercicio/youtube', [WorkoutPlanController::class, 'exerciseYoutubeVideo'])->name('student.exercise.youtube');
     
     // Debug: Verificar se rota estÃƒÂ¡ acessÃƒÂ­vel
     Route::get('/debug/toggle-route', function () {

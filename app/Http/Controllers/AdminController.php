@@ -6,7 +6,12 @@ use App\Models\User;
 use App\Models\Assessment;
 use App\Models\WorkoutPlan;
 use App\Models\DietPlan;
+use App\Models\PlanConfig;
+use App\Models\ProfessionalSubscription;
+use App\Models\SubscriptionTransaction;
+use App\Services\MercadoPagoService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rules;
 use App\Rules\Cpf;
@@ -205,13 +210,31 @@ class AdminController extends Controller
     /**
      * Deletar personal
      */
-    public function deletePersonal(User $user)
+    public function deletePersonal(User $user, MercadoPagoService $mpService)
     {
         if ($user->role !== 'personal') {
             abort(404);
         }
 
         $name = $user->name;
+
+        // Cancelar preapproval no MP antes de deletar
+        $subscription = $user->professionalSubscription;
+        if ($subscription && !empty($subscription->mp_preapproval_id)) {
+            try {
+                $mpService->cancelPreapproval($subscription->mp_preapproval_id);
+                Log::info('Admin: preapproval cancelado ao deletar usuario', [
+                    'user_id'        => $user->id,
+                    'preapproval_id' => $subscription->mp_preapproval_id,
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning('Admin: falha ao cancelar preapproval ao deletar usuario', [
+                    'user_id' => $user->id,
+                    'error'   => $e->getMessage(),
+                ]);
+            }
+        }
+
         $user->delete();
 
         return redirect()->route('admin.personals.index')
@@ -261,9 +284,146 @@ class AdminController extends Controller
             });
         }
 
-        $users = $query->paginate(20);
+        $users = $query->with(['professionalSubscription'])->paginate(20);
 
         return view('admin.users.index', compact('users'));
+    }
+
+    /**
+     * Ver detalhes de um usuário
+     */
+    public function showUser(User $user)
+    {
+        $user->load('professionalSubscription');
+
+        $recentTransactions = collect();
+        $studentCount = 0;
+        $activeStudentCount = 0;
+
+        if ($user->role === 'personal') {
+            if ($user->professionalSubscription) {
+                $recentTransactions = SubscriptionTransaction::where('subscription_id', $user->professionalSubscription->id)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get();
+            }
+
+            $studentCount = User::whereHas('professionalStudents', function ($query) use ($user) {
+                $query->where('professional_id', $user->id);
+            })->count();
+
+            $activeStudentCount = User::whereHas('professionalStudents', function ($query) use ($user) {
+                $query->where('professional_id', $user->id);
+            })->where('is_active', true)->count();
+        }
+
+        return view('admin.users.show', compact('user', 'recentTransactions', 'studentCount', 'activeStudentCount'));
+    }
+
+    /**
+     * Resetar senha de um usuário
+     */
+    public function resetUserPassword(Request $request, User $user)
+    {
+        $request->validate([
+            'password' => ['required', 'string', 'min:6'],
+        ]);
+
+        $user->update(['password' => bcrypt($request->password)]);
+
+        return redirect()->back()->with('success', 'Senha do usuário redefinida com sucesso!');
+    }
+
+    /**
+     * Ativar assinatura do personal
+     */
+    public function activateSubscription(Request $request, User $user)
+    {
+        $subscription = ProfessionalSubscription::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'plan_id'     => 'basic',
+                'plan_name'   => 'Básico',
+                'max_students' => 10,
+                'price'        => 0,
+                'status'       => 'pending',
+            ]
+        );
+
+        $subscription->update([
+            'status'     => 'active',
+            'starts_at'  => now(),
+            'expires_at' => now()->addDays(30),
+            'grace_until' => now()->addDays(35),
+        ]);
+
+        $user->update([
+            'is_active'    => true,
+            'max_students' => $subscription->max_students,
+        ]);
+
+        return redirect()->back()->with('success', 'Assinatura ativada com sucesso por 30 dias!');
+    }
+
+    /**
+     * Suspender assinatura do personal
+     */
+    public function suspendSubscription(User $user, MercadoPagoService $mpService)
+    {
+        $subscription = ProfessionalSubscription::where('user_id', $user->id)->first();
+
+        if ($subscription) {
+            // Cancelar preapproval no MP ao suspender
+            if (!empty($subscription->mp_preapproval_id)) {
+                try {
+                    $mpService->cancelPreapproval($subscription->mp_preapproval_id);
+                } catch (\Throwable $e) {
+                    Log::warning('Admin: falha ao cancelar preapproval ao suspender', [
+                        'user_id' => $user->id,
+                        'error'   => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            $subscription->update([
+                'status'                => 'suspended',
+                'mp_preapproval_status' => 'cancelled',
+            ]);
+
+            $user->update(['is_active' => false]);
+        }
+
+        return redirect()->back()->with('success', 'Assinatura suspensa com sucesso!');
+    }
+
+    /**
+     * Estender assinatura do personal
+     */
+    public function extendSubscription(Request $request, User $user)
+    {
+        $request->validate([
+            'days' => ['required', 'integer', 'min:1', 'max:365'],
+        ]);
+
+        $days = (int) $request->days;
+
+        $subscription = ProfessionalSubscription::where('user_id', $user->id)->firstOrFail();
+
+        $baseExpiry = ($subscription->expires_at && $subscription->expires_at->isFuture())
+            ? $subscription->expires_at
+            : now();
+
+        $baseGrace = ($subscription->grace_until && $subscription->grace_until->isFuture())
+            ? $subscription->grace_until
+            : $baseExpiry->copy()->addDays(5);
+
+        $subscription->update([
+            'expires_at'  => $baseExpiry->addDays($days),
+            'grace_until' => $baseGrace->addDays($days),
+            'status'      => in_array($subscription->status, ['suspended', 'overdue']) ? 'active' : $subscription->status,
+        ]);
+
+        return redirect()->back()->with('success', "Acesso estendido em {$days} dia(s) com sucesso!");
     }
 
     /**
@@ -272,5 +432,70 @@ class AdminController extends Controller
     public function logs()
     {
         return view('admin.logs');
+    }
+
+    /**
+     * Gestão de Planos
+     */
+    public function plansIndex()
+    {
+        $plans = PlanConfig::all();
+        return view('admin.plans.index', compact('plans'));
+    }
+
+    public function plansEdit($planId)
+    {
+        $plan = PlanConfig::where('plan_id', $planId)->firstOrFail();
+        return view('admin.plans.edit', compact('plan'));
+    }
+
+    public function plansUpdate(Request $request, $planId)
+    {
+        $plan = PlanConfig::where('plan_id', $planId)->firstOrFail();
+        $validated = $request->validate([
+            'name'         => 'required|string|max:100',
+            'price'        => 'required|numeric|min:0',
+            'max_students' => 'required|integer|min:1',
+            'features'     => 'required|string',
+        ]);
+        $features = array_filter(array_map('trim', explode("\n", $validated['features'])));
+        $plan->update([
+            'name'         => $validated['name'],
+            'price'        => $validated['price'],
+            'max_students' => $validated['max_students'],
+            'features'     => array_values($features),
+        ]);
+        return redirect()->route('admin.plans.index')->with('success', 'Plano atualizado com sucesso!');
+    }
+
+    public function plansDiscount(Request $request, $planId)
+    {
+        $plan = PlanConfig::where('plan_id', $planId)->firstOrFail();
+        $validated = $request->validate([
+            'discount_percent'    => 'required|integer|min:1|max:99',
+            'discount_expires_at' => 'nullable|date|after:now',
+        ]);
+        $plan->update([
+            'discount_percent'    => $validated['discount_percent'],
+            'discount_expires_at' => $validated['discount_expires_at'] ?? null,
+        ]);
+        return redirect()->route('admin.plans.index')->with('success', 'Desconto aplicado com sucesso!');
+    }
+
+    public function plansRemoveDiscount($planId)
+    {
+        $plan = PlanConfig::where('plan_id', $planId)->firstOrFail();
+        $plan->update([
+            'discount_percent'    => null,
+            'discount_expires_at' => null,
+        ]);
+        return redirect()->route('admin.plans.index')->with('success', 'Desconto removido com sucesso!');
+    }
+
+    public function plansToggle($planId)
+    {
+        $plan = PlanConfig::where('plan_id', $planId)->firstOrFail();
+        $plan->update(['is_active' => !$plan->is_active]);
+        return redirect()->route('admin.plans.index')->with('success', 'Status do plano atualizado!');
     }
 }

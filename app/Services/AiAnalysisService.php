@@ -12,19 +12,83 @@ use Illuminate\Support\Facades\Storage;
 class AiAnalysisService
 {
     protected $client;
+    protected array $apiKeys = [];
 
     public function __construct()
     {
-        // Inicializa o cliente Gemini com a chave via config (compatível com config:cache)
-        $apiKey = config('services.gemini.api_key');
-        
-        if (!$apiKey) {
+        // Suporte a múltiplas keys para fallback em caso de cota esgotada
+        $keys = array_filter([
+            config('services.gemini.api_key'),
+            config('services.gemini.api_key_2'),
+            config('services.gemini.api_key_3'),
+        ]);
+
+        if (empty($keys)) {
             Log::error('GEMINI_API_KEY não está configurada no arquivo .env');
             $this->client = null;
         } else {
-            Log::info('Cliente Gemini inicializado com sucesso');
-            $this->client = \Gemini::client($apiKey);
+            $this->apiKeys = array_values($keys);
+            Log::info('Cliente Gemini inicializado com sucesso (' . count($this->apiKeys) . ' key(s) disponível(is))');
+            $this->client = \Gemini::client($this->apiKeys[0]);
         }
+    }
+
+    /**
+     * Tenta executar uma chamada Gemini com fallback entre combinações de key+modelo.
+     * Ordem de tentativa:
+     *   key1 + gemini-2.5-flash
+     *   key2 + gemini-2.5-flash
+     *   key2 + gemini-2.5-flash-lite
+     *   key2 + gemini-3.1-flash-lite-preview
+     */
+    protected function callWithFallback(callable $fn): mixed
+    {
+        $combinations = [];
+
+        // Monta combinações: todas as keys com modelo principal
+        foreach ($this->apiKeys as $key) {
+            $combinations[] = ['key' => $key, 'model' => 'gemini-2.5-flash'];
+        }
+
+        // Adiciona modelos alternativos com a última key disponível
+        if (!empty($this->apiKeys)) {
+            $lastKey = end($this->apiKeys);
+            $combinations[] = ['key' => $lastKey, 'model' => 'gemini-2.5-flash-lite'];
+            $combinations[] = ['key' => $lastKey, 'model' => 'gemini-3.1-flash-lite-preview'];
+        }
+
+        $lastException = null;
+
+        foreach ($combinations as $i => $combo) {
+            try {
+                $client = \Gemini::client($combo['key']);
+                $result = $fn($client, $combo['model']);
+                if ($i > 0) {
+                    Log::info("Gemini fallback bem-sucedido com combinação #{$i} (model: {$combo['model']})");
+                }
+                return $result;
+            } catch (\Exception $e) {
+                $isQuota = str_contains($e->getMessage(), 'Quota exceeded')
+                        || str_contains($e->getMessage(), 'quota')
+                        || str_contains($e->getMessage(), '429')
+                        || str_contains($e->getMessage(), 'RESOURCE_EXHAUSTED')
+                        || str_contains($e->getMessage(), 'exceeded your current quota');
+
+                $isHighDemand = str_contains($e->getMessage(), 'high demand')
+                             || str_contains($e->getMessage(), 'temporarily')
+                             || str_contains($e->getMessage(), '503');
+
+                if (($isQuota || $isHighDemand) && isset($combinations[$i + 1])) {
+                    Log::warning("Gemini combo #{$i} (model: {$combo['model']}) falhou — tentando próximo...");
+                    $lastException = $e;
+                    continue;
+                }
+
+                throw $e;
+            }
+        }
+
+        throw new \RuntimeException('Todos os modelos Gemini disponíveis atingiram o limite. Tente novamente mais tarde.');
     }
 
     /**
@@ -59,7 +123,7 @@ class AiAnalysisService
 
         if (!$this->client) {
             Log::error('GEMINI_API_KEY não está configurada!');
-            dd('ERRO: Chave API do Gemini não está configurada. Verifique o arquivo .env no diretório raiz do projeto.');
+            throw new \RuntimeException('Chave API do Gemini não está configurada.');
         }
 
         try {
@@ -86,6 +150,7 @@ class AiAnalysisService
                 "REGRAS DO TREINO: " .
                 "1. Respeite as lesões e dores informadas na anamnese (ex: se tiver lesão no joelho, adapte). " .
                 "2. Inclua exercícios corretivos específicos para os desvios encontrados nas fotos. " .
+                "3. MUITO IMPORTANTE: Use SOMENTE nomes de exercícios em português. NUNCA coloque nomes em inglês entre parênteses ou qualquer termo em inglês no nome dos exercícios. Exemplo CORRETO: 'Puxada Alta com Barra'. Exemplo ERRADO: 'Puxada Alta (Lat Pulldown) com Barra'. " .
                 
                 "Retorne APENAS um JSON válido com esta estrutura exata: " .
                 "{
@@ -127,12 +192,18 @@ class AiAnalysisService
                     }
                 }";
 
+            $promptSize = strlen($prompt);
+            Log::info("Gemini diagnóstico — prompt_bytes: {$promptSize}, imagens: " . count($imagePaths) . ", caminhos: " . implode(', ', $imagePaths));
+
             $parts[] = $prompt;
 
+            $totalImageBytes = 0;
             foreach ($imagePaths as $path) {
                 if (Storage::disk('private')->exists($path)) {
                     $imageData = Storage::disk('private')->get($path);
                     $mimeType = Storage::disk('private')->mimeType($path);
+                    $totalImageBytes += strlen($imageData);
+                    Log::info("Gemini imagem — path: {$path}, mime: {$mimeType}, bytes: " . strlen($imageData));
                     
                     // Tenta converter string para Enum MimeType
                     $enumMimeType = MimeType::tryFrom($mimeType);
@@ -148,38 +219,64 @@ class AiAnalysisService
 
             if (count($parts) <= 1) {
                 Log::warning('Nenhuma imagem válida foi processada para o Gemini.');
-                dd('ERRO: Nenhuma imagem válida foi encontrada. Verifique se as imagens foram enviadas corretamente.');
+                throw new \RuntimeException('Nenhuma imagem válida foi encontrada para análise.');
             }
 
-            // Tenta o modelo mais recente e estável listado na conta do usuário (Gemini 2.5)
+            Log::info("Gemini diagnóstico — total_image_bytes: {$totalImageBytes}, total_parts: " . count($parts));
             Log::info('Enviando requisição para Gemini 2.5-flash com ' . (count($parts) - 1) . ' imagem(ns)');
-            
-            $response = $this->client->generativeModel('gemini-2.5-flash')->generateContent($parts);
-            $textResult = $response->text();
-            
-            Log::info('Resposta Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
-            
-            $textResult = preg_replace('/^```json\s*|\s*```$/', '', $textResult); // Limpa markdown
-            
-            $jsonResult = json_decode($textResult, true);
 
-            if (json_last_error() === JSON_ERROR_NONE) {
-                Log::info('Análise Gemini processada com sucesso');
-                return $jsonResult;
-            } else {
-                Log::error('Erro JSON Gemini: ' . $textResult);
-                dd('A IA retornou uma resposta inválida. Tente novamente.', 'Resposta: ' . substr($textResult, 0, 1000));
+            $maxAttempts = 3;
+            $lastException = null;
+
+            for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+                try {
+                    $response = $this->callWithFallback(
+                        fn($client, $model) => $client->generativeModel($model)->generateContent($parts)
+                    );
+                    $textResult = $response->text();
+
+                    Log::info("Resposta Gemini recebida (tentativa {$attempt}, primeiros 500 chars): " . substr($textResult, 0, 500));
+
+                    $textResult = preg_replace('/^```json\s*|\s*```$/', '', $textResult);
+                    $jsonResult = json_decode($textResult, true);
+
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        Log::info('Análise Gemini processada com sucesso');
+                        return $jsonResult;
+                    }
+
+                    Log::error('Erro JSON Gemini: ' . $textResult);
+                    throw new \RuntimeException('A IA retornou uma resposta inválida. Tente novamente.');
+
+                } catch (\RuntimeException $e) {
+                    throw $e; // Erros de JSON não fazem retry
+                } catch (\Exception $e) {
+                    $lastException = $e;
+                    $isRetryable   = str_contains($e->getMessage(), 'high demand')
+                                  || str_contains($e->getMessage(), 'temporarily')
+                                  || str_contains($e->getMessage(), '503');
+
+                    if ($isRetryable && $attempt < $maxAttempts) {
+                        Log::warning("Gemini alta demanda — tentativa {$attempt}/{$maxAttempts}. Aguardando 4s...");
+                        sleep(4);
+                        continue;
+                    }
+
+                    if (str_contains($e->getMessage(), 'Quota exceeded') || str_contains($e->getMessage(), '429')) {
+                        throw new \RuntimeException('Limite da API Gemini atingido. Aguarde alguns instantes e tente novamente.');
+                    }
+                    if ($isRetryable) {
+                        throw new \RuntimeException('A IA está com alta demanda no momento. Aguarde alguns instantes e tente novamente.');
+                    }
+                    throw new \RuntimeException('Erro ao processar análise com IA: ' . $e->getMessage());
+                }
             }
+
+            throw new \RuntimeException('A IA está com alta demanda no momento. Aguarde alguns instantes e tente novamente.');
 
         } catch (\Exception $e) {
             Log::error('Erro API Gemini: ' . $e->getMessage());
-            
-            // Verifica se é erro de cota
-            if (str_contains($e->getMessage(), 'Quota exceeded') || str_contains($e->getMessage(), '429')) {
-                dd('LIMITE DA IA ATINGIDO (Quota Exceeded).', 'O plano gratuito da Google tem um limite de requisições por minuto. Aguarde 30 segundos e tente novamente.');
-            }
-            
-            dd('ERRO API GEMINI:', $e->getMessage());
+            throw $e instanceof \RuntimeException ? $e : new \RuntimeException('Erro ao processar análise com IA: ' . $e->getMessage());
         }
     }
 
@@ -229,11 +326,13 @@ class AiAnalysisService
             }
 
             // Usa o mesmo modelo estável
-            Log::info('Enviando requisição de refinamento para Gemini 2.5-flash');
-            
-            $response = $this->client->generativeModel('gemini-2.5-flash')->generateContent($parts);
+            Log::info('Enviando requisição de refinamento para Gemini 1.5-flash');
+
+            $response = $this->callWithFallback(
+                fn($client, $model) => $client->generativeModel($model)->generateContent($parts)
+            );
             $textResult = $response->text();
-            
+
             Log::info('Resposta de refinamento Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
             
             $textResult = preg_replace('/^```json\s*|\s*```$/', '', $textResult);
@@ -245,17 +344,19 @@ class AiAnalysisService
                 return $jsonResult;
             } else {
                 Log::error('Erro JSON Gemini Refine: ' . substr($textResult, 0, 1000));
-                dd('Erro ao refinar resposta da IA. Resposta: ' . substr($textResult, 0, 500));
+                throw new \RuntimeException('A IA retornou uma resposta inválida ao refinar. Tente novamente.');
             }
 
         } catch (\Exception $e) {
             Log::error('Erro API Gemini Refine: ' . $e->getMessage());
             
-            if (str_contains($e->getMessage(), 'Quota exceeded')) {
-                dd('ERRO: Limite da API Gemini atingido. Aguarde um momento e tente novamente.');
+            if (str_contains($e->getMessage(), 'Quota exceeded') || str_contains($e->getMessage(), '429')) {
+                throw new \RuntimeException('Limite da API Gemini atingido. Aguarde alguns instantes e tente novamente.');
             }
-            
-            dd('ERRO API GEMINI REFINE:', $e->getMessage());
+            if (str_contains($e->getMessage(), 'high demand') || str_contains($e->getMessage(), 'temporarily')) {
+                throw new \RuntimeException('A IA está com alta demanda no momento. Aguarde alguns instantes e tente novamente.');
+            }
+            throw new \RuntimeException('Erro ao refinar análise com IA: ' . $e->getMessage());
         }
     }
 
@@ -304,7 +405,7 @@ class AiAnalysisService
 
         if (!$this->client) {
             Log::error('GEMINI_API_KEY não configurada!');
-            dd('ERRO: Chave API do Gemini não está configurada. Verifique o arquivo .env');
+            throw new \RuntimeException('Chave API do Gemini não está configurada.');
         }
 
         try {
@@ -332,6 +433,7 @@ Analisando APENAS os dados fornecidos (sem imagens), gere um treino estruturado 
 2. Seja apropriado para o nível de experiência
 3. Focalize no objetivo especificado
 4. Inclua recomendações de postura e técnica
+5. MUITO IMPORTANTE: Use SOMENTE nomes de exercícios em português. NUNCA coloque nomes em inglês entre parênteses ou qualquer termo em inglês no nome dos exercícios. Exemplo CORRETO: Puxada Alta com Barra. Exemplo ERRADO: Puxada Alta (Lat Pulldown) com Barra.
 
 RETORNE UM JSON ESTRUTURADO com:
 {
@@ -365,8 +467,10 @@ RETORNE UM JSON ESTRUTURADO com:
 Retorne SOMENTE o JSON, sem markdown ou explicações adicionais.";
 
             Log::info('Enviando requisição para Gemini 2.5-flash (sem imagens)');
-            
-            $response = $this->client->generativeModel('gemini-2.5-flash')->generateContent($prompt);
+
+            $response = $this->callWithFallback(
+                fn($client, $model) => $client->generativeModel($model)->generateContent($prompt)
+            );
             $textResult = $response->text();
             
             Log::info('Resposta Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
@@ -377,20 +481,33 @@ Retorne SOMENTE o JSON, sem markdown ou explicações adicionais.";
 
             if (json_last_error() === JSON_ERROR_NONE) {
                 Log::info('Treino gerado com sucesso pela IA');
+                // Normalizar campos que devem ser arrays mas podem vir como string
+                foreach (['strengthen', 'stretch'] as $field) {
+                    if (isset($jsonResult['suggested_focus'][$field]) && is_string($jsonResult['suggested_focus'][$field])) {
+                        $jsonResult['suggested_focus'][$field] = array_map('trim', explode(',', $jsonResult['suggested_focus'][$field]));
+                    }
+                }
+                foreach (['low', 'medium', 'high'] as $level) {
+                    if (isset($jsonResult['risk_factors'][$level]) && is_string($jsonResult['risk_factors'][$level])) {
+                        $jsonResult['risk_factors'][$level] = array_map('trim', explode(',', $jsonResult['risk_factors'][$level]));
+                    }
+                }
                 return $jsonResult;
             } else {
                 Log::error('Erro JSON Gemini (no images): ' . substr($textResult, 0, 1000));
-                dd('A IA retornou um JSON inválido. Resposta: ' . substr($textResult, 0, 500));
+                throw new \RuntimeException('A IA retornou uma resposta inválida. Tente novamente.');
             }
 
         } catch (\Exception $e) {
             Log::error('Erro API Gemini (no images): ' . $e->getMessage());
             
             if (str_contains($e->getMessage(), 'Quota exceeded') || str_contains($e->getMessage(), '429')) {
-                dd('ERRO: Limite da API Gemini atingido. Aguarde alguns minutos e tente novamente.');
+                throw new \RuntimeException('Limite da API Gemini atingido. Aguarde alguns instantes e tente novamente.');
             }
-            
-            dd('ERRO API GEMINI:', $e->getMessage());
+            if (str_contains($e->getMessage(), 'high demand') || str_contains($e->getMessage(), 'temporarily')) {
+                throw new \RuntimeException('A IA está com alta demanda no momento. Aguarde alguns instantes e tente novamente.');
+            }
+            throw new \RuntimeException('Erro ao processar análise com IA: ' . $e->getMessage());
         }
     }
 }

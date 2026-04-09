@@ -22,4 +22,27 @@ class Exercise extends Model
     {
         return $this->belongsTo(WorkoutDay::class, 'workout_day_id');
     }
+
+    public function getEmbedVideoUrlAttribute(): ?string
+    {
+        if (!$this->video_url) {
+            return null;
+        }
+
+        $url = trim($this->video_url);
+
+        if (str_contains($url, 'youtube.com/embed/') || str_contains($url, 'player.vimeo.com/video/')) {
+            return $url;
+        }
+
+        if (preg_match('~(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)([^&?/]+)~', $url, $matches)) {
+            return 'https://www.youtube.com/embed/' . $matches[1];
+        }
+
+        if (preg_match('~vimeo\.com/(?:video/)?(\d+)~', $url, $matches)) {
+            return 'https://player.vimeo.com/video/' . $matches[1];
+        }
+
+        return null;
+    }
 }

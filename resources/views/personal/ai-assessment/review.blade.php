@@ -85,7 +85,7 @@
                             Fortalecer
                         </span>
                         <div class="text-gray-300 leading-loose bg-gray-900/50 p-4 rounded-lg border border-gray-700/50 text-sm">
-                            {{ implode(', ', $analysisResult['suggested_focus']['strengthen'] ?? []) }}
+                            {{ implode(', ', is_array($analysisResult['suggested_focus']['strengthen'] ?? []) ? ($analysisResult['suggested_focus']['strengthen'] ?? []) : explode(',', $analysisResult['suggested_focus']['strengthen'])) }}
                         </div>
                     </div>
                     <div>
@@ -94,7 +94,7 @@
                             Alongar
                         </span>
                         <div class="text-gray-300 leading-loose bg-gray-900/50 p-4 rounded-lg border border-gray-700/50 text-sm">
-                            {{ implode(', ', $analysisResult['suggested_focus']['stretch'] ?? []) }}
+                            {{ implode(', ', is_array($analysisResult['suggested_focus']['stretch'] ?? []) ? ($analysisResult['suggested_focus']['stretch'] ?? []) : explode(',', $analysisResult['suggested_focus']['stretch'])) }}
                         </div>
                     </div>
                 </div>

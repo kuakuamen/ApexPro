@@ -101,74 +101,137 @@
     </div>
     
     <div>
-        <div>
-            @foreach($workout->days as $day)
-                <div class="px-4 py-6 sm:px-6 border-b border-teal-900/30 last:border-b-0">
-                    <dt class="text-base font-bold text-teal-300 mb-4">
-                        {{ $day->name }}
-                    </dt>
-                    <dd class="text-sm text-stone-300 sm:col-span-3">
+	        <div class="space-y-4">
+	            @foreach($workout->days as $day)
+	                <div class="px-4 py-4 sm:px-6 border-b border-teal-900/30 last:border-b-0" x-data="{ open: false }">
+	                    <button type="button"
+	                            @click="open = !open"
+	                            class="w-full flex items-center justify-between rounded-2xl border border-teal-900/40 bg-zinc-900/70 px-4 py-4 text-left hover:border-teal-600/60 hover:bg-zinc-900 transition-colors">
+	                        <span class="text-base font-bold text-teal-300">
+	                            {{ $day->name }}
+	                        </span>
+	                        <span class="flex items-center gap-3 text-xs font-semibold text-stone-300">
+	                            <span>{{ $day->exercises->count() }} exercicios</span>
+	                            <svg class="h-5 w-5 text-teal-300 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+	                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+	                            </svg>
+	                        </span>
+	                    </button>
+	                    <dd x-show="open" x-transition class="mt-4 text-sm text-stone-300 sm:col-span-3">
                         <ul role="list" class="space-y-4">
                             @foreach($day->exercises as $exercise)
                                 @if(auth()->user()->role === 'aluno')
                                     <!-- Card Mobile-First (Aluno) -->
-                                    <li class="bg-zinc-900/60 border border-teal-900/30 rounded-2xl shadow-md p-5 relative overflow-hidden transition-all duration-300" 
-                                        x-data="exerciseItem({{ $exercise->id }}, {{ in_array($exercise->id, $todayLogs ?? []) ? 'true' : 'false' }}, '{{ $exercise->rest_time }}')"
-                                        :class="{ 'bg-zinc-800/40 opacity-75': completed }">
-                                        
+                                    <li class="rounded-2xl shadow-lg overflow-hidden border transition-all duration-300"
+                                        x-data="exerciseItem({{ $exercise->id }}, {{ in_array($exercise->id, $todayLogs ?? []) ? 'true' : 'false' }}, @js($exercise->rest_time), @js($exercise->name), @js($exercise->embed_video_url))"
+                                        :class="completed ? 'bg-zinc-800/50 border-teal-700/30 opacity-80' : 'bg-zinc-900 border-teal-800/40'">
+
                                         <!-- Header: Nome e Check -->
-                                        <div class="flex justify-between items-start mb-4">
-                                            <h4 class="text-base font-semibold text-stone-100 leading-tight w-3/4 transition-colors" 
+                                        <div class="flex items-center justify-between gap-3 px-4 pt-4 pb-3">
+                                            <h4 class="text-base font-bold text-stone-100 leading-snug flex-1 transition-colors"
                                                 :class="{ 'text-stone-400 line-through': completed }">
                                                 {{ $exercise->name }}
                                             </h4>
-                                            
                                             <!-- Checkbox Estilo iOS -->
-                                            <div class="flex-shrink-0 cursor-pointer transform transition-transform active:scale-90" @click="completed = !completed; toggle()">
-                                                <!-- Estado: Não Marcado -->
-                                                <div x-show="!completed" class="w-8 h-8 rounded-full border-2 border-stone-500 bg-zinc-800/60 hover:border-teal-400 transition-colors"></div>
-                                                
-                                                <!-- Estado: Marcado -->
-                                                <div x-show="completed" 
+                                            <div class="flex-shrink-0 cursor-pointer active:scale-90 transition-transform" @click="completed = !completed; toggle()">
+                                                <div x-show="!completed" class="w-9 h-9 rounded-full border-2 border-zinc-600 bg-zinc-800 hover:border-teal-400 transition-colors"></div>
+                                                <div x-show="completed"
                                                      x-transition:enter="transition ease-out duration-200"
-                                                     x-transition:enter-start="transform scale-0 opacity-0"
-                                                     x-transition:enter-end="transform scale-100 opacity-100"
-                                                     class="w-8 h-8 rounded-full bg-gradient-to-br from-teal-600 to-cyan-700 border-2 border-teal-400 flex items-center justify-center shadow-lg shadow-teal-700/50">
+                                                     x-transition:enter-start="scale-0 opacity-0"
+                                                     x-transition:enter-end="scale-100 opacity-100"
+                                                     class="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 border-2 border-teal-400 flex items-center justify-center shadow-lg shadow-teal-700/40">
                                                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                                                     </svg>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <!-- Grid de Informações -->
-                                        <div class="grid grid-cols-3 gap-2 mb-4 text-center">
-                                            <div class="bg-teal-700/20 border border-teal-600/30 rounded-lg p-2">
-                                                <span class="block text-xs text-teal-200 uppercase font-bold">Séries</span>
-                                                <span class="block text-lg font-bold text-teal-300">{{ $exercise->sets ?? '-' }}</span>
+                                        <!-- Grid Séries / Reps / Descanso -->
+                                        <div class="grid grid-cols-3 gap-2 px-4 pb-4">
+                                            <div class="flex flex-col items-center justify-center bg-teal-900/30 border border-teal-700/30 rounded-xl py-3">
+                                                <span class="text-[10px] uppercase tracking-widest text-teal-400 font-semibold mb-1">Séries</span>
+                                                <span class="text-2xl font-extrabold text-white">{{ $exercise->sets ?? '-' }}</span>
                                             </div>
-                                            <div class="bg-teal-700/20 border border-teal-600/30 rounded-lg p-2">
-                                                <span class="block text-xs text-teal-200 uppercase font-bold">Reps</span>
-                                                <span class="block text-lg font-bold text-teal-300">{{ $exercise->reps ?? '-' }}</span>
+                                            <div class="flex flex-col items-center justify-center bg-teal-900/30 border border-teal-700/30 rounded-xl py-3">
+                                                <span class="text-[10px] uppercase tracking-widest text-teal-400 font-semibold mb-1">Reps</span>
+                                                <span class="text-2xl font-extrabold text-white">{{ $exercise->reps ?? '-' }}</span>
                                             </div>
-                                            <div class="bg-teal-700/20 border border-teal-600/30 rounded-lg p-2">
-                                                <span class="block text-xs text-teal-200 uppercase font-bold">Descanso</span>
-                                                <span class="block text-lg font-bold text-teal-300">{{ $exercise->rest_time ?? '-' }}</span>
+                                            <div class="flex flex-col items-center justify-center bg-teal-900/30 border border-teal-700/30 rounded-xl py-3">
+                                                <span class="text-[10px] uppercase tracking-widest text-teal-400 font-semibold mb-1">Descanso</span>
+                                                <span class="text-xl font-extrabold text-white leading-tight">{{ $exercise->rest_time ?? '-' }}</span>
                                             </div>
+                                        </div>
+
+                                        <!-- Botão Ver Execução -->
+                                        <div class="px-4 pb-3">
+                                            <button type="button" @click="toggleVideo()"
+                                                    class="w-full flex items-center justify-between px-4 py-3.5 rounded-xl border font-semibold text-sm transition-all active:scale-95"
+                                                    :class="showVideo
+                                                        ? 'bg-cyan-800/30 border-cyan-600/50 text-cyan-200'
+                                                        : 'bg-zinc-800 border-zinc-700 text-stone-300 hover:border-cyan-700/50 hover:text-cyan-200'">
+                                                <span class="flex items-center gap-2">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                    Ver execução do exercício
+                                                </span>
+                                                <span class="text-xs opacity-70" x-text="videoButtonLabel()"></span>
+                                            </button>
+                                        </div>
+
+                                        <!-- Área do Vídeo -->
+                                        <div x-show="showVideo" x-transition class="border-t border-zinc-800">
+                                            <template x-if="videoLoading">
+                                                <div class="flex flex-col items-center justify-center py-10 gap-3">
+                                                    <svg class="w-8 h-8 text-cyan-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                                                    </svg>
+                                                    <span class="text-sm text-cyan-300">Buscando vídeo no YouTube...</span>
+                                                </div>
+                                            </template>
+
+                                            <template x-if="videoError">
+                                                <div class="px-4 py-4 text-sm text-amber-300 bg-amber-950/30 flex items-start gap-2">
+                                                    <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                    <span x-text="videoError"></span>
+                                                </div>
+                                            </template>
+
+                                            <template x-if="videoUrl">
+                                                <div>
+                                                    <div class="w-full bg-black" style="aspect-ratio: 16/9">
+                                                        <iframe class="w-full h-full"
+                                                                :src="videoUrl"
+                                                                :title="'Execução de ' + exerciseName"
+                                                                loading="lazy"
+                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                allowfullscreen></iframe>
+                                                    </div>
+                                                    <template x-if="videoTitle">
+                                                        <div class="px-4 py-3 bg-zinc-950/60">
+                                                            <p class="text-xs font-semibold text-stone-200 leading-snug" x-text="videoTitle"></p>
+                                                            <p class="text-xs text-stone-500 mt-0.5" x-text="videoChannel"></p>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
                                         </div>
 
                                         <!-- Ações (Timer) -->
                                         <template x-if="restSeconds > 0 && !completed">
-                                            <div class="mt-3">
-                                                <button type="button" 
-                                                        @click="startTimer()" 
+                                            <div class="px-4 pb-4 pt-2">
+                                                <button type="button"
+                                                        @click="startTimer()"
                                                         x-show="!timerRunning"
-                                                        class="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-bold rounded-lg text-stone-100 bg-gradient-to-r from-teal-700 to-cyan-800 hover:from-teal-800 hover:to-cyan-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-teal-500 shadow-lg hover:shadow-teal-700/50 transition-all active:scale-95">
-                                                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                        class="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-base font-bold text-white bg-gradient-to-r from-teal-600 to-cyan-700 hover:from-teal-700 hover:to-cyan-800 shadow-lg shadow-teal-900/40 active:scale-95 transition-all">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                                     Iniciar Descanso
                                                 </button>
 
-                                                <div x-show="timerRunning" class="w-full bg-teal-700/20 rounded-lg p-3 flex items-center justify-between border border-teal-600/40">
+                                                <div x-show="timerRunning" class="w-full bg-teal-900/30 rounded-xl p-4 flex items-center justify-between border border-teal-700/40">
                                                     <span class="flex items-center text-teal-300 font-bold text-xl animate-pulse">
                                                         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                                         <span x-text="formatTime(timeLeft)"></span>
@@ -212,7 +275,7 @@
 </div>
 
 <script>
-    function exerciseItem(id, initialStatus, restTimeStr) {
+    function exerciseItem(id, initialStatus, restTimeStr, exerciseName, initialVideoUrl) {
         // Chave única para o LocalStorage: workout_log_{DATA}_{ID}
         const storageKey = `workout_log_${new Date().toISOString().split('T')[0]}_${id}`;
         const storageKeyExpire = `workout_log_expire_${id}`;
@@ -252,10 +315,18 @@
 
         return {
             id: id,
+            exerciseName: exerciseName,
             completed: status,
             restSeconds: seconds,
             timeLeft: seconds,
             timerRunning: false,
+            showVideo: false,
+            videoLoaded: Boolean(initialVideoUrl),
+            videoLoading: false,
+            videoError: '',
+            videoUrl: initialVideoUrl || '',
+            videoTitle: '',
+            videoChannel: '',
             interval: null,
             storageKey: storageKey,
             storageKeyExpire: storageKeyExpire,
@@ -303,6 +374,53 @@
             },
             
             // updateGlobalCount removido pois agora usamos eventos delta (+1/-1)
+
+            videoButtonLabel() {
+                if (this.videoLoading) return 'Buscando...';
+                if (this.showVideo) return 'Ocultar';
+                return this.videoLoaded ? 'Abrir video' : 'Buscar no YouTube';
+            },
+
+            toggleVideo() {
+                this.showVideo = !this.showVideo;
+
+                if (this.showVideo && !this.videoLoaded && !this.videoLoading) {
+                    this.loadYoutubeVideo();
+                }
+            },
+
+            loadYoutubeVideo() {
+                this.videoLoading = true;
+                this.videoError = '';
+
+                fetch(`{{ route('student.exercise.youtube') }}?name=${encodeURIComponent(this.exerciseName)}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(async response => {
+                    const data = await response.json().catch(() => ({}));
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Nao encontrei video para este exercicio.');
+                    }
+
+                    return data;
+                })
+                .then(data => {
+                    this.videoUrl = `https://www.youtube.com/embed/${data.video_id}`;
+                    this.videoTitle = data.title || '';
+                    this.videoChannel = data.channel_title || '';
+                    this.videoLoaded = true;
+                })
+                .catch(error => {
+                    this.videoError = error.message || 'Nao foi possivel carregar o video agora.';
+                })
+                .finally(() => {
+                    this.videoLoading = false;
+                });
+            },
 
             startTimer() {
                 if (this.restSeconds <= 0) return;

@@ -272,6 +272,15 @@ class PersonalController extends Controller
      */
     public function storeStudent(Request $request)
     {
+        // Verifica limite de alunos do plano
+        $user = Auth::user();
+        $maxStudents = $user->max_students ?? 0;
+        $currentStudents = $user->students()->count();
+
+        if ($currentStudents >= $maxStudents) {
+            return redirect()->back()->with('error', "Você atingiu o limite de {$maxStudents} alunos do seu plano. Faça upgrade para adicionar mais alunos.");
+        }
+
         // Limpa CPF e Telefone antes da validação para garantir unicidade correta
         $request->merge([
             'cpf' => preg_replace('/[^0-9]/', '', $request->cpf),
@@ -590,26 +599,26 @@ class PersonalController extends Controller
             $this->calculateBodyComposition($data, $student);
         }
 
-        // Upload de Fotos
+        // Upload de Fotos (comprimidas antes de salvar)
         if ($request->hasFile('photo_front')) {
-            $data['photo_front'] = $request->file('photo_front')->store('assessments', 'private');
+            $data['photo_front'] = \App\Helpers\ImageHelper::compressAndStore($request->file('photo_front'), 'assessments', 'private');
         }
         if ($request->hasFile('photo_back')) {
-            $data['photo_back'] = $request->file('photo_back')->store('assessments', 'private');
+            $data['photo_back'] = \App\Helpers\ImageHelper::compressAndStore($request->file('photo_back'), 'assessments', 'private');
         }
         if ($request->hasFile('photo_side')) {
-            $data['photo_side'] = $request->file('photo_side')->store('assessments', 'private');
+            $data['photo_side'] = \App\Helpers\ImageHelper::compressAndStore($request->file('photo_side'), 'assessments', 'private');
         }
         if ($request->hasFile('photo_side_right')) {
-            $data['photo_side_right'] = $request->file('photo_side_right')->store('assessments', 'private');
+            $data['photo_side_right'] = \App\Helpers\ImageHelper::compressAndStore($request->file('photo_side_right'), 'assessments', 'private');
         }
         if ($request->hasFile('photo_side_left')) {
-            $data['photo_side_left'] = $request->file('photo_side_left')->store('assessments', 'private');
+            $data['photo_side_left'] = \App\Helpers\ImageHelper::compressAndStore($request->file('photo_side_left'), 'assessments', 'private');
         }
         if ($request->hasFile('photo_extra')) {
             $extraPhotos = [];
             foreach ($request->file('photo_extra') as $extraPhoto) {
-                $extraPhotos[] = $extraPhoto->store('assessments', 'private');
+                $extraPhotos[] = \App\Helpers\ImageHelper::compressAndStore($extraPhoto, 'assessments', 'private');
             }
             $data['extra_photos'] = $extraPhotos;
         }
@@ -775,21 +784,21 @@ class PersonalController extends Controller
             $this->calculateBodyComposition($data, $measurement->student);
         }
 
-        // Upload de Fotos (apaga antiga se enviar nova)
+        // Upload de Fotos (comprimidas antes de salvar)
         if ($request->hasFile('photo_front')) {
-            $data['photo_front'] = $request->file('photo_front')->store('assessments', 'private');
+            $data['photo_front'] = \App\Helpers\ImageHelper::compressAndStore($request->file('photo_front'), 'assessments', 'private');
         }
         if ($request->hasFile('photo_back')) {
-            $data['photo_back'] = $request->file('photo_back')->store('assessments', 'private');
+            $data['photo_back'] = \App\Helpers\ImageHelper::compressAndStore($request->file('photo_back'), 'assessments', 'private');
         }
         if ($request->hasFile('photo_side')) {
-            $data['photo_side'] = $request->file('photo_side')->store('assessments', 'private');
+            $data['photo_side'] = \App\Helpers\ImageHelper::compressAndStore($request->file('photo_side'), 'assessments', 'private');
         }
         if ($request->hasFile('photo_side_right')) {
-            $data['photo_side_right'] = $request->file('photo_side_right')->store('assessments', 'private');
+            $data['photo_side_right'] = \App\Helpers\ImageHelper::compressAndStore($request->file('photo_side_right'), 'assessments', 'private');
         }
         if ($request->hasFile('photo_side_left')) {
-            $data['photo_side_left'] = $request->file('photo_side_left')->store('assessments', 'private');
+            $data['photo_side_left'] = \App\Helpers\ImageHelper::compressAndStore($request->file('photo_side_left'), 'assessments', 'private');
         }
         $existingExtraPhotos = is_array($measurement->extra_photos) ? $measurement->extra_photos : [];
         $hasExtraChanges = $request->hasFile('photo_extra') || $request->hasFile('replace_extra_photos') || $request->filled('remove_extra_photos');
@@ -810,7 +819,7 @@ class PersonalController extends Controller
                 }
 
                 if (isset($replaceExtraPhotos[$index])) {
-                    $processedExtraPhotos[] = $replaceExtraPhotos[$index]->store('assessments', 'private');
+                    $processedExtraPhotos[] = \App\Helpers\ImageHelper::compressAndStore($replaceExtraPhotos[$index], 'assessments', 'private');
                 } else {
                     $processedExtraPhotos[] = $existingPath;
                 }
@@ -818,7 +827,7 @@ class PersonalController extends Controller
 
             if ($request->hasFile('photo_extra')) {
                 foreach ($request->file('photo_extra') as $extraPhoto) {
-                    $processedExtraPhotos[] = $extraPhoto->store('assessments', 'private');
+                    $processedExtraPhotos[] = \App\Helpers\ImageHelper::compressAndStore($extraPhoto, 'assessments', 'private');
                 }
             }
 

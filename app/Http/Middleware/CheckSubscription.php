@@ -53,7 +53,11 @@ class CheckSubscription
             }
 
             // Assinatura pendente (aguardando pagamento)
+            // Se o período pago ainda está válido, permite acesso normalmente
             if ($subscription->status === 'pending') {
+                if ($subscription->expires_at && $subscription->expires_at->isFuture()) {
+                    return $next($request);
+                }
                 return redirect()->route('subscription.renew');
             }
 
@@ -62,13 +66,7 @@ class CheckSubscription
                 return $next($request);
             }
 
-            // Em grace period → acesso com warning
-            if ($subscription->isInGrace()) {
-                session(['subscription_grace_warning' => true]);
-                return $next($request);
-            }
-
-            // Expirado (grace venceu)
+            // Venceu → bloqueia imediatamente, sem grace period
             return redirect()->route('subscription.renew');
         }
 

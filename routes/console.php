@@ -13,3 +13,6 @@ Schedule::command('financial:suspend-overdue')->dailyAt('00:00');
 
 // Verifica assinaturas de profissionais vencidas e suspende após grace period
 Schedule::command('subscription:check-overdue')->dailyAt('06:00');
+
+// Remove usuários criados via PIX que não pagaram e o QR Code expirou
+Schedule::command('subscriptions:cleanup-abandoned-pix')->everyFiveMinutes();

@@ -227,7 +227,7 @@ class AiAssessmentController extends Controller
         // Resolver imagens: arquivo novo ou reutilizar path existente
         $resolveImage = function(string $slot, string $inputName) use ($request, $isReusing, $reuseSourceType, $reuseSourceId, $personalId): string {
             if ($request->hasFile($inputName)) {
-                return $request->file($inputName)->store('assessments', 'private');
+                return \App\Helpers\ImageHelper::compressAndStore($request->file($inputName), 'assessments', 'private');
             }
             if ($isReusing && $request->input('reuse_' . $slot)) {
                 $existing = $this->resolveReusePath($reuseSourceType, $reuseSourceId, $slot, $personalId);
@@ -275,7 +275,7 @@ class AiAssessmentController extends Controller
         // Novos uploads extras são adicionados além das reutilizadas (sem limite fixo no merge)
         if ($request->hasFile('photo_extra')) {
             foreach ($request->file('photo_extra') as $extraPhoto) {
-                $extraPaths[] = $extraPhoto->store('assessments', 'private');
+                $extraPaths[] = \App\Helpers\ImageHelper::compressAndStore($extraPhoto, 'assessments', 'private');
             }
         }
 
@@ -310,10 +310,14 @@ class AiAssessmentController extends Controller
         ];
 
         // Chamar o serviço de IA
-        $analysisResult = $this->aiService->analyzeImages(
-            array_merge([$frontPath, $sideRightPath, $sideLeftPath, $backPath], $extraPaths), 
-            $studentData
-        );
+        try {
+            $analysisResult = $this->aiService->analyzeImages(
+                array_merge([$frontPath, $sideRightPath, $sideLeftPath, $backPath], $extraPaths),
+                $studentData
+            );
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['ai' => $e->getMessage()]);
+        }
 
         // Retornar a view de revisão com os dados preenchidos
         // Buscamos todos os exercícios para o select de edição
@@ -430,12 +434,16 @@ class AiAssessmentController extends Controller
         ];
 
         // Chamar o serviço de IA para refinamento
-        $analysisResult = $this->aiService->refineAnalysis(
-            $previousAnalysis,
-            $request->feedback,
-            array_merge(array_filter([$frontPath, $sidePath, $sideLeftPath, $backPath]), is_array($extraPaths) ? $extraPaths : []),
-            $studentData
-        );
+        try {
+            $analysisResult = $this->aiService->refineAnalysis(
+                $previousAnalysis,
+                $request->feedback,
+                array_merge(array_filter([$frontPath, $sidePath, $sideLeftPath, $backPath]), is_array($extraPaths) ? $extraPaths : []),
+                $studentData
+            );
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['ai' => $e->getMessage()]);
+        }
 
         // Atualizar sessão
         session(['last_analysis_result' => $analysisResult]);
@@ -502,7 +510,10 @@ class AiAssessmentController extends Controller
             $backPath  = $request->input('back_path')  ?: session('last_back_path');
             $extraPaths = session('last_extra_paths', []);
 
-            // 1. Criar o Plano de Treino primeiro para obter o ID
+            // 1. Inativar treinos anteriores antes de aprovar o novo
+            $student->workoutPlans()->where('is_active', true)->update(['is_active' => false]);
+
+            // 2. Criar o Plano de Treino ativo (este é o momento da aprovação)
             $plan = $student->workoutPlans()->create([
                 'name' => $request->workout_name,
                 'goal' => $request->goal,
@@ -624,7 +635,11 @@ class AiAssessmentController extends Controller
         ];
 
         // Chamar o serviço de IA (sem imagens)
-        $analysisResult = $this->aiService->generateWorkoutWithoutImages($studentData);
+        try {
+            $analysisResult = $this->aiService->generateWorkoutWithoutImages($studentData);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['ai' => $e->getMessage()]);
+        }
 
         // Buscamos todos os exercícios para o select de edição
         $allExercises = Exercise::orderBy('name')->get();
@@ -642,10 +657,15 @@ class AiAssessmentController extends Controller
         return view('personal.ai-assessment.review', array_merge(
             compact('student', 'allExercises', 'analysisResult'),
             [
-                'images' => [
+                'frontPath'    => null,
+                'sidePath'     => null,
+                'sideLeftPath' => null,
+                'backPath'     => null,
+                'extraPaths'   => [],
+                'images'       => [
                     'front' => null,
-                    'side' => null,
-                    'back' => null,
+                    'side'  => null,
+                    'back'  => null,
                 ],
             ],
             ['request' => $request]

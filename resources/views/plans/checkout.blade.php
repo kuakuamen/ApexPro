@@ -181,8 +181,11 @@
                                 PIX
                             </button>
                             <button type="button" id="tab-card"
-                                class="flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all tab-btn"
+                                class="flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all tab-btn relative"
                                 onclick="switchTab('card')">
+                                @if(!$isRenewal)
+                                <span style="position:absolute;top:-10px;right:8px;background:#10b981;color:#000;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;white-space:nowrap;">7 DIAS GRÁTIS</span>
+                                @endif
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                 </svg>
@@ -209,6 +212,22 @@
 
                         {{-- Cartão panel --}}
                         <div id="panel-card" class="hidden">
+
+                            @if(!$isRenewal)
+                            {{-- Trial banner --}}
+                            <div class="mb-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-4 text-sm text-emerald-200 flex gap-3 items-start">
+                                <svg class="w-5 h-5 mt-0.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div>
+                                    <p class="font-semibold text-emerald-300">7 dias grátis para novos usuários</p>
+                                    <p class="mt-1 text-emerald-200/80">
+                                        Cadastre seu cartão agora e tenha <strong>7 dias de acesso gratuito</strong>.<br>
+                                        No <strong>8º dia</strong>, a cobrança de <strong>R$ {{ number_format($plan['price'], 2, ',', '.') }}/mês</strong> inicia automaticamente. Cancele quando quiser.
+                                    </p>
+                                </div>
+                            </div>
+                            @else
                             <div class="mb-5 rounded-xl bg-blue-500/10 border border-blue-500/20 p-4 text-sm text-blue-200 flex gap-3 items-start">
                                 <svg class="w-5 h-5 mt-0.5 shrink-0 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -218,6 +237,7 @@
                                     <p class="mt-1 text-blue-300/80">Seu cartão será cobrado automaticamente todo mês. Cancele quando quiser.</p>
                                 </div>
                             </div>
+                            @endif
 
                             <div id="card-errors" class="mb-4 hidden rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200"></div>
                             <div id="cardPaymentBrick_container"></div>
@@ -255,12 +275,36 @@
                         @endforeach
                     </ul>
 
+                    {{-- Resumo de cobrança --}}
+                    @if(!$isRenewal)
+                    <div id="summary-pix" class="pt-4 border-t border-white/10">
+                        <div class="flex justify-between items-center">
+                            <span class="text-zinc-400 text-sm">Total hoje (PIX)</span>
+                            <span class="text-2xl font-bold text-white">R$ {{ number_format($plan['price'], 2, ',', '.') }}</span>
+                        </div>
+                        <p class="mt-3 text-xs text-zinc-500 text-center">Cobrança mensal recorrente. Cancele quando quiser.</p>
+                    </div>
+                    <div id="summary-card" class="pt-4 border-t border-white/10 hidden">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-zinc-400 text-sm">Hoje</span>
+                            <span class="text-lg font-bold text-emerald-400">Grátis</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-zinc-400 text-sm">A partir do 8º dia</span>
+                            <span class="text-lg font-bold text-white">R$ {{ number_format($plan['price'], 2, ',', '.') }}/mês</span>
+                        </div>
+                        <div class="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
+                            <span class="text-sm font-semibold text-emerald-300">7 dias grátis incluídos</span>
+                        </div>
+                        <p class="mt-3 text-xs text-zinc-500 text-center">Cancele antes do 8º dia e não será cobrado o plano.</p>
+                    </div>
+                    @else
                     <div class="flex justify-between items-center pt-4 border-t border-white/10">
                         <span class="text-zinc-400 text-sm">Total mensal</span>
                         <span class="text-2xl font-bold text-white">R$ {{ number_format($plan['price'], 2, ',', '.') }}</span>
                     </div>
-
                     <p class="mt-3 text-xs text-zinc-500 text-center">Cobrança mensal recorrente. Cancele quando quiser.</p>
+                    @endif
                 </div>
             </section>
 
@@ -290,6 +334,7 @@
 (function () {
     const mpPublicKey    = @json($mpPublicKey);
     const planPrice      = Number(@json($plan['price']));
+    const trialEnabled   = @json($trialEnabled ?? false);
     const form           = document.getElementById('checkout-form');
     const pmInput        = document.getElementById('payment_method_input');
     const cardTokenInput = document.getElementById('card_token_input');
@@ -303,36 +348,38 @@
     const birthYear  = document.getElementById('birth_year');
     const birthInput = document.getElementById('birth_date_input');
 
-    function updateBirthDate() {
-        const d = birthDay.value, m = birthMonth.value, y = birthYear.value;
-        if (d && m && y) {
-            birthInput.value = y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-        } else {
-            birthInput.value = '';
+    if (birthDay && birthMonth && birthYear && birthInput) {
+        function updateBirthDate() {
+            const d = birthDay.value, m = birthMonth.value, y = birthYear.value;
+            if (d && m && y) {
+                birthInput.value = y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            } else {
+                birthInput.value = '';
+            }
         }
+
+        // Pré-popular se old() tiver valor
+        if (birthInput.value) {
+            const parts = birthInput.value.split('-');
+            if (parts.length === 3) {
+                birthYear.value  = parts[0];
+                birthMonth.value = parseInt(parts[1]).toString();
+                birthDay.value   = parseInt(parts[2]).toString();
+            }
+        }
+
+        [birthDay, birthMonth, birthYear].forEach(el => el.addEventListener('change', updateBirthDate));
+
+        form.addEventListener('submit', function(e) {
+            if (!birthInput.value) {
+                e.preventDefault();
+                birthDay.classList.add('border-red-500');
+                birthMonth.classList.add('border-red-500');
+                birthYear.classList.add('border-red-500');
+                birthDay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, true);
     }
-
-    // Pré-popular se old() tiver valor
-    if (birthInput.value) {
-        const parts = birthInput.value.split('-');
-        if (parts.length === 3) {
-            birthYear.value  = parts[0];
-            birthMonth.value = parseInt(parts[1]).toString();
-            birthDay.value   = parseInt(parts[2]).toString();
-        }
-    }
-
-    [birthDay, birthMonth, birthYear].forEach(el => el.addEventListener('change', updateBirthDate));
-
-    form.addEventListener('submit', function(e) {
-        if (!birthInput.value) {
-            e.preventDefault();
-            birthDay.classList.add('border-red-500');
-            birthMonth.classList.add('border-red-500');
-            birthYear.classList.add('border-red-500');
-            birthDay.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }, true);
 
     // ── CPF mask ──────────────────────────────────────────────────────────────
     const cpfField = document.getElementById('cpf_input');
@@ -367,18 +414,25 @@
         const panelPix  = document.getElementById('panel-pix');
         const panelCard = document.getElementById('panel-card');
 
+        const summaryPix  = document.getElementById('summary-pix');
+        const summaryCard = document.getElementById('summary-card');
+
         if (tab === 'pix') {
             pmInput.value = 'pix';
             tabPix.classList.add('tab-active');
             tabCard.classList.remove('tab-active');
             panelPix.classList.remove('hidden');
             panelCard.classList.add('hidden');
+            if (summaryPix)  summaryPix.classList.remove('hidden');
+            if (summaryCard) summaryCard.classList.add('hidden');
         } else {
             pmInput.value = 'credit_card';
             tabCard.classList.add('tab-active');
             tabPix.classList.remove('tab-active');
             panelPix.classList.add('hidden');
             panelCard.classList.remove('hidden');
+            if (summaryPix)  summaryPix.classList.add('hidden');
+            if (summaryCard) summaryCard.classList.remove('hidden');
             if (!brickReady) initBrick();
         }
     };

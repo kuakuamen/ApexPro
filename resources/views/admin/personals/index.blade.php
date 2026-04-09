@@ -56,7 +56,13 @@
                         <td>{{ $personal->phone ?? '-' }}</td>
                         <td>{{ $personal->profession ?? '-' }}</td>
                         <td>
-                            @if ($personal->is_active)
+                            @php
+                                $pSub = $personal->professionalSubscription;
+                                $pExpired = $pSub && $pSub->expires_at && $pSub->expires_at->isPast() && $pSub->status === 'active';
+                            @endphp
+                            @if ($pExpired)
+                                <span class="badge badge-warning">Vencido</span>
+                            @elseif ($personal->is_active)
                                 <span class="badge badge-success">Ativo</span>
                             @else
                                 <span class="badge badge-danger">Inativo</span>

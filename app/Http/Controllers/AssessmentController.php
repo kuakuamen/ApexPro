@@ -42,9 +42,9 @@ class AssessmentController extends Controller
         $user = Auth::user();
 
         // Salvar Imagens em disco PRIVADO (seguro)
-        $frontPath = $request->file('front_image')->store('assessments', 'private');
-        $sidePath = $request->file('side_image')->store('assessments', 'private');
-        $backPath = $request->file('back_image')->store('assessments', 'private');
+        $frontPath = \App\Helpers\ImageHelper::compressAndStore($request->file('front_image'), 'assessments', 'private');
+        $sidePath  = \App\Helpers\ImageHelper::compressAndStore($request->file('side_image'), 'assessments', 'private');
+        $backPath  = \App\Helpers\ImageHelper::compressAndStore($request->file('back_image'), 'assessments', 'private');
 
         // Chamar Serviço de IA (Simulado por enquanto)
         $aiResult = $this->aiService->analyzeImages(

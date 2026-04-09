@@ -8,7 +8,7 @@
         <p class="text-stone-300">Vamos manter o foco hoje?</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 gap-6">
         <!-- Card de Treino -->
         <div class="bg-zinc-900/55 shadow rounded-lg overflow-hidden border-l-4 border-teal-600">
             <div class="px-4 py-5 sm:p-6">
@@ -32,28 +32,6 @@
             </div>
         </div>
 
-        <!-- Card de Dieta -->
-        <div class="bg-zinc-900/55 shadow rounded-lg overflow-hidden border-l-4 border-teal-600">
-            <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-stone-100 flex items-center">
-                    <svg class="h-6 w-6 text-teal-300 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    Plano Alimentar
-                </h3>
-                
-                @if($activeDiet)
-                    <div class="mt-4">
-                        <p class="text-xl font-bold text-stone-100">{{ $activeDiet->name }}</p>
-                        <p class="text-sm text-stone-300 mb-4">{{ $activeDiet->goal }}</p>
-                        
-                        <a href="{{ route('diets.show', $activeDiet) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-stone-100 bg-teal-700 hover:bg-teal-800 focus:outline-none">
-                            Ver Dieta Completa
-                        </a>
-                    </div>
-                @else
-                    <p class="mt-4 text-stone-300">Você ainda não tem uma dieta ativa.</p>
-                @endif
-            </div>
-        </div>
     </div>
 
     <!-- Peso Atual e IMC -->

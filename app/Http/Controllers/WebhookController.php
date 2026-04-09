@@ -68,7 +68,11 @@ class WebhookController extends Controller
                 $paymentInfo = $mpService->getPaymentStatus($mpPaymentId);
                 $extRef = $paymentInfo['raw']['external_reference'] ?? null;
                 if ($extRef) {
-                    $transaction = SubscriptionTransaction::where('mp_external_reference', $extRef)->first();
+                    // MP recebe 'sub-{uuid}' mas salvamos só '{uuid}' no banco
+                    $normalizedRef = preg_replace('/^sub-/', '', $extRef);
+                    $transaction = SubscriptionTransaction::where('mp_external_reference', $normalizedRef)
+                        ->orWhere('mp_external_reference', $extRef)
+                        ->first();
                 }
             } catch (\Exception $e) {
                 Log::warning('MP Webhook: failed to get payment status for fallback', [
@@ -260,8 +264,8 @@ class WebhookController extends Controller
             ? Carbon::parse($info['next_payment_date'])
             : $now->copy()->addDays(30);
 
-        // --- Renovação mensal automática (subscription já estava ativa) ---
-        if ($subscription->status === 'active') {
+        // --- Renovação mensal automática (ativa, vencida em grace ou overdue) ---
+        if (in_array($subscription->status, ['active', 'overdue', 'pending'])) {
             // Deduplicação: já existe transaction aprovada na última hora?
             $recent = SubscriptionTransaction::where('subscription_id', $subscription->id)
                 ->where('status', 'approved')

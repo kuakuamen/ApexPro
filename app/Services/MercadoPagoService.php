@@ -59,7 +59,8 @@ class MercadoPagoService
                 'transaction_amount' => (float) $plan['price'],
                 'currency_id'        => 'BRL',
             ],
-            'back_url' => $backUrl,
+            'back_url'           => $backUrl,
+            'notification_url'   => $appUrl . '/webhooks/mercadopago',
         ];
 
         $response = Http::withToken($this->accessToken)
@@ -94,6 +95,11 @@ class MercadoPagoService
 
         $json = $response->json();
         if (!$response->successful()) {
+            Log::warning('MP getPreapproval failed', [
+                'preapproval_id' => $preapprovalId,
+                'http_status'    => $response->status(),
+                'response_body'  => $json,
+            ]);
             $message = $json['message'] ?? $json['error'] ?? 'Erro ao consultar assinatura.';
             throw new \RuntimeException($message);
         }
@@ -255,27 +261,101 @@ class MercadoPagoService
      * Cria preapproval recorrente usando card_id salvo (best-effort, sem status forçado).
      * Em sandbox: fica pending. Em produção: torna-se authorized automaticamente.
      */
-    public function createPreapprovalWithCardId(User $user, array $plan, string $customerId, string $cardId, string $externalRef): array
+    /**
+     * @deprecated Use createSubscriptionWithToken() instead.
+     * Mantido para compatibilidade com renovações existentes.
+     */
+    public function createPreapprovalWithCardId(User $user, array $plan, string $customerId, string $cardToken, string $externalRef): array
     {
-        $appUrl  = rtrim((string) config('app.url'), '/');
+        return $this->createSubscriptionWithToken($user, $plan, $cardToken, $externalRef);
+    }
+
+    /**
+     * Cria ou retorna um preapproval_plan no MP para o plano dado.
+     * Armazena o mp_plan_id no plan_configs para reuso.
+     */
+    public function createOrGetPlan(array $plan, int $trialDays = 1): string
+    {
+        // Verificar se já existe no banco
+        $planConfig = \App\Models\PlanConfig::where('plan_id', $plan['id'])->first();
+        if ($planConfig && !empty($planConfig->mp_plan_id)) {
+            return $planConfig->mp_plan_id;
+        }
+
+        $appUrl = rtrim((string) config('app.url'), '/');
         if (str_contains($appUrl, 'localhost') || str_contains($appUrl, '127.0.0.1')) {
             $appUrl = rtrim((string) config('services.mercadopago.back_url', $appUrl), '/');
         }
-        $backUrl = $appUrl . '/assinatura/resultado-preapproval';
 
         $payload = [
-            'reason'             => $plan['name'] . ' - Assinatura Mensal ApexPro',
-            'external_reference' => $externalRef,
-            'payer_email'        => $this->resolvePayerEmail($user),
-            'customer_id'        => $customerId,
-            'card_id'            => (int) $cardId,
-            'auto_recurring'     => [
+            'reason'         => $plan['name'] . ' - ApexPro',
+            'auto_recurring' => [
                 'frequency'          => 1,
                 'frequency_type'     => 'months',
                 'transaction_amount' => (float) $plan['price'],
                 'currency_id'        => 'BRL',
+                'free_trial'         => [
+                    'frequency'      => $trialDays,
+                    'frequency_type' => 'days',
+                ],
             ],
-            'back_url' => $backUrl,
+            'payment_methods_allowed' => [
+                'payment_types' => [['id' => 'credit_card']],
+            ],
+            'back_url' => $appUrl . '/assinatura/resultado-preapproval',
+        ];
+
+        $response = Http::withToken($this->accessToken)
+            ->acceptJson()
+            ->post('https://api.mercadopago.com/preapproval_plan', $payload);
+
+        $json = $response->json();
+
+        Log::info('MP: preapproval_plan criado', [
+            'plan_id'    => $plan['id'],
+            'mp_plan_id' => $json['id'] ?? null,
+            'status'     => $json['status'] ?? null,
+            'trial_days' => $trialDays,
+        ]);
+
+        if (!$response->successful()) {
+            throw new \RuntimeException($json['message'] ?? $json['error'] ?? 'Erro ao criar plano MP.');
+        }
+
+        $mpPlanId = (string) ($json['id'] ?? '');
+
+        // Salvar no banco para reuso
+        if ($planConfig) {
+            $planConfig->update(['mp_plan_id' => $mpPlanId]);
+        } else {
+            \App\Models\PlanConfig::create([
+                'plan_id'    => $plan['id'],
+                'mp_plan_id' => $mpPlanId,
+            ]);
+        }
+
+        return $mpPlanId;
+    }
+
+    /**
+     * Cria assinatura vinculada a um plano MP (com free_trial nativo).
+     * status: "authorized" = checkout transparente sem redirect.
+     */
+    public function createSubscriptionWithPlan(User $user, string $mpPlanId, string $cardToken, string $externalRef): array
+    {
+        $appUrl = rtrim((string) config('app.url'), '/');
+        if (str_contains($appUrl, 'localhost') || str_contains($appUrl, '127.0.0.1')) {
+            $appUrl = rtrim((string) config('services.mercadopago.back_url', $appUrl), '/');
+        }
+
+        $payload = [
+            'preapproval_plan_id' => $mpPlanId,
+            'payer_email'         => $this->resolvePayerEmail($user),
+            'card_token_id'       => $cardToken,
+            'status'              => 'authorized',
+            'external_reference'  => $externalRef,
+            'back_url'            => $appUrl . '/assinatura/resultado-preapproval',
+            'notification_url'    => $appUrl . '/webhooks/mercadopago',
         ];
 
         $response = Http::withToken($this->accessToken)
@@ -284,16 +364,83 @@ class MercadoPagoService
 
         $json = $response->json();
 
+        Log::info('MP: createSubscriptionWithPlan response', [
+            'status'            => $json['status'] ?? null,
+            'next_payment_date' => $json['next_payment_date'] ?? null,
+            'http_status'       => $response->status(),
+        ]);
+
         if (!$response->successful()) {
-            $msg = $json['message'] ?? $json['error'] ?? 'Erro ao criar preapproval com card_id.';
+            throw new \RuntimeException($json['message'] ?? $json['error'] ?? 'Erro ao criar assinatura com plano.');
+        }
+
+        return [
+            'preapproval_id'    => (string) ($json['id'] ?? ''),
+            'status'            => (string) ($json['status'] ?? 'pending'),
+            'next_payment_date' => $json['next_payment_date'] ?? null,
+            'card_id'           => (string) ($json['card_id'] ?? ''),
+            'raw_response'      => $json,
+        ];
+    }
+
+    /**
+     * Cria assinatura recorrente transparente usando card_token_id do Brick.
+     * Passa status "authorized" para ativar sem redirect.
+     * $startDate: data da primeira cobrança (null = imediato).
+     */
+    public function createSubscriptionWithToken(User $user, array $plan, string $cardToken, string $externalRef, ?Carbon $startDate = null): array
+    {
+        $appUrl = rtrim((string) config('app.url'), '/');
+        if (str_contains($appUrl, 'localhost') || str_contains($appUrl, '127.0.0.1')) {
+            $appUrl = rtrim((string) config('services.mercadopago.back_url', $appUrl), '/');
+        }
+        $backUrl = $appUrl . '/assinatura/resultado-preapproval';
+
+        $autoRecurring = [
+            'frequency'          => 1,
+            'frequency_type'     => 'months',
+            'transaction_amount' => (float) $plan['price'],
+            'currency_id'        => 'BRL',
+        ];
+
+        if ($startDate) {
+            $autoRecurring['start_date'] = $startDate->setTimezone('America/Sao_Paulo')->format('Y-m-d\TH:i:s.000P');
+        }
+
+        $payload = [
+            'reason'             => $plan['name'] . ' - Assinatura Mensal ApexPro',
+            'external_reference' => $externalRef,
+            'payer_email'        => $this->resolvePayerEmail($user),
+            'card_token_id'      => $cardToken,   // token do Brick (uso único)
+            'auto_recurring'     => $autoRecurring,
+            'back_url'           => $backUrl,
+            'status'             => 'authorized',  // checkout transparente, sem redirect
+            'notification_url'   => $appUrl . '/webhooks/mercadopago',
+        ];
+
+        $response = Http::withToken($this->accessToken)
+            ->acceptJson()
+            ->post('https://api.mercadopago.com/preapproval', $payload);
+
+        $json = $response->json();
+
+        Log::info('MP: createSubscriptionWithToken response', [
+            'status'            => $json['status'] ?? null,
+            'next_payment_date' => $json['next_payment_date'] ?? null,
+            'payment_method_id' => $json['payment_method_id'] ?? null,
+            'http_status'       => $response->status(),
+        ]);
+
+        if (!$response->successful()) {
+            $msg = $json['message'] ?? $json['error'] ?? 'Erro ao criar assinatura.';
             throw new \RuntimeException($msg);
         }
 
         return [
             'preapproval_id'    => (string) ($json['id'] ?? ''),
             'status'            => (string) ($json['status'] ?? 'pending'),
-            'init_point'        => (string) ($json['init_point'] ?? ''),
             'next_payment_date' => $json['next_payment_date'] ?? null,
+            'card_id'           => (string) ($json['card_id'] ?? ''),
             'raw_response'      => $json,
         ];
     }
