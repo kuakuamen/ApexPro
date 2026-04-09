@@ -107,19 +107,12 @@ class WebhookController extends Controller
 
         // Se é um pagamento diferente mas mesma external_reference (renovação recorrente),
         // cria nova transaction em vez de reutilizar a original
-        $isRenewal = $transaction->status === 'approved'
-            && $transaction->mp_payment_id !== null
+        $isRecurringAttempt = $transaction->status === 'approved'
+            && $transaction->payment_method === 'credit_card'
             && $transaction->mp_payment_id !== $mpPaymentId;
 
-        if ($isRenewal && $status === 'approved') {
-            $renewalTx = $transaction->replicate(['mp_payment_id', 'mp_raw_response', 'paid_at', 'refunded_at', 'pix_qr_code', 'pix_qr_code_base64', 'pix_expires_at']);
-            $renewalTx->mp_payment_id   = $mpPaymentId;
-            $renewalTx->mp_raw_response = $paymentInfo['raw'];
-            $renewalTx->status          = 'pending';
-            $renewalTx->paid_at         = null;
-            $renewalTx->save();
-            $this->handleApproved($renewalTx);
-            return response()->json(['ok' => true]);
+        if ($isRecurringAttempt) {
+            $transaction = $this->createRecurringAttemptTransaction($transaction, $mpPaymentId, $paymentInfo['raw'] ?? []);
         }
 
         if (!$transaction->mp_payment_id) {
@@ -136,10 +129,12 @@ class WebhookController extends Controller
                 $transaction->status = 'rejected';
                 $transaction->failure_reason = $paymentInfo['status_detail'] ?? 'rejected';
                 $transaction->save();
+                $this->blockSubscriptionAfterFailedRenewal($transaction);
                 break;
             case 'cancelled':
                 $transaction->status = 'cancelled';
                 $transaction->save();
+                $this->blockSubscriptionAfterFailedRenewal($transaction);
                 break;
             case 'refunded':
             case 'charged_back':
@@ -289,7 +284,7 @@ class WebhookController extends Controller
                 'payment_method'        => 'credit_card',
                 'status'                => 'approved',
                 'mp_preapproval_id'     => $preapprovalId,
-                'mp_external_reference' => 'preapproval-renewal-' . $preapprovalId . '-' . $yearMonth,
+                'mp_external_reference' => sprintf('renew-%d-%s', $subscription->id, $yearMonth),
                 'paid_at'               => $now,
                 'mp_status_detail'      => 'authorized',
             ]);
@@ -414,5 +409,53 @@ class WebhookController extends Controller
         }
 
         Log::info("MP Webhook: payment {$status}", ['transaction_id' => $transaction->id]);
+    }
+
+    protected function createRecurringAttemptTransaction(SubscriptionTransaction $baseTransaction, string $mpPaymentId, array $rawPayment): SubscriptionTransaction
+    {
+        $existingAttempt = SubscriptionTransaction::where('mp_payment_id', $mpPaymentId)->first();
+        if ($existingAttempt) {
+            return $existingAttempt;
+        }
+
+        $attempt = $baseTransaction->replicate([
+            'mp_payment_id',
+            'mp_raw_response',
+            'paid_at',
+            'refunded_at',
+            'pix_qr_code',
+            'pix_qr_code_base64',
+            'pix_expires_at',
+            'failure_reason',
+        ]);
+
+        $attempt->mp_payment_id = $mpPaymentId;
+        $attempt->mp_external_reference = sprintf('pay-%s', $mpPaymentId);
+        $attempt->mp_raw_response = $rawPayment;
+        $attempt->status = 'pending';
+        $attempt->paid_at = null;
+        $attempt->failure_reason = null;
+        $attempt->save();
+
+        return $attempt;
+    }
+
+    protected function blockSubscriptionAfterFailedRenewal(SubscriptionTransaction $transaction): void
+    {
+        $subscription = $transaction->subscription;
+        if (!$subscription || $transaction->payment_method !== 'credit_card') {
+            return;
+        }
+
+        $subscription->update([
+            'status' => 'suspended',
+        ]);
+
+        $user = $subscription->user;
+        if ($user) {
+            $user->update([
+                'is_active' => false,
+            ]);
+        }
     }
 }
