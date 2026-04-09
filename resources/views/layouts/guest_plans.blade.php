@@ -29,7 +29,6 @@
                     <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
                         <span class="font-bold text-white text-lg">A</span>
                     </div>
-                    <span class="text-xl font-bold text-text-primary tracking-tight">ApexPro</span>
                 </div>
                 <div>
                     @if(auth()->check())
