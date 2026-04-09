@@ -426,7 +426,6 @@ class SubscriptionController extends Controller
 
     protected function processMP(MercadoPagoService $mpService, User $user, array $plan, SubscriptionTransaction $transaction, string $paymentMethod, Request $request, bool $isTrial = false)
     {
-        // ── PIX ──────────────────────────────────────────────────────────────
         if ($paymentMethod === 'pix') {
             $result = $mpService->createPixPayment($user, $plan, $transaction->mp_external_reference);
 
@@ -441,83 +440,77 @@ class SubscriptionController extends Controller
             return redirect()->route('subscription.pix-waiting', ['ref' => $transaction->mp_external_reference]);
         }
 
-        // ── CARTÃO: assinatura recorrente via MP Subscriptions API ──────────────
         $cardToken = (string) $request->input('card_token');
-        $trialDays = 1; // TESTE: 1 dia. Em produção: 7
-
+        $trialDays = 1;
         $preRef = 'sub-' . $transaction->mp_external_reference;
 
         try {
             if ($isTrial) {
-                // Criar/reutilizar plano com free_trial nativo do MP
-                $mpPlanId  = $mpService->createOrGetPlan($plan, $trialDays);
+                $mpPlanId = $mpService->createOrGetPlan($plan, $trialDays);
                 $subResult = $mpService->createSubscriptionWithPlan($user, $mpPlanId, $cardToken, $preRef);
             } else {
-                // Renovação: assinatura sem trial
                 $subResult = $mpService->createSubscriptionWithToken($user, $plan, $cardToken, $preRef);
             }
         } catch (\Throwable $e) {
             throw new \RuntimeException('Erro ao criar assinatura: ' . $e->getMessage());
         }
 
-        // Atualizar transação com resultado
+        $authorized = ($subResult['status'] ?? null) === 'authorized';
+        $nextBilling = !empty($subResult['next_payment_date'])
+            ? Carbon::parse($subResult['next_payment_date'])
+            : ($isTrial ? Carbon::now()->addDays($trialDays) : Carbon::now()->addDays(30));
+
         $transaction->update([
-            'status'           => $subResult['status'] === 'authorized' ? 'approved' : 'pending',
-            'mp_status_detail' => $subResult['status'],
-            'mp_raw_response'  => $subResult['raw_response'],
-            'paid_at'          => $subResult['status'] === 'authorized' ? Carbon::now() : null,
+            'status'            => ($isTrial && $authorized) ? 'approved' : 'pending',
+            'mp_preapproval_id' => $subResult['preapproval_id'],
+            'mp_status_detail'  => $subResult['status'],
+            'mp_raw_response'   => $subResult['raw_response'],
+            'paid_at'           => ($isTrial && $authorized) ? Carbon::now() : null,
         ]);
 
-        if ($subResult['status'] === 'authorized') {
-            // Ativar acesso: trial (N dias grátis) ou normal (30 dias)
-            if ($isTrial) {
-                $this->activateSubscriptionUntil($transaction->fresh(), Carbon::now()->addDays($trialDays));
-            } else {
-                $this->activateSubscription($transaction->fresh());
-            }
-
-            // Marcar transação como gratuita no trial
-            if ($isTrial) {
-                $transaction->update(['amount' => 0, 'status' => 'approved', 'paid_at' => Carbon::now()]);
-            }
-
-            $user->refresh();
-            Auth::login($user->fresh());
-
-            // Salvar dados do preapproval na assinatura
-            $subscription = $transaction->fresh()->subscription;
-            if ($subscription) {
-                $nextBilling = !empty($subResult['next_payment_date'])
-                    ? Carbon::parse($subResult['next_payment_date'])
-                    : ($isTrial ? Carbon::now()->addDays($trialDays) : Carbon::now()->addDays(30));
-
-                $subscription->update([
-                    'mp_preapproval_id'     => $subResult['preapproval_id'],
-                    'mp_preapproval_status' => $subResult['status'],
-                    'mp_card_id'            => $subResult['card_id'] ?? null,
-                    'next_billing_at'       => $nextBilling,
-                ]);
-            }
-
-            Log::info('MP: assinatura criada com sucesso', [
-                'preapproval_id' => $subResult['preapproval_id'],
-                'status'         => $subResult['status'],
-                'is_trial'       => $isTrial,
-                'next_payment'   => $subResult['next_payment_date'] ?? null,
-                'user_id'        => $user->id,
+        $subscription = $transaction->fresh()->subscription;
+        if ($subscription) {
+            $subscription->update([
+                'mp_preapproval_id'     => $subResult['preapproval_id'],
+                'mp_preapproval_status' => $subResult['status'],
+                'mp_card_id'            => $subResult['card_id'] ?? null,
+                'next_billing_at'       => $nextBilling,
             ]);
-
-            $successMsg = $isTrial
-                ? "Seu período gratuito de {$trialDays} dia(s) está liberado! A cobrança do plano inicia automaticamente após o trial."
-                : 'Assinatura ativada! Bem-vindo ao ApexPro.';
-
-            return redirect()->route('personal.dashboard')->with('success', $successMsg);
         }
 
-        // Status pending: MP não autorizou imediatamente (raro com card_token_id)
-        Auth::login($user);
+        Log::info('MP: assinatura criada com sucesso', [
+            'preapproval_id' => $subResult['preapproval_id'],
+            'status'         => $subResult['status'],
+            'is_trial'       => $isTrial,
+            'next_payment'   => $subResult['next_payment_date'] ?? null,
+            'user_id'        => $user->id,
+        ]);
+
+        if ($authorized && $isTrial) {
+            $this->activateSubscriptionUntil($transaction->fresh(), Carbon::now()->addDays($trialDays));
+            $transaction->update([
+                'amount'  => 0,
+                'status'  => 'approved',
+                'paid_at' => Carbon::now(),
+            ]);
+
+            Auth::login($user->fresh());
+
+            return redirect()->route('personal.dashboard')->with(
+                'success',
+                "Seu periodo gratuito de {$trialDays} dia(s) esta liberado! A cobranca do plano inicia automaticamente apos o trial."
+            );
+        }
+
+        Auth::login($user->fresh());
+
         return redirect()->route('subscription.payment-result', ['ref' => $transaction->mp_external_reference])
-            ->with('info', 'Sua assinatura está sendo processada. Aguarde a confirmação.');
+            ->with(
+                'info',
+                $isTrial
+                    ? 'Sua assinatura esta sendo processada. Aguarde a confirmacao.'
+                    : 'Assinatura criada. O acesso sera liberado apos a confirmacao da primeira cobranca.'
+            );
     }
 
     protected function activateSubscription(SubscriptionTransaction $transaction): void
@@ -608,9 +601,10 @@ class SubscriptionController extends Controller
                 if (!empty($transaction->mp_preapproval_id)) {
                     $info = $mpService->getPreapproval($transaction->mp_preapproval_id);
                     $remoteStatus = match ($info['status'] ?? '') {
-                        'authorized' => 'approved',
-                        'pending'    => 'pending',
-                        default      => $info['status'] ?? null,
+                        'authorized', 'pending' => 'pending',
+                        'paused'                => 'rejected',
+                        'cancelled'             => 'cancelled',
+                        default                 => $info['status'] ?? null,
                     };
                 } elseif (!empty($transaction->mp_payment_id)) {
                     // PIX / pagamento avulso
@@ -660,9 +654,10 @@ class SubscriptionController extends Controller
                 if (!empty($transaction->mp_preapproval_id)) {
                     $info = $mpService->getPreapproval($transaction->mp_preapproval_id);
                     $remoteStatus = match ($info['status'] ?? '') {
-                        'authorized' => 'approved',
-                        'pending'    => 'pending',
-                        default      => $info['status'] ?? null,
+                        'authorized', 'pending' => 'pending',
+                        'paused'                => 'rejected',
+                        'cancelled'             => 'cancelled',
+                        default                 => $info['status'] ?? null,
                     };
                 } elseif (!empty($transaction->mp_payment_id)) {
                     $paymentInfo  = $mpService->getPaymentStatus((string) $transaction->mp_payment_id);

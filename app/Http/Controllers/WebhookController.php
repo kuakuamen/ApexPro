@@ -35,7 +35,7 @@ class WebhookController extends Controller
     }
 
     // -------------------------------------------------------------------------
-    // Pagamento avulso (PIX, cartão legado)
+    // Pagamento avulso (PIX, cartao legado)
     // -------------------------------------------------------------------------
 
     protected function handlePaymentWebhook(Request $request, MercadoPagoService $mpService)
@@ -57,7 +57,7 @@ class WebhookController extends Controller
         }
 
         if (!$transaction) {
-            // Fallback 2: buscar via API do MP (pode ter latência — race condition com o controller)
+            // Fallback 2: buscar via API do MP (pode ter latencia - race condition com o controller)
             // Aguarda 2s para o controller ter tempo de salvar o mp_payment_id
             sleep(2);
             $transaction = SubscriptionTransaction::where('mp_payment_id', $mpPaymentId)->first();
@@ -68,7 +68,7 @@ class WebhookController extends Controller
                 $paymentInfo = $mpService->getPaymentStatus($mpPaymentId);
                 $extRef = $paymentInfo['raw']['external_reference'] ?? null;
                 if ($extRef) {
-                    // MP recebe 'sub-{uuid}' mas salvamos só '{uuid}' no banco
+                    // MP recebe 'sub-{uuid}' mas salvamos so '{uuid}' no banco
                     $normalizedRef = preg_replace('/^sub-/', '', $extRef);
                     $transaction = SubscriptionTransaction::where('mp_external_reference', $normalizedRef)
                         ->orWhere('mp_external_reference', $extRef)
@@ -99,13 +99,13 @@ class WebhookController extends Controller
 
         $status = $paymentInfo['status'] ?? null;
 
-        // Idempotência: só ignora se for literalmente o mesmo payment_id já processado
+        // Idempotencia: so ignora se for literalmente o mesmo payment_id ja processado
         if ($transaction->status === 'approved' && $status === 'approved'
             && $transaction->mp_payment_id === $mpPaymentId) {
             return response()->json(['ok' => true]);
         }
 
-        // Se é um pagamento diferente mas mesma external_reference (renovação recorrente),
+        // Se e um pagamento diferente mas mesma external_reference (renovacao recorrente),
         // cria nova transaction em vez de reutilizar a original
         $isRecurringAttempt = $transaction->status === 'approved'
             && $transaction->payment_method === 'credit_card'
@@ -187,7 +187,7 @@ class WebhookController extends Controller
                 $tx = SubscriptionTransaction::where('mp_external_reference', $extRef)->first();
                 if ($tx) {
                     $subscription = $tx->subscription;
-                    // Guardar preapproval_id se ainda não tiver (race condition)
+                    // Guardar preapproval_id se ainda nao tiver (race condition)
                     if ($subscription && empty($subscription->mp_preapproval_id)) {
                         $subscription->update(['mp_preapproval_id' => $preapprovalId]);
                     }
@@ -202,8 +202,8 @@ class WebhookController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        // Idempotência: pula somente se não for 'authorized' (renovações sempre chegam como authorized→authorized)
-        // Para 'authorized', a deduplicação real fica dentro de handlePreapprovalAuthorized (transaction da última hora)
+        // Idempotencia: pula somente se nao for 'authorized' (renovacoes sempre chegam como authorized -> authorized)
+        // Para 'authorized', a deduplicacao real fica dentro de handlePreapprovalAuthorized.
         if ($subscription->mp_preapproval_status === $mpStatus && $mpStatus !== 'authorized') {
             return response()->json(['ok' => true]);
         }
@@ -224,7 +224,13 @@ class WebhookController extends Controller
                     'status'                => 'overdue',
                     'mp_preapproval_status' => 'paused',
                 ]);
-                Log::info('MP Webhook: preapproval paused → subscription overdue', [
+                $this->syncLatestPendingCardTransaction($subscription, [
+                    'mp_preapproval_id' => $preapprovalId,
+                    'mp_status_detail'  => 'paused',
+                    'status'            => 'rejected',
+                    'failure_reason'    => 'preapproval_paused',
+                ]);
+                Log::info('MP Webhook: preapproval paused -> subscription overdue', [
                     'subscription_id' => $subscription->id,
                 ]);
                 break;
@@ -235,8 +241,14 @@ class WebhookController extends Controller
                     'mp_preapproval_status' => 'cancelled',
                 ];
                 $subscription->update($updateData);
+                $this->syncLatestPendingCardTransaction($subscription, [
+                    'mp_preapproval_id' => $preapprovalId,
+                    'mp_status_detail'  => 'cancelled',
+                    'status'            => 'cancelled',
+                    'failure_reason'    => 'preapproval_cancelled',
+                ]);
 
-                // Desativar user apenas se o acesso já venceu
+                // Desativar user apenas se o acesso ja venceu
                 $user = $subscription->user;
                 if ($user && ($subscription->expires_at === null || $subscription->expires_at->isPast())) {
                     $user->update(['is_active' => false]);
@@ -254,106 +266,39 @@ class WebhookController extends Controller
 
     protected function handlePreapprovalAuthorized(ProfessionalSubscription $subscription, array $info, string $preapprovalId): void
     {
-        $now = Carbon::now();
         $nextBillingAt = !empty($info['next_payment_date'])
             ? Carbon::parse($info['next_payment_date'])
-            : $now->copy()->addDays(30);
+            : Carbon::now()->addDays(30);
 
-        // --- Renovação mensal automática (ativa, vencida em grace ou overdue) ---
-        if (in_array($subscription->status, ['active', 'overdue', 'pending'])) {
-            // Deduplicação: já existe transaction aprovada na última hora?
-            $recent = SubscriptionTransaction::where('subscription_id', $subscription->id)
-                ->where('status', 'approved')
-                ->where('paid_at', '>=', $now->copy()->subHour())
-                ->exists();
+        $subscription->update([
+            'mp_preapproval_id'     => $preapprovalId,
+            'mp_preapproval_status' => 'authorized',
+            'mp_card_id'            => $info['card_id'] ?? $subscription->mp_card_id,
+            'next_billing_at'       => $nextBillingAt,
+        ]);
 
-            if ($recent) {
-                Log::info('MP Webhook: preapproval renewal duplicata ignorada', [
-                    'subscription_id' => $subscription->id,
-                ]);
-                return;
-            }
+        $this->syncLatestPendingCardTransaction($subscription, [
+            'mp_preapproval_id' => $preapprovalId,
+            'mp_status_detail'  => 'authorized',
+        ]);
 
-            // Criar transaction de registro da cobrança mensal
-            $yearMonth = $now->format('Ym');
-            SubscriptionTransaction::create([
-                'subscription_id'       => $subscription->id,
-                'user_id'               => $subscription->user_id,
-                'plan_id'               => $subscription->plan_id,
-                'amount'                => $subscription->price,
-                'payment_method'        => 'credit_card',
-                'status'                => 'approved',
-                'mp_preapproval_id'     => $preapprovalId,
-                'mp_external_reference' => sprintf('renew-%d-%s', $subscription->id, $yearMonth),
-                'paid_at'               => $now,
-                'mp_status_detail'      => 'authorized',
-            ]);
+        Log::info('MP Webhook: preapproval authorized synchronized without activation', [
+            'subscription_id' => $subscription->id,
+            'preapproval_id'  => $preapprovalId,
+        ]);
+    }
 
-            $subscription->update([
-                'status'                => 'active',
-                'mp_preapproval_status' => 'authorized',
-                'expires_at'            => $now->copy()->addDays(30),
-                'last_paid_at'          => $now,
-                'next_billing_at'       => $nextBillingAt,
-            ]);
-
-            $user = $subscription->user;
-            if ($user) {
-                $user->update([
-                    'subscription_expires_at' => $subscription->expires_at,
-                    'is_active'               => true,
-                ]);
-            }
-
-            Log::info('MP Webhook: preapproval monthly renewal processed', [
-                'subscription_id' => $subscription->id,
-            ]);
-            return;
-        }
-
-        // --- Primeira ativação (subscription estava pending) ---
-        $transaction = SubscriptionTransaction::where('subscription_id', $subscription->id)
-            ->where('status', 'pending')
+    protected function syncLatestPendingCardTransaction(ProfessionalSubscription $subscription, array $attributes): void
+    {
+        $pendingTransaction = SubscriptionTransaction::where('subscription_id', $subscription->id)
             ->where('payment_method', 'credit_card')
+            ->where('status', 'pending')
             ->latest()
             ->first();
 
-        if ($transaction) {
-            $transaction->update([
-                'status'            => 'approved',
-                'paid_at'           => $now,
-                'mp_preapproval_id' => $preapprovalId,
-                'mp_status_detail'  => 'authorized',
-            ]);
-
-            // Usar SubscriptionController helper via instância
-            $controller = app(SubscriptionController::class);
-            $controller->activateSubscriptionPublic($transaction->fresh());
-        } else {
-            // Sem transaction pendente: ativar diretamente
-            $subscription->update([
-                'status'                => 'active',
-                'mp_preapproval_status' => 'authorized',
-                'starts_at'             => $now,
-                'expires_at'            => $now->copy()->addDays(30),
-                'last_paid_at'          => $now,
-                'next_billing_at'       => $nextBillingAt,
-            ]);
-
-            $user = $subscription->user;
-            if ($user) {
-                $user->update([
-                    'subscription_expires_at' => $subscription->expires_at,
-                    'is_active'               => true,
-                    'plan_name'               => $subscription->plan_name,
-                    'max_students'            => $subscription->max_students,
-                ]);
-            }
+        if ($pendingTransaction) {
+            $pendingTransaction->update($attributes);
         }
-
-        Log::info('MP Webhook: preapproval first activation processed', [
-            'subscription_id' => $subscription->id,
-        ]);
     }
 
     // -------------------------------------------------------------------------
