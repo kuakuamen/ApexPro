@@ -68,7 +68,11 @@ class WebhookController extends Controller
                 $paymentInfo = $mpService->getPaymentStatus($mpPaymentId);
                 $extRef = $paymentInfo['raw']['external_reference'] ?? null;
                 if ($extRef) {
-                    $transaction = SubscriptionTransaction::where('mp_external_reference', $extRef)->first();
+                    // MP recebe 'sub-{uuid}' mas salvamos só '{uuid}' no banco
+                    $normalizedRef = preg_replace('/^sub-/', '', $extRef);
+                    $transaction = SubscriptionTransaction::where('mp_external_reference', $normalizedRef)
+                        ->orWhere('mp_external_reference', $extRef)
+                        ->first();
                 }
             } catch (\Exception $e) {
                 Log::warning('MP Webhook: failed to get payment status for fallback', [
