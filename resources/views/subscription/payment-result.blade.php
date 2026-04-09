@@ -34,8 +34,8 @@
                 <svg class="w-8 h-8 text-yellow-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
             </div>
             <h1 class="text-2xl font-bold text-white mb-2">Processando Pagamento</h1>
-            <p class="text-sm text-zinc-400 mb-4">Seu pagamento esta em analise. Vamos atualizar automaticamente.</p>
-            <p class="text-xs text-zinc-500 mb-8">Se nao atualizar em ate 60s, recarregue a pagina.</p>
+            <p class="text-sm text-zinc-400 mb-4">A cobranca foi criada. O acesso sera liberado somente apos a confirmacao do pagamento.</p>
+            <p class="text-xs text-zinc-500 mb-8">Se o status nao atualizar em ate 60s, recarregue a pagina.</p>
             <a href="{{ route('plans.index') }}" class="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">Voltar aos planos</a>
 
             @else
