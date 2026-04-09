@@ -223,20 +223,23 @@
             <div style="min-width:140px;text-align:center;" class="d-none d-md-block">
                 @if($user->role === 'personal' && $sub)
                     @php
-                        $subClass = match($sub->status) {
-                            'active'    => 'sub-active',
-                            'pending'   => 'sub-pending',
-                            'suspended' => 'sub-suspended',
-                            'overdue'   => 'sub-overdue',
-                            default     => 'sub-cancelled',
+                        $subExpired = $sub->expires_at && $sub->expires_at->isPast();
+                        $subClass = match(true) {
+                            $subExpired && $sub->status === 'active' => 'sub-overdue',
+                            $sub->status === 'active'    => 'sub-active',
+                            $sub->status === 'pending'   => 'sub-pending',
+                            $sub->status === 'suspended' => 'sub-suspended',
+                            $sub->status === 'overdue'   => 'sub-overdue',
+                            default                      => 'sub-cancelled',
                         };
-                        $subLabel = match($sub->status) {
-                            'active'    => 'Ativa',
-                            'pending'   => 'Pendente',
-                            'suspended' => 'Suspensa',
-                            'overdue'   => 'Vencida',
-                            'cancelled' => 'Cancelada',
-                            default     => $sub->status,
+                        $subLabel = match(true) {
+                            $subExpired && $sub->status === 'active' => 'Vencida',
+                            $sub->status === 'active'    => 'Ativa',
+                            $sub->status === 'pending'   => 'Pendente',
+                            $sub->status === 'suspended' => 'Suspensa',
+                            $sub->status === 'overdue'   => 'Vencida',
+                            $sub->status === 'cancelled' => 'Cancelada',
+                            default                      => $sub->status,
                         };
                     @endphp
                     <span class="sub-badge {{ $subClass }}">
