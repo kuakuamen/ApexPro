@@ -354,7 +354,6 @@ class AdminController extends Controller
             'status'     => 'active',
             'starts_at'  => now(),
             'expires_at' => now()->addDays(30),
-            'grace_until' => now()->addDays(35),
         ]);
 
         $user->update([
@@ -413,14 +412,9 @@ class AdminController extends Controller
             ? $subscription->expires_at
             : now();
 
-        $baseGrace = ($subscription->grace_until && $subscription->grace_until->isFuture())
-            ? $subscription->grace_until
-            : $baseExpiry->copy()->addDays(5);
-
         $subscription->update([
-            'expires_at'  => $baseExpiry->addDays($days),
-            'grace_until' => $baseGrace->addDays($days),
-            'status'      => in_array($subscription->status, ['suspended', 'overdue']) ? 'active' : $subscription->status,
+            'expires_at' => $baseExpiry->addDays($days),
+            'status'     => in_array($subscription->status, ['suspended', 'overdue']) ? 'active' : $subscription->status,
         ]);
 
         return redirect()->back()->with('success', "Acesso estendido em {$days} dia(s) com sucesso!");

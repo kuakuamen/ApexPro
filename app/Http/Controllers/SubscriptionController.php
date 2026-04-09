@@ -535,14 +535,12 @@ class SubscriptionController extends Controller
         $subscription = $transaction->subscription;
         if (!$subscription) return;
 
-        $now       = Carbon::now();
-        $graceDays = (int) config('services.mercadopago.grace_period_days', 5);
+        $now = Carbon::now();
 
         $subscription->update([
             'status'              => 'active',
             'starts_at'           => $now,
             'expires_at'          => $until,
-            'grace_until'         => $until->copy()->addDays($graceDays),
             'last_payment_method' => $transaction->payment_method,
             'last_paid_at'        => $now,
             'next_billing_at'     => $until,
@@ -566,14 +564,12 @@ class SubscriptionController extends Controller
             return;
         }
 
-        $now       = Carbon::now();
-        $graceDays = (int) config('services.mercadopago.grace_period_days', 5);
+        $now = Carbon::now();
 
         $updateData = [
             'status'              => 'active',
             'starts_at'           => $now,
             'expires_at'          => $now->copy()->addDays($days),
-            'grace_until'         => $now->copy()->addDays($days + $graceDays),
             'last_payment_method' => $transaction->payment_method,
             'last_paid_at'        => $now,
             'next_billing_at'     => $subscription->next_billing_at ?? $now->copy()->addDays($days),

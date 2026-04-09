@@ -16,36 +16,23 @@ class CheckOverdueSubscriptions extends Command
     {
         $now = Carbon::now();
 
-        // Fase 1: active com expires_at vencido → overdue
-        $overdue = ProfessionalSubscription::where('status', 'active')
+        // active com expires_at vencido → suspended + bloqueia user imediatamente (sem grace period)
+        $expired = ProfessionalSubscription::whereIn('status', ['active', 'overdue'])
             ->whereNotNull('expires_at')
             ->where('expires_at', '<', $now)
             ->get();
 
-        foreach ($overdue as $sub) {
-            $sub->update(['status' => 'overdue']);
-            Log::info("Subscription #{$sub->id} (user #{$sub->user_id}) marked as overdue");
-        }
-
-        $this->info("Fase 1: {$overdue->count()} assinaturas marcadas como vencidas (overdue).");
-
-        // Fase 2: overdue com grace_until vencido → suspended + bloqueia user
-        $suspended = ProfessionalSubscription::where('status', 'overdue')
-            ->whereNotNull('grace_until')
-            ->where('grace_until', '<', $now)
-            ->get();
-
-        foreach ($suspended as $sub) {
+        foreach ($expired as $sub) {
             $sub->update(['status' => 'suspended']);
 
             $user = $sub->user;
             if ($user) {
                 $user->update(['is_active' => false]);
-                Log::info("User #{$user->id} suspended due to overdue subscription #{$sub->id}");
+                Log::info("User #{$user->id} blocked - subscription #{$sub->id} expired at {$sub->expires_at}");
             }
         }
 
-        $this->info("Fase 2: {$suspended->count()} assinaturas suspensas (grace period expirado).");
+        $this->info("{$expired->count()} assinaturas expiradas → acesso bloqueado.");
 
         return self::SUCCESS;
     }

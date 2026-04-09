@@ -294,13 +294,10 @@ class WebhookController extends Controller
                 'mp_status_detail'      => 'authorized',
             ]);
 
-            $graceDays = (int) config('services.mercadopago.grace_period_days', 5);
-
             $subscription->update([
                 'status'                => 'active',
                 'mp_preapproval_status' => 'authorized',
                 'expires_at'            => $now->copy()->addDays(30),
-                'grace_until'           => $now->copy()->addDays(30 + $graceDays),
                 'last_paid_at'          => $now,
                 'next_billing_at'       => $nextBillingAt,
             ]);
@@ -339,13 +336,11 @@ class WebhookController extends Controller
             $controller->activateSubscriptionPublic($transaction->fresh());
         } else {
             // Sem transaction pendente: ativar diretamente
-            $graceDays = (int) config('services.mercadopago.grace_period_days', 5);
             $subscription->update([
                 'status'                => 'active',
                 'mp_preapproval_status' => 'authorized',
                 'starts_at'             => $now,
                 'expires_at'            => $now->copy()->addDays(30),
-                'grace_until'           => $now->copy()->addDays(30 + $graceDays),
                 'last_paid_at'          => $now,
                 'next_billing_at'       => $nextBillingAt,
             ]);
@@ -378,14 +373,12 @@ class WebhookController extends Controller
 
         $subscription = $transaction->subscription;
         if ($subscription) {
-            $now       = Carbon::now();
-            $graceDays = config('services.mercadopago.grace_period_days', 5);
+            $now = Carbon::now();
 
             $subscription->update([
                 'status'              => 'active',
                 'starts_at'           => $now,
                 'expires_at'          => $now->copy()->addDays(30),
-                'grace_until'         => $now->copy()->addDays(30 + $graceDays),
                 'last_payment_method' => $transaction->payment_method,
                 'last_paid_at'        => $now,
             ]);

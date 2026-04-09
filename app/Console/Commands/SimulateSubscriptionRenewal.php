@@ -35,10 +35,8 @@ class SimulateSubscriptionRenewal extends Command
                 ['user', $user->name . ' (' . $user->email . ')'],
                 ['status', $subscription->status],
                 ['expires_at', $subscription->expires_at?->format('d/m/Y H:i:s') ?? 'NULL'],
-                ['grace_until', $subscription->grace_until?->format('d/m/Y H:i:s') ?? 'NULL'],
                 ['is_active (user)', $user->is_active ? 'true' : 'false'],
                 ['isActive()', $subscription->isActive() ? 'SIM' : 'NÃO'],
-                ['isInGrace()', $subscription->isInGrace() ? 'SIM' : 'NÃO'],
                 ['isExpired()', $subscription->isExpired() ? 'SIM' : 'NÃO'],
             ]
         );
@@ -46,7 +44,7 @@ class SimulateSubscriptionRenewal extends Command
         if ($subscription->status !== 'active') {
             $this->warn("AVISO: status = '{$subscription->status}'. O webhook de renovação exige status = 'active'.");
             $this->warn("Para simular corretamente, use o SQL abaixo para forçar expiração ANTES de rodar este comando:");
-            $this->line("UPDATE professional_subscriptions SET status='active', expires_at=NOW()-INTERVAL 2 DAY, grace_until=NOW()-INTERVAL 1 DAY WHERE user_id={$user->id};");
+            $this->line("UPDATE professional_subscriptions SET status='active', expires_at=NOW()-INTERVAL 2 DAY WHERE user_id={$user->id};");
             $this->line("UPDATE users SET subscription_expires_at=NOW()-INTERVAL 2 DAY WHERE id={$user->id};");
             $this->line('');
 
@@ -59,9 +57,7 @@ class SimulateSubscriptionRenewal extends Command
         $this->info('Simulando renovação automática via preapproval...');
 
         $now = Carbon::now();
-        $graceDays = (int) config('services.mercadopago.grace_period_days', 5);
         $preapprovalId = $subscription->mp_preapproval_id ?? 'simulated-test';
-        $yearMonth = $now->format('Ym');
 
         // Deduplicação: já existe transaction aprovada na última hora?
         $recent = SubscriptionTransaction::where('subscription_id', $subscription->id)
@@ -95,7 +91,6 @@ class SimulateSubscriptionRenewal extends Command
             'status'                => 'active',
             'mp_preapproval_status' => 'authorized',
             'expires_at'            => $now->copy()->addDays(30),
-            'grace_until'           => $now->copy()->addDays(30 + $graceDays),
             'last_paid_at'          => $now,
             'next_billing_at'       => $now->copy()->addDays(30),
         ]);
@@ -117,7 +112,6 @@ class SimulateSubscriptionRenewal extends Command
                 ['user', $user->name . ' (' . $user->email . ')'],
                 ['status', $subscription->status],
                 ['expires_at', $subscription->expires_at?->format('d/m/Y H:i:s') ?? 'NULL'],
-                ['grace_until', $subscription->grace_until?->format('d/m/Y H:i:s') ?? 'NULL'],
                 ['is_active (user)', $user->is_active ? 'true' : 'false'],
                 ['isActive()', $subscription->isActive() ? 'SIM ✓' : 'NÃO'],
                 ['transaction_id criada', (string) $tx->id],

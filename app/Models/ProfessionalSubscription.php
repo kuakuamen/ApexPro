@@ -55,21 +55,9 @@ class ProfessionalSubscription extends Model
         return $this->status === 'active' && $this->expires_at && $this->expires_at->isFuture();
     }
 
-    public function isInGrace(): bool
-    {
-        if (!in_array($this->status, ['active', 'overdue'])) {
-            return false;
-        }
-
-        return $this->expires_at
-            && $this->expires_at->isPast()
-            && $this->grace_until
-            && $this->grace_until->isFuture();
-    }
-
     public function isExpired(): bool
     {
-        if ($this->isActive() || $this->isInGrace()) {
+        if ($this->isActive()) {
             return false;
         }
 
