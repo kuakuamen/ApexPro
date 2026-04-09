@@ -52,7 +52,7 @@ return [
         'test_public_key'   => env('MP_TEST_PUBLIC_KEY'),
         'mode'              => env('MP_MODE', 'live'),
         'webhook_secret'    => env('MP_WEBHOOK_SECRET'),
-        'grace_period_days' => 5,
+        'grace_period_days' => env('MP_GRACE_PERIOD_DAYS', 5),
         'back_url'          => env('MP_BACK_URL'),
     ],
 

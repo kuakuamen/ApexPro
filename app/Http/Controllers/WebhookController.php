@@ -99,8 +99,26 @@ class WebhookController extends Controller
 
         $status = $paymentInfo['status'] ?? null;
 
-        // Idempotência
-        if ($transaction->status === 'approved' && $status === 'approved') {
+        // Idempotência: só ignora se for literalmente o mesmo payment_id já processado
+        if ($transaction->status === 'approved' && $status === 'approved'
+            && $transaction->mp_payment_id === $mpPaymentId) {
+            return response()->json(['ok' => true]);
+        }
+
+        // Se é um pagamento diferente mas mesma external_reference (renovação recorrente),
+        // cria nova transaction em vez de reutilizar a original
+        $isRenewal = $transaction->status === 'approved'
+            && $transaction->mp_payment_id !== null
+            && $transaction->mp_payment_id !== $mpPaymentId;
+
+        if ($isRenewal && $status === 'approved') {
+            $renewalTx = $transaction->replicate(['mp_payment_id', 'mp_raw_response', 'paid_at', 'refunded_at', 'pix_qr_code', 'pix_qr_code_base64', 'pix_expires_at']);
+            $renewalTx->mp_payment_id   = $mpPaymentId;
+            $renewalTx->mp_raw_response = $paymentInfo['raw'];
+            $renewalTx->status          = 'pending';
+            $renewalTx->paid_at         = null;
+            $renewalTx->save();
+            $this->handleApproved($renewalTx);
             return response()->json(['ok' => true]);
         }
 
@@ -189,7 +207,8 @@ class WebhookController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        // Idempotência: pula apenas se não for 'authorized' (renovações sempre precisam ser processadas)
+        // Idempotência: pula somente se não for 'authorized' (renovações sempre chegam como authorized→authorized)
+        // Para 'authorized', a deduplicação real fica dentro de handlePreapprovalAuthorized (transaction da última hora)
         if ($subscription->mp_preapproval_status === $mpStatus && $mpStatus !== 'authorized') {
             return response()->json(['ok' => true]);
         }
