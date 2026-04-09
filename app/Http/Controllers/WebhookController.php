@@ -102,6 +102,7 @@ class WebhookController extends Controller
         // Idempotencia: so ignora se for literalmente o mesmo payment_id ja processado
         if ($transaction->status === 'approved' && $status === 'approved'
             && $transaction->mp_payment_id === $mpPaymentId) {
+            $this->syncTransactionWithPaymentPayload($transaction, $paymentInfo, $mpPaymentId);
             return response()->json(['ok' => true]);
         }
 
@@ -119,7 +120,7 @@ class WebhookController extends Controller
             $transaction->mp_payment_id = $mpPaymentId;
         }
 
-        $transaction->mp_raw_response = $paymentInfo['raw'];
+        $this->syncTransactionWithPaymentPayload($transaction, $paymentInfo, $mpPaymentId);
 
         switch ($status) {
             case 'approved':
@@ -127,12 +128,15 @@ class WebhookController extends Controller
                 break;
             case 'rejected':
                 $transaction->status = 'rejected';
+                $transaction->mp_status_detail = $paymentInfo['status_detail'] ?? $status;
                 $transaction->failure_reason = $paymentInfo['status_detail'] ?? 'rejected';
                 $transaction->save();
                 $this->blockSubscriptionAfterFailedRenewal($transaction);
                 break;
             case 'cancelled':
                 $transaction->status = 'cancelled';
+                $transaction->mp_status_detail = $paymentInfo['status_detail'] ?? $status;
+                $transaction->failure_reason = $paymentInfo['status_detail'] ?? 'cancelled';
                 $transaction->save();
                 $this->blockSubscriptionAfterFailedRenewal($transaction);
                 break;
@@ -143,9 +147,11 @@ class WebhookController extends Controller
             case 'in_process':
             case 'pending':
                 $transaction->status = 'pending';
+                $transaction->mp_status_detail = $paymentInfo['status_detail'] ?? $status;
                 $transaction->save();
                 break;
             default:
+                $transaction->mp_status_detail = $paymentInfo['status_detail'] ?? $status;
                 $transaction->save();
                 break;
         }
@@ -334,12 +340,18 @@ class WebhookController extends Controller
             }
         }
 
-        Log::info('MP Webhook: payment approved', ['transaction_id' => $transaction->id]);
+        Log::info('MP Webhook: payment approved', [
+            'transaction_id' => $transaction->id,
+            'payment_id'     => $transaction->mp_payment_id,
+            'amount'         => $transaction->amount,
+            'status_detail'  => $transaction->mp_status_detail,
+        ]);
     }
 
     protected function handleRefund(SubscriptionTransaction $transaction, string $status): void
     {
         $transaction->status = $status;
+        $transaction->mp_status_detail = $transaction->mp_status_detail ?: $status;
         $transaction->refunded_at = Carbon::now();
         $transaction->save();
 
@@ -353,7 +365,12 @@ class WebhookController extends Controller
             }
         }
 
-        Log::info("MP Webhook: payment {$status}", ['transaction_id' => $transaction->id]);
+        Log::info("MP Webhook: payment {$status}", [
+            'transaction_id' => $transaction->id,
+            'payment_id'     => $transaction->mp_payment_id,
+            'amount'         => $transaction->amount,
+            'status_detail'  => $transaction->mp_status_detail,
+        ]);
     }
 
     protected function createRecurringAttemptTransaction(SubscriptionTransaction $baseTransaction, string $mpPaymentId, array $rawPayment): SubscriptionTransaction
@@ -383,6 +400,31 @@ class WebhookController extends Controller
         $attempt->save();
 
         return $attempt;
+    }
+
+    protected function syncTransactionWithPaymentPayload(SubscriptionTransaction $transaction, array $paymentInfo, ?string $mpPaymentId = null): void
+    {
+        $rawPayment = $paymentInfo['raw'] ?? [];
+        $amount = data_get($rawPayment, 'transaction_amount');
+        $statusDetail = $paymentInfo['status_detail']
+            ?? data_get($rawPayment, 'status_detail')
+            ?? ($paymentInfo['status'] ?? null);
+
+        if ($mpPaymentId && !$transaction->mp_payment_id) {
+            $transaction->mp_payment_id = $mpPaymentId;
+        }
+
+        $transaction->mp_raw_response = $rawPayment;
+
+        if ($amount !== null) {
+            $transaction->amount = (float) $amount;
+        }
+
+        if ($statusDetail) {
+            $transaction->mp_status_detail = $statusDetail;
+        }
+
+        $transaction->save();
     }
 
     protected function blockSubscriptionAfterFailedRenewal(SubscriptionTransaction $transaction): void
