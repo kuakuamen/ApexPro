@@ -178,7 +178,7 @@
 
                 {{-- Ativar manualmente --}}
                 @if(!$sub->isActive())
-                    <form method="POST" action="{{ route('admin.personals.activate-subscription', $user->id) }}">
+                    <form method="POST" action="{{ route('admin.users.subscription.activate', $user->id) }}">
                         @csrf
                         @method('PATCH')
                         <button type="submit" class="btn-action btn-toggle-off" onclick="return confirm('Ativar assinatura por 30 dias?')">
@@ -188,7 +188,7 @@
                 @endif
 
                 {{-- Estender assinatura --}}
-                <form method="POST" action="{{ route('admin.personals.extend-subscription', $user->id) }}" class="d-flex align-items-center gap-3 mt-3 flex-wrap">
+                <form method="POST" action="{{ route('admin.users.subscription.extend', $user->id) }}" class="d-flex align-items-center gap-3 mt-3 flex-wrap">
                     @csrf
                     @method('PATCH')
                     <input type="number" name="days" class="extend-input" placeholder="Dias" min="1" max="365" required>
