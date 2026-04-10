@@ -76,7 +76,7 @@
         </div>
         
         <!-- Sidebar (Desktop: Fixa / Mobile: Off-canvas) -->
-         <aside :class="sidebarOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'"
+         <aside x-cloak :class="sidebarOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'"
              @keydown.escape.window="sidebarOpen = false"
              class="fixed inset-y-0 left-0 z-50 w-64 bg-[#0b1220]/95 backdrop-blur-sm text-stone-100 transition-transform duration-500 ease-in-out flex flex-col shadow-2xl border-r"
              style="border-right-color: rgba(51, 65, 85, 0.65);">
