@@ -85,50 +85,49 @@
 
     <!-- Side-by-Side Modal Template -->
     <template x-teleport="body">
-        <div x-data="{ open: false, leftImage: null, rightImage: null, view: 'front' }"
+        <div x-data="{
+                 open: false, leftImage: null, rightImage: null, view: 'front',
+                 switchView(v) {
+                     this.view = v;
+                     window.dispatchEvent(new CustomEvent('sbs-view-change', { detail: { view: v } }));
+                 }
+             }"
              @open-sbs-modal.window="open = true; leftImage = $event.detail.leftImage; rightImage = $event.detail.rightImage; view = $event.detail.view"
-             x-on:switch-sbs-view.window="view = $event.detail; $dispatch('update-sbs-images', view)"
-             x-show="open" 
+             @update-sbs-images.window="leftImage = $event.detail.leftImage; rightImage = $event.detail.rightImage; view = $event.detail.view"
+             x-show="open"
              style="display: none;"
              class="fixed inset-0 z-[99999] overflow-hidden"
-             aria-labelledby="modal-title" 
-             role="dialog" 
+             aria-labelledby="modal-title"
+             role="dialog"
              aria-modal="true">
-            
-            <!-- Overlay Backdrop -->
-            <div x-show="open" 
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-gray-950/90 backdrop-blur-md transition-opacity" 
-                 aria-hidden="true"></div>
+
+            <!-- Overlay -->
+            <div class="fixed inset-0 bg-black/95 backdrop-blur-sm" aria-hidden="true"></div>
 
             <!-- Fullscreen Container -->
             <div class="fixed inset-0 flex flex-col w-full h-full z-[100000]">
-                
-                <!-- Toolbar -->
-                <div class="bg-gray-900 px-4 py-3 flex justify-between items-center border-b border-gray-700 shadow-xl z-50 shrink-0">
-                    <h3 class="text-lg leading-6 font-bold text-white tracking-wide" id="modal-title">
-                        Comparação Lado a Lado
-                    </h3>
-                    <div class="flex items-center space-x-4">
-                        <!-- View Switcher -->
-                        <div class="flex bg-gray-800 rounded-lg p-1 border border-gray-700">
-                            <button @click="$dispatch('switch-sbs-view', 'front')" :class="{'bg-indigo-600 text-white shadow': view === 'front', 'text-gray-400 hover:text-white hover:bg-gray-700': view !== 'front'}" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">Frontal</button>
-                            <button @click="$dispatch('switch-sbs-view', 'side_right')" :class="{'bg-indigo-600 text-white shadow': view === 'side_right', 'text-gray-400 hover:text-white hover:bg-gray-700': view !== 'side_right'}" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">Lado D</button>
-                            <button @click="$dispatch('switch-sbs-view', 'side_left')" :class="{'bg-indigo-600 text-white shadow': view === 'side_left', 'text-gray-400 hover:text-white hover:bg-gray-700': view !== 'side_left'}" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">Lado E</button>
-                            <button @click="$dispatch('switch-sbs-view', 'back')" :class="{'bg-indigo-600 text-white shadow': view === 'back', 'text-gray-400 hover:text-white hover:bg-gray-700': view !== 'back'}" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">Costas</button>
-                        </div>
-                        
-                        <!-- Close Button -->
-                        <button @click="open = false" class="bg-gray-800 hover:bg-red-600 text-gray-400 hover:text-white p-2 rounded-full transition-colors border border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+
+                <!-- Toolbar mobile-first -->
+                <div style="background:#0d0f1a;border-bottom:1px solid rgba(255,255,255,0.08);padding:12px 16px;flex-shrink:0;">
+                    <!-- Row 1: título + fechar -->
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-white font-extrabold text-sm">Comparação Lado a Lado</h3>
+                        <button @click="open = false"
+                                style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);color:#f87171;">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </button>
+                    </div>
+                    <!-- Row 2: switcher de vista (full width) -->
+                    <div style="display:flex;gap:6px;">
+                        @foreach([['front','Frontal'],['side_right','Lado D'],['side_left','Lado E'],['back','Costas']] as [$val,$lbl])
+                        <button @click="switchView('{{ $val }}')"
+                                :style="view === '{{ $val }}' ? 'background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-color:#6366f1;' : 'background:rgba(255,255,255,0.05);color:#64748b;border-color:rgba(255,255,255,0.1);'"
+                                style="flex:1;padding:8px 4px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid;transition:all 0.2s;">
+                            {{ $lbl }}
+                        </button>
+                        @endforeach
                     </div>
                 </div>
 
@@ -168,7 +167,8 @@
         </div>
     </template>
     
-<div class="space-y-8" x-data="evolutionData()">
+<div class="space-y-8" x-data="evolutionData()"
+     @sbs-view-change.window="sbsView = $event.detail.view; updateSbsImages(); window.dispatchEvent(new CustomEvent('update-sbs-images', { detail: { leftImage: sbsLeftImage, rightImage: sbsRightImage, view: sbsView } }))">
     <!-- Header -->
     <div class="flex justify-between items-center">
         <h1 class="text-3xl font-bold text-white">Sua Evolução</h1>
