@@ -829,11 +829,18 @@
                     this.sbsView = view;
                     this.updateSbsImages();
                     this.sbsOpen = true;
+                    // Dispara evento para o modal teleportado no body
+                    window.dispatchEvent(new CustomEvent('open-sbs-modal', {
+                        detail: {
+                            leftImage: this.sbsLeftImage,
+                            rightImage: this.sbsRightImage,
+                            view: view
+                        }
+                    }));
                 },
 
                 updateSbsImages() {
                     if (!this.leftMeasurement || !this.rightMeasurement) return;
-                    
                     this.sbsLeftImage = this.getPhotoUrl(this.leftMeasurement.id, this.sbsView);
                     this.sbsRightImage = this.getPhotoUrl(this.rightMeasurement.id, this.sbsView);
                 }
