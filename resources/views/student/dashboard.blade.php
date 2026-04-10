@@ -30,7 +30,6 @@
 
 <style>
     .dash-bg {
-        min-height: 100vh;
         background: #0d0f1a;
     }
     /* Hero card gradiente */
