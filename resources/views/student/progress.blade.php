@@ -62,7 +62,7 @@
     {{-- Bar chart semanal --}}
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:18px;">
         <p class="sec-title">Treinos por Semana</p>
-        @php $maxVal = max(array_column($weeklyStats, 'count'), 1); @endphp
+        @php $counts = array_column($weeklyStats, 'count'); $maxVal = max(max($counts) ?: 1, 1); @endphp
         <div class="bar-wrap">
             @foreach($weeklyStats as $wk)
             @php
