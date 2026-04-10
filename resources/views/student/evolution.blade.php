@@ -2,6 +2,86 @@
 
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    /* ── Tema dark navy para Evolução ─────────────────────── */
+    .space-y-8 { background: #0d0f1a; }
+
+    /* Cards */
+    .bg-gray-800\/50,
+    .bg-gray-800\/50.backdrop-blur-sm {
+        background: rgba(255,255,255,0.04) !important;
+        backdrop-filter: blur(8px) !important;
+    }
+    .border-gray-700 { border-color: rgba(255,255,255,0.08) !important; }
+    .border-gray-600 { border-color: rgba(255,255,255,0.1) !important; }
+    .hover\:border-gray-600:hover { border-color: rgba(99,102,241,0.35) !important; }
+
+    /* Texto */
+    .text-gray-400 { color: #64748b !important; }
+    .text-gray-300 { color: #94a3b8 !important; }
+
+    /* Header */
+    .space-y-8 h1 { font-size: 22px !important; font-weight: 900 !important; }
+    .space-y-8 a[href*="dashboard"] {
+        font-size: 13px; font-weight: 700; color: #6366f1 !important;
+        background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25);
+        padding: 7px 14px; border-radius: 10px; text-decoration: none !important;
+    }
+
+    /* Tabs */
+    .border-b.border-gray-700 { border-color: rgba(255,255,255,0.07) !important; }
+    button[class*="border-b-2"] {
+        font-size: 13px !important; font-weight: 700 !important;
+        padding: 12px 4px !important;
+    }
+    button.border-gray-400 {
+        border-color: #6366f1 !important;
+        color: #fff !important;
+    }
+    button.border-transparent { color: #475569 !important; }
+
+    /* Tabela */
+    thead.bg-gray-700\/50 { background: rgba(255,255,255,0.03) !important; }
+    .divide-y.divide-gray-700 > * { border-color: rgba(255,255,255,0.05) !important; }
+    tr.hover\:bg-gray-700\/30:hover { background: rgba(99,102,241,0.06) !important; }
+
+    /* Selects */
+    select.bg-gray-700 {
+        background: rgba(255,255,255,0.05) !important;
+        border-color: rgba(255,255,255,0.1) !important;
+        color: #e2e8f0 !important; border-radius: 10px !important;
+    }
+
+    /* Fotos sem conteúdo */
+    .bg-gray-600 { background: rgba(255,255,255,0.05) !important; }
+    .bg-gray-700\/50 { background: rgba(255,255,255,0.03) !important; }
+
+    /* Botão lado a lado */
+    .bg-indigo-600 { background: linear-gradient(135deg,#6366f1,#8b5cf6) !important; }
+    .bg-indigo-600:hover { opacity: 0.9 !important; }
+
+    /* Badge view switcher */
+    .bg-gray-800 { background: rgba(255,255,255,0.05) !important; }
+    .bg-gray-700 { background: rgba(255,255,255,0.08) !important; }
+    .bg-gray-900 { background: #0d0f1a !important; }
+
+    /* Empty state */
+    .text-gray-600 { color: #334155 !important; }
+
+    /* Cards resumo — destaque com borda roxa */
+    .grid.grid-cols-1.md\:grid-cols-3 > div {
+        border-radius: 16px !important;
+    }
+    .grid.grid-cols-1.md\:grid-cols-3 > div:first-child { border-color: rgba(99,102,241,0.3) !important; }
+    .grid.grid-cols-1.md\:grid-cols-3 > div:nth-child(2) { border-color: rgba(236,72,153,0.3) !important; }
+    .grid.grid-cols-1.md\:grid-cols-3 > div:nth-child(3) { border-color: rgba(52,211,153,0.3) !important; }
+
+    /* Título dos gráficos */
+    h3.text-lg { font-weight: 800 !important; font-size: 15px !important; }
+
+    /* Rounded em todos os cards */
+    .rounded-xl { border-radius: 16px !important; }
+</style>
 
     <!-- Side-by-Side Modal Template -->
     <template x-teleport="body">
@@ -835,17 +915,21 @@
                 {
                     label: 'Peso Total (kg)',
                     data: @json($weights),
-                    borderColor: 'rgb(148, 163, 184)', // Slate 400
-                    backgroundColor: 'rgba(148, 163, 184, 0.1)',
-                    tension: 0.3,
+                    borderColor: 'rgb(99,102,241)',
+                    backgroundColor: 'rgba(99,102,241,0.12)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgb(99,102,241)',
+                    tension: 0.4,
                     fill: true
                 },
                 {
                     label: 'Massa Muscular (kg)',
                     data: @json($muscleMasses),
-                    borderColor: 'rgb(100, 116, 139)', // Slate 600
-                    backgroundColor: 'rgba(100, 116, 139, 0.1)',
-                    tension: 0.3,
+                    borderColor: 'rgb(52,211,153)',
+                    backgroundColor: 'rgba(52,211,153,0.08)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgb(52,211,153)',
+                    tension: 0.4,
                     fill: true
                 }
             ]
@@ -894,9 +978,11 @@
                 {
                     label: '% Gordura Corporal',
                     data: @json($bodyFats),
-                    borderColor: 'rgb(200, 30, 30)', // Red 700
-                    backgroundColor: 'rgba(200, 30, 30, 0.1)',
-                    tension: 0.3,
+                    borderColor: 'rgb(236,72,153)',
+                    backgroundColor: 'rgba(236,72,153,0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgb(236,72,153)',
+                    tension: 0.4,
                     fill: true
                 }
             ]
