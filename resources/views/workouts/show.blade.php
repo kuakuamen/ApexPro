@@ -1,295 +1,329 @@
 @extends('layouts.app')
 
 @section('content')
-<script src="//unpkg.com/alpinejs" defer></script>
+<style>
+    .show-bg { min-height: 100vh; background: #0d0f1a; }
 
-<div class="bg-zinc-900/55 backdrop-blur-sm border border-teal-900/30 rounded-xl shadow-lg overflow-hidden">
-    <div class="px-4 py-5 sm:px-6 flex flex-col sm:flex-row justify-between items-center border-b border-teal-900/40">
-        <div>
-            <h3 class="text-lg leading-6 font-bold text-stone-100">
-                {{ $workout->name }}
-            </h3>
-            <p class="mt-1 max-w-2xl text-sm text-stone-300">
-                Objetivo: {{ $workout->goal ?? 'Não definido' }}
-            </p>
-        </div>
-        <div class="mt-4 sm:mt-0 flex flex-col items-end">
-            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $workout->is_active ? 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/50' : 'bg-red-400/20 text-red-300 border border-red-400/50' }}">
-                {{ $workout->is_active ? 'Ativo' : 'Inativo' }}
-            </span>
-            
-            @if(auth()->user()->role === 'aluno')
-                <!-- Barra de Progresso Geral (Apenas Aluno) -->
-            <div class="mt-3 sm:w-80" x-data="progressTracker({{ $workout->days->sum(fn($day) => $day->exercises->count()) }}, {{ count($todayLogs ?? []) }}, {{ $workout->id }})">
-                <!-- Header: Título + Porcentagem -->
-                <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <h4 class="text-sm font-bold text-stone-100">Progresso da Semana</h4>
-                        <p class="text-xs text-stone-300 mt-1">
-                            <span x-text="current + ' de ' + total"></span> exercícios completados
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-4xl font-bold text-teal-300" x-text="Math.round((current / total) * 100) + '%'\"></div>
-                        <p class="text-xs text-stone-300">Completo</p>
-                    </div>
-                </div>
-                
-                <!-- Barra de Progresso Melhorada -->
-                <div class="mb-4">
-                    <div class="w-full bg-zinc-800/70 rounded-full h-4 overflow-hidden border border-teal-900/40">
-                        <div class="bg-gradient-to-r from-teal-700 via-teal-600 to-cyan-700 h-4 rounded-full transition-all duration-500 shadow-lg shadow-teal-700/40" 
-                             :style="'width: ' + ((current / total) * 100) + '%'"></div>
-                    </div>
-                </div>
+    /* Header */
+    .back-btn {
+        width: 38px; height: 38px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+        color: #94a3b8; text-decoration: none; transition: all 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
-                <!-- Grid de Informações Adicionais -->
-                <div class="grid grid-cols-3 gap-2 mb-4">
-                    <!-- Exercícios Restantes -->
-                    <div class="bg-zinc-800/50 border border-teal-900/30 rounded-lg p-3 text-center">
-                        <p class="text-xs text-stone-300 uppercase font-semibold">Restantes</p>
-                        <p class="text-lg font-bold text-teal-300" x-text="total - current"></p>
-                    </div>
-                    
-                    <!-- Dias da Semana -->
-                    <div class="bg-zinc-800/50 border border-teal-900/30 rounded-lg p-3 text-center">
-                        <p class="text-xs text-stone-300 uppercase font-semibold">Dias</p>
-                        <p class="text-lg font-bold text-teal-300" x-text="daysLeftInWeek"></p>
-                    </div>
-                    
-                    <!-- Meta Diária -->
-                    <div class="bg-zinc-800/50 border border-teal-900/30 rounded-lg p-3 text-center">
-                        <p class="text-xs text-stone-300 uppercase font-semibold">Meta/Dia</p>
-                        <p class="text-lg font-bold text-teal-300" x-text="Math.ceil(total / 7)"></p>
-                    </div>
-                </div>
+    /* Day section */
+    .day-header {
+        width: 100%; display: flex; align-items: center; justify-content: space-between;
+        background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px; padding: 14px 16px;
+        cursor: pointer; transition: all 0.2s;
+    }
+    .day-header:hover { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.3); }
+    .day-header.open { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.4); border-radius: 16px 16px 0 0; }
 
-                <!-- Informações Recentes -->
-                <div class="flex gap-2 mb-4 bg-zinc-800/40 rounded-lg p-3 border border-teal-900/30">
-                    <div class="flex-1">
-                        <p class="text-xs text-stone-300 uppercase font-semibold mb-1">Último Reset</p>
-                        <p class="text-xs text-teal-300 font-mono" x-text="lastResetDay"></p>
-                    </div>
-                    <div class="flex-1 text-right">
-                        <p class="text-xs text-stone-300 uppercase font-semibold mb-1">Streak</p>
-                        <p class="text-xs text-teal-300 font-mono" x-text="streakDays + ' dias'"></p>
-                    </div>
-                </div>
-                
-                <!-- Botões de Ação -->
-                <div class="flex gap-2">
-                    <button @click="resetProgress()" 
-                            class="flex-1 px-3 py-2 text-xs font-semibold rounded-lg text-red-300 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 transition-colors">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                        Zerar
-                    </button>
-                    <div class="flex-1 px-3 py-2 text-xs font-semibold rounded-lg text-teal-300 bg-teal-700/20 border border-teal-600/40 flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span x-text="completedToday + ' hoje'"></span>
-                    </div>
-                </div>
-            </div>
+    /* Exercise card */
+    .exercise-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.2s;
+    }
+    .exercise-card.done {
+        background: rgba(99,102,241,0.06);
+        border-color: rgba(99,102,241,0.2);
+        opacity: 0.75;
+    }
+
+    /* Stat chips */
+    .stat-chip {
+        flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
+        border-radius: 12px; padding: 12px 8px;
+    }
+    .stat-chip-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #818cf8; font-weight: 700; margin-bottom: 4px; }
+    .stat-chip-value { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; }
+
+    /* Checkbox */
+    .ex-check-empty {
+        width: 36px; height: 36px; border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.04);
+        flex-shrink: 0; cursor: pointer;
+        transition: all 0.2s;
+    }
+    .ex-check-empty:hover { border-color: rgba(99,102,241,0.6); }
+    .ex-check-done {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border: 2px solid #6366f1;
+        flex-shrink: 0; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Timer btn */
+    .timer-btn {
+        width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; color: #fff;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border: none; cursor: pointer; transition: all 0.2s;
+        active: scale(0.97);
+    }
+    .timer-running {
+        background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.4);
+        border-radius: 12px; padding: 14px;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+
+    /* Video btn */
+    .video-btn {
+        width: 100%; display: flex; align-items: center; justify-content: between; gap: 8px;
+        padding: 12px 14px; border-radius: 12px; font-size: 13px; font-weight: 600;
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        color: #94a3b8; cursor: pointer; transition: all 0.2s;
+    }
+    .video-btn:hover, .video-btn.active { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.4); color: #a5b4fc; }
+
+    /* Progress bar top */
+    .progress-bar-bg { background: rgba(255,255,255,0.06); border-radius: 99px; height: 5px; overflow: hidden; }
+    .progress-bar-fill { background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 99px; height: 5px; transition: width 0.5s ease; }
+</style>
+
+<div class="show-bg pt-4 pb-6 space-y-4">
+
+    {{-- HEADER --}}
+    <div class="flex items-center gap-3 px-1">
+        <a href="{{ route('workouts.index') }}" class="back-btn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <div class="flex-1 min-w-0">
+            <h1 class="text-white font-extrabold text-xl leading-tight truncate">{{ $workout->name }}</h1>
+            @if($workout->goal)
+                <p class="text-slate-400 text-xs mt-0.5 truncate">{{ $workout->goal }}</p>
             @endif
-
-            @if(auth()->user()->role === 'personal')
-                <a href="{{ route('workouts.edit', $workout) }}" class="mt-3 inline-flex items-center px-4 py-2 border border-teal-600/40 text-xs font-semibold rounded-lg text-teal-300 bg-teal-700/20 hover:bg-teal-700/30 focus:outline-none transition-colors">
-                    <svg class="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    Editar Treino
-                </a>
-            @endif
         </div>
+        <span class="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0
+            {{ $workout->is_active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-zinc-700/40 text-slate-400' }}">
+            {{ $workout->is_active ? 'Ativo' : 'Inativo' }}
+        </span>
     </div>
-    
-    <div>
-	        <div class="space-y-4">
-	            @foreach($workout->days as $day)
-	                <div class="px-4 py-4 sm:px-6 border-b border-teal-900/30 last:border-b-0" x-data="{ open: false }">
-	                    <button type="button"
-	                            @click="open = !open"
-	                            class="w-full flex items-center justify-between rounded-2xl border border-teal-900/40 bg-zinc-900/70 px-4 py-4 text-left hover:border-teal-600/60 hover:bg-zinc-900 transition-colors">
-	                        <span class="text-base font-bold text-teal-300">
-	                            {{ $day->name }}
-	                        </span>
-	                        <span class="flex items-center gap-3 text-xs font-semibold text-stone-300">
-	                            <span>{{ $day->exercises->count() }} exercicios</span>
-	                            <svg class="h-5 w-5 text-teal-300 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-	                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-	                            </svg>
-	                        </span>
-	                    </button>
-	                    <dd x-show="open" x-transition class="mt-4 text-sm text-stone-300 sm:col-span-3">
-                        <ul role="list" class="space-y-4">
-                            @foreach($day->exercises as $exercise)
-                                @if(auth()->user()->role === 'aluno')
-                                    <!-- Card Mobile-First (Aluno) -->
-                                    <li class="rounded-2xl shadow-lg overflow-hidden border transition-all duration-300"
-                                        x-data="exerciseItem({{ $exercise->id }}, {{ in_array($exercise->id, $todayLogs ?? []) ? 'true' : 'false' }}, @js($exercise->rest_time), @js($exercise->name), @js($exercise->embed_video_url))"
-                                        :class="completed ? 'bg-zinc-800/50 border-teal-700/30 opacity-80' : 'bg-zinc-900 border-teal-800/40'">
 
-                                        <!-- Header: Nome e Check -->
-                                        <div class="flex items-center justify-between gap-3 px-4 pt-4 pb-3">
-                                            <h4 class="text-base font-bold text-stone-100 leading-snug flex-1 transition-colors"
-                                                :class="{ 'text-stone-400 line-through': completed }">
-                                                {{ $exercise->name }}
-                                            </h4>
-                                            <!-- Checkbox Estilo iOS -->
-                                            <div class="flex-shrink-0 cursor-pointer active:scale-90 transition-transform" @click="completed = !completed; toggle()">
-                                                <div x-show="!completed" class="w-9 h-9 rounded-full border-2 border-zinc-600 bg-zinc-800 hover:border-teal-400 transition-colors"></div>
-                                                <div x-show="completed"
-                                                     x-transition:enter="transition ease-out duration-200"
-                                                     x-transition:enter-start="scale-0 opacity-0"
-                                                     x-transition:enter-end="scale-100 opacity-100"
-                                                     class="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 border-2 border-teal-400 flex items-center justify-center shadow-lg shadow-teal-700/40">
-                                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Grid Séries / Reps / Descanso -->
-                                        <div class="grid grid-cols-3 gap-2 px-4 pb-4">
-                                            <div class="flex flex-col items-center justify-center bg-teal-900/30 border border-teal-700/30 rounded-xl py-3">
-                                                <span class="text-[10px] uppercase tracking-widest text-teal-400 font-semibold mb-1">Séries</span>
-                                                <span class="text-2xl font-extrabold text-white">{{ $exercise->sets ?? '-' }}</span>
-                                            </div>
-                                            <div class="flex flex-col items-center justify-center bg-teal-900/30 border border-teal-700/30 rounded-xl py-3">
-                                                <span class="text-[10px] uppercase tracking-widest text-teal-400 font-semibold mb-1">Reps</span>
-                                                <span class="text-2xl font-extrabold text-white">{{ $exercise->reps ?? '-' }}</span>
-                                            </div>
-                                            <div class="flex flex-col items-center justify-center bg-teal-900/30 border border-teal-700/30 rounded-xl py-3">
-                                                <span class="text-[10px] uppercase tracking-widest text-teal-400 font-semibold mb-1">Descanso</span>
-                                                <span class="text-xl font-extrabold text-white leading-tight">{{ $exercise->rest_time ?? '-' }}</span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Botão Ver Execução -->
-                                        <div class="px-4 pb-3">
-                                            <button type="button" @click="toggleVideo()"
-                                                    class="w-full flex items-center justify-between px-4 py-3.5 rounded-xl border font-semibold text-sm transition-all active:scale-95"
-                                                    :class="showVideo
-                                                        ? 'bg-cyan-800/30 border-cyan-600/50 text-cyan-200'
-                                                        : 'bg-zinc-800 border-zinc-700 text-stone-300 hover:border-cyan-700/50 hover:text-cyan-200'">
-                                                <span class="flex items-center gap-2">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                    </svg>
-                                                    Ver execução do exercício
-                                                </span>
-                                                <span class="text-xs opacity-70" x-text="videoButtonLabel()"></span>
-                                            </button>
-                                        </div>
-
-                                        <!-- Área do Vídeo -->
-                                        <div x-show="showVideo" x-transition class="border-t border-zinc-800">
-                                            <template x-if="videoLoading">
-                                                <div class="flex flex-col items-center justify-center py-10 gap-3">
-                                                    <svg class="w-8 h-8 text-cyan-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                                                    </svg>
-                                                    <span class="text-sm text-cyan-300">Buscando vídeo no YouTube...</span>
-                                                </div>
-                                            </template>
-
-                                            <template x-if="videoError">
-                                                <div class="px-4 py-4 text-sm text-amber-300 bg-amber-950/30 flex items-start gap-2">
-                                                    <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                    <span x-text="videoError"></span>
-                                                </div>
-                                            </template>
-
-                                            <template x-if="videoUrl">
-                                                <div>
-                                                    <div class="w-full bg-black" style="aspect-ratio: 16/9">
-                                                        <iframe class="w-full h-full"
-                                                                :src="videoUrl"
-                                                                :title="'Execução de ' + exerciseName"
-                                                                loading="lazy"
-                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                                allowfullscreen></iframe>
-                                                    </div>
-                                                    <template x-if="videoTitle">
-                                                        <div class="px-4 py-3 bg-zinc-950/60">
-                                                            <p class="text-xs font-semibold text-stone-200 leading-snug" x-text="videoTitle"></p>
-                                                            <p class="text-xs text-stone-500 mt-0.5" x-text="videoChannel"></p>
-                                                        </div>
-                                                    </template>
-                                                </div>
-                                            </template>
-                                        </div>
-
-                                        <!-- Ações (Timer) -->
-                                        <template x-if="restSeconds > 0 && !completed">
-                                            <div class="px-4 pb-4 pt-2">
-                                                <button type="button"
-                                                        @click="startTimer()"
-                                                        x-show="!timerRunning"
-                                                        class="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-base font-bold text-white bg-gradient-to-r from-teal-600 to-cyan-700 hover:from-teal-700 hover:to-cyan-800 shadow-lg shadow-teal-900/40 active:scale-95 transition-all">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                    Iniciar Descanso
-                                                </button>
-
-                                                <div x-show="timerRunning" class="w-full bg-teal-900/30 rounded-xl p-4 flex items-center justify-between border border-teal-700/40">
-                                                    <span class="flex items-center text-teal-300 font-bold text-xl animate-pulse">
-                                                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                        <span x-text="formatTime(timeLeft)"></span>
-                                                    </span>
-                                                    <button @click="stopTimer()" class="text-sm font-medium text-red-400 hover:text-red-300 border border-red-500/50 px-3 py-1 rounded bg-red-600/20 hover:bg-red-600/30">
-                                                        Cancelar
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </li>
-                                @else
-                                    <!-- Modo Leitura (Personal) -->
-                                    <li class="bg-zinc-900/60 border border-teal-900/30 rounded-xl p-4 mb-3">
-                                        <div class="flex items-start justify-between">
-                                            <div>
-                                                <h5 class="font-semibold text-stone-100">{{ $exercise->name }}</h5>
-                                                <div class="flex flex-wrap gap-3 mt-3 text-sm">
-                                                    @if($exercise->sets) <span class="text-teal-300"><strong>Séries:</strong> {{ $exercise->sets }}</span> @endif
-                                                    @if($exercise->reps) <span class="text-teal-300"><strong>Reps:</strong> {{ $exercise->reps }}</span> @endif
-                                                    @if($exercise->rest_time) <span class="text-teal-300"><strong>Descanso:</strong> {{ $exercise->rest_time }}</span> @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
-                                @endif
-                            @endforeach
-                        </ul>
-                    </dd>
-                </div>
-            @endforeach
-        </div>
-    </div>
-</div>
-
-<div class="mt-6">
-    <a href="{{ route('workouts.index') }}" class="inline-flex items-center text-teal-300 hover:text-teal-200 font-semibold transition-colors">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-        Voltar para Meus Treinos
+    @if(auth()->user()->role === 'personal')
+    {{-- EDIT BUTTON FOR PERSONAL --}}
+    <a href="{{ route('workouts.edit', $workout) }}"
+       class="flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm text-white"
+       style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Editar Treino
     </a>
+    @endif
+
+    @if(auth()->user()->role === 'aluno')
+    {{-- PROGRESS BAR --}}
+    @php $totalEx = $workout->days->sum(fn($d) => $d->exercises->count()); @endphp
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;"
+         x-data="progressTracker({{ $totalEx }}, {{ count($todayLogs ?? []) }}, {{ $workout->id }})">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <p class="text-white font-bold text-sm">Progresso de Hoje</p>
+                <p class="text-slate-500 text-xs mt-0.5"><span x-text="current"></span> de {{ $totalEx }} exercícios</p>
+            </div>
+            <p class="text-indigo-400 font-extrabold text-2xl" x-text="Math.round((current / total) * 100) + '%'"></p>
+        </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" :style="'width:' + ((current / total) * 100) + '%'"></div>
+        </div>
+    </div>
+    @endif
+
+    {{-- DAY SECTIONS --}}
+    <div class="space-y-3">
+        @foreach($workout->days as $day)
+        <div x-data="{ open: {{ $loop->first ? 'true' : 'false' }} }">
+            {{-- Day Header --}}
+            <button type="button" @click="open = !open" :class="open ? 'day-header open' : 'day-header'">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                         style="background:linear-gradient(135deg,rgba(99,102,241,0.3),rgba(139,92,246,0.2));border:1px solid rgba(99,102,241,0.3);">
+                        <span class="text-indigo-300 font-extrabold text-sm">{{ $loop->iteration }}</span>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-white font-bold text-sm">{{ $day->name }}</p>
+                        <p class="text-slate-500 text-xs">{{ $day->exercises->count() }} exercícios</p>
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-slate-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': open }"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            {{-- Exercises --}}
+            <div x-show="open" x-transition
+                 style="background:rgba(255,255,255,0.02);border:1px solid rgba(99,102,241,0.2);border-top:none;border-radius:0 0 16px 16px;padding:12px;gap:10px;display:flex;flex-direction:column;">
+                @foreach($day->exercises as $exercise)
+                    @if(auth()->user()->role === 'aluno')
+                    <div class="exercise-card" :class="completed ? 'done' : ''"
+                         x-data="exerciseItem({{ $exercise->id }}, {{ in_array($exercise->id, $todayLogs ?? []) ? 'true' : 'false' }}, @js($exercise->rest_time), @js($exercise->name), @js($exercise->embed_video_url))">
+
+                        {{-- Name + Check --}}
+                        <div class="flex items-center gap-3 p-4">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white font-bold text-sm leading-snug"
+                                   :class="{ 'line-through text-slate-500': completed }">{{ $exercise->name }}</p>
+                            </div>
+                            <div @click="completed = !completed; toggle()" class="cursor-pointer active:scale-90 transition-transform">
+                                <div x-show="!completed" class="ex-check-empty"></div>
+                                <div x-show="completed"
+                                     x-transition:enter="transition ease-out duration-150"
+                                     x-transition:enter-start="scale-0 opacity-0"
+                                     x-transition:enter-end="scale-100 opacity-100"
+                                     class="ex-check-done">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Stats chips --}}
+                        <div class="flex gap-2 px-4 pb-4">
+                            <div class="stat-chip">
+                                <span class="stat-chip-label">Séries</span>
+                                <span class="stat-chip-value">{{ $exercise->sets ?? '—' }}</span>
+                            </div>
+                            <div class="stat-chip">
+                                <span class="stat-chip-label">Reps</span>
+                                <span class="stat-chip-value">{{ $exercise->reps ?? '—' }}</span>
+                            </div>
+                            <div class="stat-chip">
+                                <span class="stat-chip-label">Descanso</span>
+                                <span class="stat-chip-value" style="font-size:16px;">{{ $exercise->rest_time ?? '—' }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Video btn --}}
+                        <div class="px-4 pb-3">
+                            <button type="button" @click="toggleVideo()"
+                                    :class="showVideo ? 'video-btn active' : 'video-btn'">
+                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="flex-1 text-left" x-text="videoButtonLabel()">Ver execução</span>
+                            </button>
+                        </div>
+
+                        {{-- Video area --}}
+                        <div x-show="showVideo" x-transition class="border-t border-white/5">
+                            <template x-if="videoLoading">
+                                <div class="flex items-center justify-center gap-3 py-8">
+                                    <svg class="w-6 h-6 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                                    </svg>
+                                    <span class="text-sm text-slate-400">Buscando vídeo...</span>
+                                </div>
+                            </template>
+                            <template x-if="videoError">
+                                <div class="px-4 py-3 text-sm text-amber-300 bg-amber-950/20">
+                                    <span x-text="videoError"></span>
+                                </div>
+                            </template>
+                            <template x-if="videoUrl">
+                                <div>
+                                    <div class="w-full bg-black" style="aspect-ratio:16/9">
+                                        <iframe class="w-full h-full" :src="videoUrl"
+                                                :title="'Execução de ' + exerciseName"
+                                                loading="lazy"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowfullscreen></iframe>
+                                    </div>
+                                    <template x-if="videoTitle">
+                                        <div class="px-4 py-3">
+                                            <p class="text-xs font-semibold text-slate-200 leading-snug" x-text="videoTitle"></p>
+                                            <p class="text-xs text-slate-500 mt-0.5" x-text="videoChannel"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        {{-- Rest timer --}}
+                        <template x-if="restSeconds > 0 && !completed">
+                            <div class="px-4 pb-4">
+                                <button type="button" @click="startTimer()" x-show="!timerRunning" class="timer-btn">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Iniciar Descanso
+                                </button>
+                                <div x-show="timerRunning" class="timer-running">
+                                    <span class="flex items-center gap-2 text-indigo-300 font-bold text-xl">
+                                        <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span x-text="formatTime(timeLeft)"></span>
+                                    </span>
+                                    <button @click="stopTimer()"
+                                            class="text-xs font-semibold text-red-400 border border-red-500/40 px-3 py-1.5 rounded-lg bg-red-500/10">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    @else
+                    {{-- Personal read mode --}}
+                    <div class="exercise-card">
+                        <div class="p-4">
+                            <p class="text-white font-bold text-sm mb-3">{{ $exercise->name }}</p>
+                            <div class="flex gap-2">
+                                @if($exercise->sets)
+                                <div class="stat-chip">
+                                    <span class="stat-chip-label">Séries</span>
+                                    <span class="stat-chip-value">{{ $exercise->sets }}</span>
+                                </div>
+                                @endif
+                                @if($exercise->reps)
+                                <div class="stat-chip">
+                                    <span class="stat-chip-label">Reps</span>
+                                    <span class="stat-chip-value">{{ $exercise->reps }}</span>
+                                </div>
+                                @endif
+                                @if($exercise->rest_time)
+                                <div class="stat-chip">
+                                    <span class="stat-chip-label">Descanso</span>
+                                    <span class="stat-chip-value" style="font-size:16px;">{{ $exercise->rest_time }}</span>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+        @endforeach
+    </div>
+
 </div>
 
 <script>
     function exerciseItem(id, initialStatus, restTimeStr, exerciseName, initialVideoUrl) {
-        // Chave única para o LocalStorage: workout_log_{DATA}_{ID}
         const storageKey = `workout_log_${new Date().toISOString().split('T')[0]}_${id}`;
         const storageKeyExpire = `workout_log_expire_${id}`;
-        
-        // Função para verificar se ainda está dentro dos 7 dias
+
         function isValidProgress() {
             const expireDate = localStorage.getItem(storageKeyExpire);
-            if (!expireDate) return true; // Primeira vez
-            
-            const lastReset = new Date(expireDate);
-            const now = new Date();
-            const daysDiff = Math.floor((now - lastReset) / (1000 * 60 * 60 * 24));
-            
-            // Se passou 7 dias, reseta
+            if (!expireDate) return true;
+            const daysDiff = Math.floor((new Date() - new Date(expireDate)) / 86400000);
             if (daysDiff >= 7) {
                 localStorage.removeItem(storageKey);
                 localStorage.setItem(storageKeyExpire, new Date().toISOString());
@@ -297,115 +331,54 @@
             }
             return true;
         }
-        
-        // Recupera do LocalStorage ou usa o status do banco
-        const isValid = isValidProgress();
-        const savedStatus = isValid && localStorage.getItem(storageKey) === 'true';
+
+        const savedStatus = isValidProgress() && localStorage.getItem(storageKey) === 'true';
         const status = savedStatus || initialStatus;
 
-        // Extrair segundos da string
         let seconds = 0;
         if (restTimeStr) {
             const numbers = restTimeStr.replace(/[^0-9]/g, '');
             seconds = parseInt(numbers) || 0;
-            if (restTimeStr.toLowerCase().includes('min')) {
-                seconds = seconds * 60;
-            }
+            if (restTimeStr.toLowerCase().includes('min')) seconds *= 60;
         }
 
         return {
-            id: id,
-            exerciseName: exerciseName,
-            completed: status,
-            restSeconds: seconds,
-            timeLeft: seconds,
-            timerRunning: false,
-            showVideo: false,
-            videoLoaded: Boolean(initialVideoUrl),
-            videoLoading: false,
-            videoError: '',
-            videoUrl: initialVideoUrl || '',
-            videoTitle: '',
-            videoChannel: '',
-            interval: null,
-            storageKey: storageKey,
-            storageKeyExpire: storageKeyExpire,
-
-            init() {
-                // Ao iniciar, não precisamos fazer nada pois a barra já inicia com o valor do backend
-                // e o LocalStorage apenas sincroniza o estado visual do botão.
-            },
+            id, exerciseName, completed: status,
+            restSeconds: seconds, timeLeft: seconds,
+            timerRunning: false, interval: null,
+            showVideo: false, videoLoaded: Boolean(initialVideoUrl),
+            videoLoading: false, videoError: '',
+            videoUrl: initialVideoUrl || '', videoTitle: '', videoChannel: '',
+            storageKey, storageKeyExpire,
 
             toggle() {
-                // Salva no LocalStorage imediatamente (Backup Front)
                 localStorage.setItem(this.storageKey, this.completed);
-                
-                // Registra a data de expiração (7 dias a partir de agora)
-                if (!localStorage.getItem(this.storageKeyExpire)) {
+                if (!localStorage.getItem(this.storageKeyExpire))
                     localStorage.setItem(this.storageKeyExpire, new Date().toISOString());
-                }
-                
-                // Emite evento para atualizar a barra (+1 ou -1)
-                window.dispatchEvent(new CustomEvent('progress-change', { 
-                    detail: { value: this.completed ? 1 : -1 } 
-                }));
-
-                // Backend sincronização desabilitada por enquanto (localStorage já funciona perfeitamente)
-                // Será implementada quando backend estiver totalmente configurado
-                
-                /* 
-                fetch(`/aluno/exercicio/${this.id}/toggle`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status || data.message) {
-                        console.log('✓ Backend sincronizado');
-                    }
-                })
-                .catch(() => {
-                    // Nada a fazer
-                });
-                */
+                window.dispatchEvent(new CustomEvent('progress-change', { detail: { value: this.completed ? 1 : -1 } }));
             },
-            
-            // updateGlobalCount removido pois agora usamos eventos delta (+1/-1)
 
             videoButtonLabel() {
                 if (this.videoLoading) return 'Buscando...';
-                if (this.showVideo) return 'Ocultar';
-                return this.videoLoaded ? 'Abrir video' : 'Buscar no YouTube';
+                if (this.showVideo) return 'Ocultar vídeo';
+                return this.videoLoaded ? 'Ver execução' : 'Buscar no YouTube';
             },
 
             toggleVideo() {
                 this.showVideo = !this.showVideo;
-
-                if (this.showVideo && !this.videoLoaded && !this.videoLoading) {
+                if (this.showVideo && !this.videoLoaded && !this.videoLoading)
                     this.loadYoutubeVideo();
-                }
             },
 
             loadYoutubeVideo() {
                 this.videoLoading = true;
                 this.videoError = '';
-
                 fetch(`{{ route('student.exercise.youtube') }}?name=${encodeURIComponent(this.exerciseName)}`, {
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                 })
-                .then(async response => {
-                    const data = await response.json().catch(() => ({}));
-
-                    if (!response.ok) {
-                        throw new Error(data.message || 'Nao encontrei video para este exercicio.');
-                    }
-
+                .then(async r => {
+                    const data = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(data.message || 'Não encontrei vídeo.');
                     return data;
                 })
                 .then(data => {
@@ -414,26 +387,17 @@
                     this.videoChannel = data.channel_title || '';
                     this.videoLoaded = true;
                 })
-                .catch(error => {
-                    this.videoError = error.message || 'Nao foi possivel carregar o video agora.';
-                })
-                .finally(() => {
-                    this.videoLoading = false;
-                });
+                .catch(e => { this.videoError = e.message || 'Não foi possível carregar o vídeo.'; })
+                .finally(() => { this.videoLoading = false; });
             },
 
             startTimer() {
                 if (this.restSeconds <= 0) return;
-                
                 this.timerRunning = true;
                 this.timeLeft = this.restSeconds;
-                
                 this.interval = setInterval(() => {
                     this.timeLeft--;
-                    
-                    if (this.timeLeft <= 0) {
-                        this.finishTimer();
-                    }
+                    if (this.timeLeft <= 0) this.finishTimer();
                 }, 1000);
             },
 
@@ -445,149 +409,46 @@
 
             finishTimer() {
                 this.stopTimer();
-                // Marcar como concluído
                 this.completed = true;
-                this.toggle(); // Salva no banco
-                
-                // Vibrar celular (se suportado)
-                if (navigator.vibrate) {
-                    navigator.vibrate([200, 100, 200]);
-                }
-                
-                // Tocar som (opcional)
-                // const audio = new Audio('/sounds/beep.mp3');
-                // audio.play();
+                this.toggle();
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
             },
 
-            formatTime(seconds) {
-                const m = Math.floor(seconds / 60);
-                const s = seconds % 60;
-                return `${m}:${s.toString().padStart(2, '0')}`;
+            formatTime(s) {
+                return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
             }
         }
     }
 
-    // Sistema de Progresso com Persistência de 7 dias e Reset no Domingo
     function progressTracker(total, initialCurrent, workoutId) {
-        const storageKeyCount = `workout_progress_${workoutId}`;
-        const storageKeyDate = `workout_progress_date_${workoutId}`;
-        const storageKeyLastReset = `workout_progress_last_reset_${workoutId}`;
+        const keyCount = `workout_progress_${workoutId}`;
+        const keyDate  = `workout_progress_date_${workoutId}`;
 
-        // Função para verificar se é domingo
-        function isSunday() {
-            return new Date().getDay() === 0;
-        }
-
-        // Função para obter o início da semana (segunda-feira)
         function getWeekStart() {
-            const today = new Date();
-            const day = today.getDay();
-            const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Ajusta para segunda-feira
-            return new Date(today.setDate(diff)).toISOString().split('T')[0];
+            const t = new Date(), d = t.getDay();
+            const diff = t.getDate() - d + (d === 0 ? -6 : 1);
+            return new Date(t.setDate(diff)).toISOString().split('T')[0];
         }
 
-        // Função para load do progresso com validação
-        function loadProgress() {
-            const savedDate = localStorage.getItem(storageKeyDate);
-            const currentWeekStart = getWeekStart();
-
-            // Se passou de uma semana, zera
-            if (!savedDate || savedDate !== currentWeekStart) {
-                localStorage.setItem(storageKeyCount, initialCurrent);
-                localStorage.setItem(storageKeyDate, currentWeekStart);
+        function load() {
+            const saved = localStorage.getItem(keyDate);
+            const wk = getWeekStart();
+            if (!saved || saved !== wk) {
+                localStorage.setItem(keyCount, initialCurrent);
+                localStorage.setItem(keyDate, wk);
                 return initialCurrent;
             }
-
-            return parseInt(localStorage.getItem(storageKeyCount) || initialCurrent);
-        }
-
-        // Função para obter dia do último reset
-        function getLastResetDay() {
-            const lastReset = localStorage.getItem(storageKeyLastReset);
-            if (!lastReset) return 'Nenhum reset';
-            const date = new Date(lastReset);
-            return 'Reset: ' + date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' });
-        }
-
-        // Função para calcular dias restantes na semana
-        function getDaysLeftInWeek() {
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            // Semana vai de segunda (1) a domingo (0)
-            // Se é domingo (0), retorna 1, se é segunda (1) retorna 6, etc
-            return dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
-        }
-
-        // Função para calcular streak (dias consecutivos)
-        function calculateStreak() {
-            const lastReset = localStorage.getItem(storageKeyLastReset);
-            if (!lastReset) return 0;
-            const resetDate = new Date(lastReset);
-            const today = new Date();
-            const daysDiff = Math.floor((today - resetDate) / (1000 * 60 * 60 * 24));
-            return Math.max(0, daysDiff);
-        }
-
-        // Função para contar exercícios completados hoje
-        function getCompletedToday() {
-            const today = new Date().toISOString().split('T')[0];
-            let count = 0;
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith(`workout_log_${today}_`) && localStorage.getItem(key) === 'true') {
-                    count++;
-                }
-            }
-            return count;
+            return parseInt(localStorage.getItem(keyCount) || initialCurrent);
         }
 
         return {
-            total: total,
-            current: loadProgress(),
-            lastResetDay: getLastResetDay(),
-            daysLeftInWeek: getDaysLeftInWeek(),
-            streakDays: calculateStreak(),
-            completedToday: getCompletedToday(),
-
+            total,
+            current: load(),
             init() {
-                // Listener para atualizar o progresso quando exercício for marcado
-                window.addEventListener('progress-change', (e) => {
-                    this.current += e.detail.value;
-                    localStorage.setItem(storageKeyCount, this.current);
-                    this.lastResetDay = getLastResetDay();
-                    this.completedToday = getCompletedToday();
+                window.addEventListener('progress-change', e => {
+                    this.current = Math.max(0, Math.min(this.total, this.current + e.detail.value));
+                    localStorage.setItem(keyCount, this.current);
                 });
-
-                // Auto-update da data de última modificação
-                const weekStart = getWeekStart();
-                localStorage.setItem(storageKeyDate, weekStart);
-            },
-
-            resetProgress() {
-                // Remove todos os exercícios marcados do dia (limpa checkboxes)
-                const today = new Date().toISOString().split('T')[0];
-                const keysToRemove = [];
-                
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key.startsWith(`workout_log_${today}_`)) {
-                        keysToRemove.push(key);
-                    }
-                }
-                
-                keysToRemove.forEach(key => localStorage.removeItem(key));
-                
-                // Zera o progresso e registra quando foi zerado
-                this.current = 0;
-                localStorage.setItem(storageKeyCount, '0');
-                localStorage.setItem(storageKeyLastReset, new Date().toISOString());
-                this.lastResetDay = getLastResetDay();
-                
-                // Dispara evento para sincronizar a UI
-                window.dispatchEvent(new CustomEvent('progress-reset'));
-                
-                // Recarrega a página para atualizar os checkboxes
-                setTimeout(() => location.reload(), 300);
             }
         }
     }
