@@ -216,8 +216,10 @@
            <div class="flex-1 flex flex-col overflow-hidden transition-all duration-500 ease-in-out"
                :style="sidebarOpen ? 'margin-left: 16rem; width: calc(100% - 16rem);' : 'margin-left: 0; width: 100%;'">
 
-            <!-- Top Bar -->
-            <header class="h-14 shrink-0 flex items-center border-b bg-zinc-950/85 backdrop-blur-sm px-3 md:px-4" style="border-bottom-color: rgba(51, 65, 85, 0.65);">
+            <!-- Top Bar (hidden for aluno on mobile — they use bottom nav) -->
+            <header class="h-14 shrink-0 items-center border-b bg-zinc-950/85 backdrop-blur-sm px-3 md:px-4
+                {{ auth()->check() && auth()->user()->role === 'aluno' ? 'hidden md:flex' : 'flex' }}"
+                style="border-bottom-color: rgba(51, 65, 85, 0.65);">
                 <button x-show="!sidebarOpen" x-cloak @click.stop="sidebarOpen = !sidebarOpen" class="w-10 h-10 flex items-center justify-center rounded-md text-stone-100 bg-zinc-900/70 hover:bg-cyan-950/60 focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
