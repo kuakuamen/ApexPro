@@ -83,6 +83,81 @@ class StudentController extends Controller
         ));
     }
 
+    public function progress()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Histórico de treinos por semana (últimas 8 semanas)
+        $weeklyStats = [];
+        for ($i = 7; $i >= 0; $i--) {
+            $weekStart = Carbon::now()->subWeeks($i)->startOfWeek(Carbon::MONDAY);
+            $weekEnd   = Carbon::now()->subWeeks($i)->endOfWeek(Carbon::SUNDAY);
+            $count = WorkoutLog::where('student_id', $user->id)
+                ->whereBetween('date', [$weekStart->toDateString(), $weekEnd->toDateString()])
+                ->distinct('date')->count('date');
+            $weeklyStats[] = [
+                'label' => $weekStart->format('d/M'),
+                'count' => $count,
+            ];
+        }
+
+        // Total geral de treinos
+        $totalWorkouts = WorkoutLog::where('student_id', $user->id)
+            ->distinct('date')->count('date');
+
+        // Streak atual
+        $streak = 0;
+        $checkDay = Carbon::today();
+        while (true) {
+            $hasLog = WorkoutLog::where('student_id', $user->id)
+                ->whereDate('date', $checkDay->toDateString())->exists();
+            if (!$hasLog) break;
+            $streak++;
+            $checkDay->subDay();
+        }
+
+        // Melhor streak histórico
+        $allDates = WorkoutLog::where('student_id', $user->id)
+            ->distinct('date')->orderBy('date')->pluck('date')
+            ->map(fn($d) => Carbon::parse($d));
+        $bestStreak = 0; $cur = 0; $prev = null;
+        foreach ($allDates as $d) {
+            if ($prev && $d->diffInDays($prev) === 1) { $cur++; } else { $cur = 1; }
+            $bestStreak = max($bestStreak, $cur);
+            $prev = $d;
+        }
+
+        // Treinos este mês
+        $thisMonthCount = WorkoutLog::where('student_id', $user->id)
+            ->whereMonth('date', Carbon::now()->month)
+            ->whereYear('date', Carbon::now()->year)
+            ->distinct('date')->count('date');
+
+        // Última medida corporal
+        $latestMeasurement = $user->measurements()->orderByDesc('date')->first();
+
+        return view('student.progress', compact(
+            'user', 'weeklyStats', 'totalWorkouts', 'streak',
+            'bestStreak', 'thisMonthCount', 'latestMeasurement'
+        ));
+    }
+
+    public function profile()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $professionalStudent = ProfessionalStudent::where('student_id', $user->id)
+            ->with('professional')->first();
+        $professional = $professionalStudent?->professional;
+        $latestMeasurement = $user->measurements()->orderByDesc('date')->first();
+        $totalWorkouts = WorkoutLog::where('student_id', $user->id)
+            ->distinct('date')->count('date');
+
+        return view('student.profile', compact('user', 'professional', 'latestMeasurement', 'totalWorkouts'));
+    }
+
     /**
      * Tela de Evolução com Gráficos Completos.
      */
