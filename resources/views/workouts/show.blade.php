@@ -190,31 +190,25 @@
                  style="background:rgba(255,255,255,0.02);border:1px solid rgba(99,102,241,0.2);border-top:none;border-radius:0 0 16px 16px;padding:12px;gap:10px;display:flex;flex-direction:column;">
                 @foreach($day->exercises as $exercise)
                     @if(auth()->user()->role === 'aluno')
-                    <div class="exercise-card" :class="completed ? 'done' : ''"
-                         x-data="exerciseItem({{ $exercise->id }}, {{ in_array($exercise->id, $todayLogs ?? []) ? 'true' : 'false' }}, @js($exercise->rest_time), @js($exercise->name), @js($exercise->embed_video_url))">
-
-                        {{-- Name + Check --}}
-                        <div class="flex items-center gap-3 p-4">
+                    {{-- Card simples: nome + chips + botão Iniciar --}}
+                    <div class="exercise-card" style="{{ in_array($exercise->id, $todayLogs ?? []) ? 'opacity:0.55;' : '' }}">
+                        <div class="flex items-center gap-3 p-4 pb-3">
                             <div class="flex-1 min-w-0">
-                                <p class="text-white font-bold text-sm leading-snug"
-                                   :class="{ 'line-through text-slate-500': completed }">{{ $exercise->name }}</p>
+                                <p class="text-white font-bold text-sm leading-snug {{ in_array($exercise->id, $todayLogs ?? []) ? 'line-through text-slate-400' : '' }}">
+                                    {{ $exercise->name }}
+                                </p>
                             </div>
-                            <div @click="completed = !completed; toggle()" class="cursor-pointer active:scale-90 transition-transform">
-                                <div x-show="!completed" class="ex-check-empty"></div>
-                                <div x-show="completed"
-                                     x-transition:enter="transition ease-out duration-150"
-                                     x-transition:enter-start="scale-0 opacity-0"
-                                     x-transition:enter-end="scale-100 opacity-100"
-                                     class="ex-check-done">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                                    </svg>
-                                </div>
+                            @if(in_array($exercise->id, $todayLogs ?? []))
+                            <div class="ex-check-done flex-shrink-0">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                </svg>
                             </div>
+                            @endif
                         </div>
 
                         {{-- Stats chips --}}
-                        <div class="flex gap-2 px-4 pb-4">
+                        <div class="flex gap-2 px-4 pb-3">
                             <div class="stat-chip">
                                 <span class="stat-chip-label">Séries</span>
                                 <span class="stat-chip-value">{{ $exercise->sets ?? '—' }}</span>
@@ -229,76 +223,14 @@
                             </div>
                         </div>
 
-                        {{-- Video btn --}}
-                        <div class="px-4 pb-3">
-                            <button type="button" @click="toggleVideo()"
-                                    :class="showVideo ? 'video-btn active' : 'video-btn'">
-                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <span class="flex-1 text-left" x-text="videoButtonLabel()">Ver execução</span>
-                            </button>
+                        {{-- Botão Iniciar Exercício --}}
+                        <div class="px-4 pb-4">
+                            <a href="{{ route('student.workout.active', [$workout, $day]) }}"
+                               style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border-radius:12px;font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);text-decoration:none;">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                Iniciar Exercício
+                            </a>
                         </div>
-
-                        {{-- Video area --}}
-                        <div x-show="showVideo" x-transition class="border-t border-white/5">
-                            <template x-if="videoLoading">
-                                <div class="flex items-center justify-center gap-3 py-8">
-                                    <svg class="w-6 h-6 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                                    </svg>
-                                    <span class="text-sm text-slate-400">Buscando vídeo...</span>
-                                </div>
-                            </template>
-                            <template x-if="videoError">
-                                <div class="px-4 py-3 text-sm text-amber-300 bg-amber-950/20">
-                                    <span x-text="videoError"></span>
-                                </div>
-                            </template>
-                            <template x-if="videoUrl">
-                                <div>
-                                    <div class="w-full bg-black" style="aspect-ratio:16/9">
-                                        <iframe class="w-full h-full" :src="videoUrl"
-                                                :title="'Execução de ' + exerciseName"
-                                                loading="lazy"
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                allowfullscreen></iframe>
-                                    </div>
-                                    <template x-if="videoTitle">
-                                        <div class="px-4 py-3">
-                                            <p class="text-xs font-semibold text-slate-200 leading-snug" x-text="videoTitle"></p>
-                                            <p class="text-xs text-slate-500 mt-0.5" x-text="videoChannel"></p>
-                                        </div>
-                                    </template>
-                                </div>
-                            </template>
-                        </div>
-
-                        {{-- Rest timer --}}
-                        <template x-if="restSeconds > 0 && !completed">
-                            <div class="px-4 pb-4">
-                                <button type="button" @click="startTimer()" x-show="!timerRunning" class="timer-btn">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                    Iniciar Descanso
-                                </button>
-                                <div x-show="timerRunning" class="timer-running">
-                                    <span class="flex items-center gap-2 text-indigo-300 font-bold text-xl">
-                                        <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        <span x-text="formatTime(timeLeft)"></span>
-                                    </span>
-                                    <button @click="stopTimer()"
-                                            class="text-xs font-semibold text-red-400 border border-red-500/40 px-3 py-1.5 rounded-lg bg-red-500/10">
-                                        Cancelar
-                                    </button>
-                                </div>
-                            </div>
-                        </template>
                     </div>
                     @else
                     {{-- Personal read mode --}}
@@ -337,6 +269,7 @@
 </div>
 
 <script>
+    // exerciseItem foi movido para active-workout.blade.php
     function exerciseItem(id, initialStatus, restTimeStr, exerciseName, initialVideoUrl) {
         const storageKey = `workout_log_${new Date().toISOString().split('T')[0]}_${id}`;
         const storageKeyExpire = `workout_log_expire_${id}`;
