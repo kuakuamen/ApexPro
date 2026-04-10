@@ -55,9 +55,49 @@ class ProfessionalSubscription extends Model
         return $this->status === 'active' && $this->expires_at && $this->expires_at->isFuture();
     }
 
+    public function isInProcessingWindow(): bool
+    {
+        if (in_array($this->status, ['suspended', 'cancelled'])) {
+            return false;
+        }
+
+        if (!$this->expires_at || !$this->expires_at->isPast()) {
+            return false;
+        }
+
+        if (empty($this->mp_preapproval_id)) {
+            return false;
+        }
+
+        $hours = max(0, (int) config('services.mercadopago.processing_window_hours', 0));
+        if ($hours <= 0) {
+            return false;
+        }
+
+        return Carbon::now()->lte($this->expires_at->copy()->addHours($hours));
+    }
+
+    public function canAccessPlatform(): bool
+    {
+        if (in_array($this->status, ['suspended', 'cancelled'])) {
+            return false;
+        }
+
+        if ($this->expires_at && $this->expires_at->isFuture()) {
+            return true;
+        }
+
+        return $this->isInProcessingWindow();
+    }
+
+    public function isInGrace(): bool
+    {
+        return $this->isInProcessingWindow();
+    }
+
     public function isExpired(): bool
     {
-        if ($this->isActive()) {
+        if ($this->canAccessPlatform()) {
             return false;
         }
 

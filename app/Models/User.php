@@ -139,7 +139,7 @@ class User extends Authenticatable
     {
         $sub = $this->professionalSubscription;
         if (!$sub) return false;
-        return $sub->isActive() || $sub->isInGrace();
+        return $sub->canAccessPlatform();
     }
 
     public function getProfilePhotoUrlAttribute(): ?string
