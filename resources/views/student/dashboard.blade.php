@@ -150,10 +150,18 @@
                 <p class="text-slate-400 text-xs">de {{ $totalWorkoutDays }} dias</p>
             </div>
         </div>
-        <a href="{{ route('workouts.show', $activeWorkout) }}" class="btn-start mt-2">
+        @php $firstDay = $activeWorkout->days->first(); @endphp
+        @if($firstDay)
+        <a href="{{ route('student.workout.active', [$activeWorkout, $firstDay]) }}" class="btn-start mt-2">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             Iniciar Treino
         </a>
+        @else
+        <a href="{{ route('workouts.show', $activeWorkout) }}" class="btn-start mt-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            Ver Treino
+        </a>
+        @endif
     </div>
     @else
     <div class="workout-hero p-5 text-center">

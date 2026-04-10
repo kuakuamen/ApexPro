@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\BodyMeasurement;
 use App\Models\ProfessionalStudent;
 use App\Models\WorkoutLog;
+use App\Models\WorkoutPlan;
+use App\Models\WorkoutDay;
 use Carbon\Carbon;
 
 class StudentController extends Controller
@@ -81,6 +83,24 @@ class StudentController extends Controller
             'logsThisWeek', 'weekDaysWorked', 'totalWorkoutDays',
             'streak', 'lastTrainingDate', 'lastTrainingDaysAgo'
         ));
+    }
+
+    public function activeWorkout(WorkoutPlan $workout, WorkoutDay $day)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Garante que o treino pertence ao aluno
+        abort_if($workout->student_id !== $user->id, 403);
+
+        $day->load('exercises');
+
+        $todayLogs = WorkoutLog::where('student_id', $user->id)
+            ->whereDate('date', today())
+            ->pluck('exercise_id')
+            ->toArray();
+
+        return view('student.active-workout', compact('workout', 'day', 'todayLogs'));
     }
 
     public function progress()

@@ -147,8 +147,8 @@
         @foreach($workout->days as $day)
         <div x-data="{ open: {{ $loop->first ? 'true' : 'false' }} }">
             {{-- Day Header --}}
-            <button type="button" @click="open = !open" :class="open ? 'day-header open' : 'day-header'">
-                <div class="flex items-center gap-3">
+            <div :class="open ? 'day-header open' : 'day-header'" style="display:flex;align-items:center;gap:10px;">
+                <button type="button" @click="open = !open" style="display:flex;align-items:center;gap:12px;flex:1;text-align:left;">
                     <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
                          style="background:linear-gradient(135deg,rgba(99,102,241,0.3),rgba(139,92,246,0.2));border:1px solid rgba(99,102,241,0.3);">
                         <span class="text-indigo-300 font-extrabold text-sm">{{ $loop->iteration }}</span>
@@ -157,12 +157,21 @@
                         <p class="text-white font-bold text-sm">{{ $day->name }}</p>
                         <p class="text-slate-500 text-xs">{{ $day->exercises->count() }} exercícios</p>
                     </div>
-                </div>
-                <svg class="w-5 h-5 text-slate-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': open }"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
+                </button>
+                @if(auth()->user()->role === 'aluno')
+                <a href="{{ route('student.workout.active', [$workout, $day]) }}"
+                   style="flex-shrink:0;display:flex;align-items:center;gap:5px;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:800;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);text-decoration:none;">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    Iniciar
+                </a>
+                @endif
+                <button type="button" @click="open = !open" style="flex-shrink:0;">
+                    <svg class="w-5 h-5 text-slate-500 transition-transform" :class="{ 'rotate-180': open }"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+            </div>
 
             {{-- Exercises --}}
             <div x-show="open" x-transition
