@@ -222,6 +222,8 @@ Route::middleware(['auth', 'subscription'])->group(function () {
     Route::middleware('role:aluno')->group(function () {
         Route::get('/aluno/dashboard', [StudentController::class, 'dashboard'])->name('student.dashboard');
         Route::get('/aluno/evolucao', [StudentController::class, 'evolution'])->name('student.evolution');
+        Route::get('/aluno/progresso', [StudentController::class, 'progress'])->name('student.progress');
+        Route::get('/aluno/perfil', [StudentController::class, 'profile'])->name('student.profile');
     });
 });
 
