@@ -224,13 +224,54 @@
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto hide-scrollbar px-4 md:px-8 pb-4 md:pb-8 pt-0">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto hide-scrollbar px-4 md:px-8 pt-0 {{ auth()->check() && auth()->user()->role === 'aluno' ? 'pb-24 md:pb-8' : 'pb-4 md:pb-8' }}">
                 <div class="max-w-7xl mx-auto">
                     @yield('content')
                 </div>
             </main>
         </div>
     </div>
+
+    {{-- Bottom Navigation (aluno mobile only) --}}
+    @if(auth()->check() && auth()->user()->role === 'aluno')
+    <nav class="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+         style="background:rgba(11,18,32,0.97);border-top:1px solid rgba(51,65,85,0.6);backdrop-filter:blur(16px);padding-bottom:env(safe-area-inset-bottom);">
+        <div class="flex items-center justify-around h-16 px-2">
+            {{-- Home --}}
+            <a href="{{ route('student.dashboard') }}"
+               class="flex flex-col items-center justify-center gap-1 flex-1 py-2 rounded-xl transition-colors {{ request()->routeIs('student.dashboard') ? 'text-cyan-400' : 'text-slate-500' }}">
+                <svg class="w-5 h-5" fill="{{ request()->routeIs('student.dashboard') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span class="text-[10px] font-semibold">Início</span>
+            </a>
+            {{-- Treinos --}}
+            <a href="{{ route('workouts.index') }}"
+               class="flex flex-col items-center justify-center gap-1 flex-1 py-2 rounded-xl transition-colors {{ request()->routeIs('workouts.*') ? 'text-cyan-400' : 'text-slate-500' }}">
+                <svg class="w-5 h-5" fill="{{ request()->routeIs('workouts.*') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span class="text-[10px] font-semibold">Treinos</span>
+            </a>
+            {{-- Dieta --}}
+            <a href="{{ route('diets.index') }}"
+               class="flex flex-col items-center justify-center gap-1 flex-1 py-2 rounded-xl transition-colors {{ request()->routeIs('diets.*') ? 'text-cyan-400' : 'text-slate-500' }}">
+                <svg class="w-5 h-5" fill="{{ request()->routeIs('diets.*') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                </svg>
+                <span class="text-[10px] font-semibold">Dieta</span>
+            </a>
+            {{-- Evolução --}}
+            <a href="{{ route('student.evolution') }}"
+               class="flex flex-col items-center justify-center gap-1 flex-1 py-2 rounded-xl transition-colors {{ request()->routeIs('student.evolution') ? 'text-cyan-400' : 'text-slate-500' }}">
+                <svg class="w-5 h-5" fill="{{ request()->routeIs('student.evolution') ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                </svg>
+                <span class="text-[10px] font-semibold">Evolução</span>
+            </a>
+        </div>
+    </nav>
+    @endif
 
     {{-- ── Global Toast Notifications ─────────────────────────── --}}
     @php
