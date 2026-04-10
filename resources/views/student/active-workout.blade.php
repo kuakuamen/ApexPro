@@ -376,7 +376,7 @@ function activeWorkout(exercises, todayLogs) {
         },
 
         logExercise(exerciseId) {
-            fetch(`{{ route('student.exercise.toggle') }}`.replace(/\/\d+\/toggle$/, `/${exerciseId}/toggle`), {
+            fetch(`/aluno/exercicio/${exerciseId}/toggle`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
