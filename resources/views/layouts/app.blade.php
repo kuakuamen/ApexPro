@@ -59,7 +59,7 @@
         .numInputWrapper span svg path { fill:#94a3b8; }
     </style>
 </head>
-<body class="{{ auth()->check() ? 'bg-personal-dark' : 'bg-stone-100' }} font-sans antialiased" x-data="{ sidebarOpen: false }">
+<body class="{{ auth()->check() && auth()->user()->role === 'aluno' ? '' : (auth()->check() ? 'bg-personal-dark' : 'bg-stone-100') }} font-sans antialiased" style="{{ auth()->check() && auth()->user()->role === 'aluno' ? 'background:#0d0f1a;' : '' }}" x-data="{ sidebarOpen: false }">
     <div class="flex h-screen overflow-hidden">
         
            <!-- Backdrop (Click outside to close) -->
