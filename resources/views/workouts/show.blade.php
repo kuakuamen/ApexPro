@@ -125,14 +125,26 @@
     @endif
 
     @if(auth()->user()->role === 'aluno')
-    {{-- PROGRESS BAR --}}
-    @php $totalEx = $workout->days->sum(fn($d) => $d->exercises->count()); @endphp
+    {{-- PROGRESS BAR — total = exercícios do dia sendo trabalhado hoje --}}
+    @php
+        $todayLogIds = $todayLogs ?? [];
+        // Acha o dia que tem exercícios logados hoje; senão usa o primeiro dia
+        $workingDay = $workout->days->first(
+            fn($d) => $d->exercises->contains(fn($ex) => in_array($ex->id, $todayLogIds))
+        ) ?? $workout->days->first();
+        $todayTotal = $workingDay ? $workingDay->exercises->count() : 1;
+        $todayDone  = count($todayLogIds);
+    @endphp
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;"
-         x-data="progressTracker({{ $totalEx }}, {{ count($todayLogs ?? []) }}, {{ $workout->id }})">
+         x-data="{ current: {{ $todayDone }}, total: {{ $todayTotal }} }"
+         @progress-change.window="current = Math.max(0, Math.min(total, current + $event.detail.value))">
         <div class="flex items-center justify-between mb-3">
             <div>
                 <p class="text-white font-bold text-sm">Progresso de Hoje</p>
-                <p class="text-slate-500 text-xs mt-0.5"><span x-text="current"></span> de {{ $totalEx }} exercícios</p>
+                <p class="text-slate-500 text-xs mt-0.5">
+                    <span x-text="current"></span> de {{ $todayTotal }} exercícios
+                    @if($workingDay) · {{ $workingDay->name }} @endif
+                </p>
             </div>
             <p class="text-indigo-400 font-extrabold text-2xl" x-text="Math.round((current / total) * 100) + '%'"></p>
         </div>
@@ -429,37 +441,5 @@
         }
     }
 
-    function progressTracker(total, initialCurrent, workoutId) {
-        const keyCount = `workout_progress_${workoutId}`;
-        const keyDate  = `workout_progress_date_${workoutId}`;
-
-        function getWeekStart() {
-            const t = new Date(), d = t.getDay();
-            const diff = t.getDate() - d + (d === 0 ? -6 : 1);
-            return new Date(t.setDate(diff)).toISOString().split('T')[0];
-        }
-
-        function load() {
-            const saved = localStorage.getItem(keyDate);
-            const wk = getWeekStart();
-            if (!saved || saved !== wk) {
-                localStorage.setItem(keyCount, initialCurrent);
-                localStorage.setItem(keyDate, wk);
-                return initialCurrent;
-            }
-            return parseInt(localStorage.getItem(keyCount) || initialCurrent);
-        }
-
-        return {
-            total,
-            current: load(),
-            init() {
-                window.addEventListener('progress-change', e => {
-                    this.current = Math.max(0, Math.min(this.total, this.current + e.detail.value));
-                    localStorage.setItem(keyCount, this.current);
-                });
-            }
-        }
-    }
 </script>
 @endsection
