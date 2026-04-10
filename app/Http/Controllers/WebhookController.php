@@ -320,13 +320,15 @@ class WebhookController extends Controller
         $subscription = $transaction->subscription;
         if ($subscription) {
             $now = Carbon::now();
+            $nextBillingAt = $now->copy()->addDays(30);
 
             $subscription->update([
                 'status'              => 'active',
                 'starts_at'           => $now,
-                'expires_at'          => $now->copy()->addDays(30),
+                'expires_at'          => $nextBillingAt,
                 'last_payment_method' => $transaction->payment_method,
                 'last_paid_at'        => $now,
+                'next_billing_at'     => $nextBillingAt,
             ]);
 
             $user = $subscription->user;
