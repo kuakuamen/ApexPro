@@ -2,12 +2,12 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
-use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Facades\Auth;
 use App\Models\ProfessionalStudent;
 use App\Models\StudentPlan;
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 class CheckSubscription
 {
@@ -26,7 +26,7 @@ class CheckSubscription
 
     public function handle(Request $request, Closure $next): Response
     {
-        /** @var \App\Models\User $user */
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
         if (!$user) {
@@ -38,7 +38,6 @@ class CheckSubscription
         }
 
         if ($user->role === 'personal') {
-            // Verificar se rota é permitida mesmo expirado
             foreach ($this->allowedRoutes as $pattern) {
                 if ($request->routeIs($pattern)) {
                     return $next($request);
@@ -47,31 +46,18 @@ class CheckSubscription
 
             $subscription = $user->professionalSubscription;
 
-            // Sem assinatura ou suspensa/cancelada → renovação
-            if (!$subscription || in_array($subscription->status, ['suspended', 'cancelled'])) {
+            if (!$subscription || in_array($subscription->status, ['suspended', 'cancelled'], true)) {
                 return redirect()->route('subscription.renew');
             }
 
-            // Assinatura pendente (aguardando pagamento)
-            // Se o período pago ainda está válido, permite acesso normalmente
-            if ($subscription->status === 'pending') {
-                if ($subscription->expires_at && $subscription->expires_at->isFuture()) {
-                    return $next($request);
-                }
-                return redirect()->route('subscription.renew');
-            }
-
-            // Ativa → tudo ok
-            if ($subscription->isActive()) {
+            if ($subscription->canAccessPlatform()) {
                 return $next($request);
             }
 
-            // Venceu → bloqueia imediatamente, sem grace period
             return redirect()->route('subscription.renew');
         }
 
         if ($user->role === 'aluno') {
-            // Bloqueio por inadimplência financeira
             $isSuspended = StudentPlan::where('student_id', $user->id)
                 ->where('status', 'suspended')
                 ->exists();
@@ -79,13 +65,13 @@ class CheckSubscription
             if ($isSuspended) {
                 if (!$request->routeIs('logout') && !$request->routeIs('login')) {
                     Auth::logout();
+
                     return redirect()->route('login')->withErrors([
-                        'email' => 'Seu acesso está suspenso por inadimplência. Entre em contato com seu personal trainer.'
+                        'email' => 'Seu acesso esta suspenso por inadimplencia. Entre em contato com seu personal trainer.',
                     ]);
                 }
             }
 
-            // Bloqueio por expiração da assinatura do personal
             $link = ProfessionalStudent::where('student_id', $user->id)
                 ->where('type', 'personal')
                 ->with('professional')
@@ -93,11 +79,18 @@ class CheckSubscription
 
             if ($link && $link->professional) {
                 $personal = $link->professional;
-                if ($personal->subscription_expires_at && $personal->subscription_expires_at->isPast()) {
+                $personalSubscription = $personal->professionalSubscription;
+
+                $personalHasAccess = $personalSubscription
+                    ? $personalSubscription->canAccessPlatform()
+                    : !($personal->subscription_expires_at && $personal->subscription_expires_at->isPast());
+
+                if (!$personalHasAccess) {
                     if (!$request->routeIs('logout') && !$request->routeIs('login')) {
                         Auth::logout();
+
                         return redirect()->route('login')->withErrors([
-                            'email' => 'O acesso ao sistema foi suspenso temporariamente. O plano do seu Personal Trainer expirou.'
+                            'email' => 'O acesso ao sistema foi suspenso temporariamente. O plano do seu Personal Trainer expirou.',
                         ]);
                     }
                 }

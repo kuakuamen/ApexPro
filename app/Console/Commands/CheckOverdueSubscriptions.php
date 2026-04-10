@@ -10,20 +10,32 @@ use Illuminate\Support\Facades\Log;
 class CheckOverdueSubscriptions extends Command
 {
     protected $signature = 'subscription:check-overdue';
-    protected $description = 'Verifica assinaturas vencidas e suspende acesso após grace period';
+    protected $description = 'Verifica assinaturas vencidas e suspende acesso fora da janela tecnica de cobranca.';
 
     public function handle(): int
     {
         $now = Carbon::now();
+        $windowHours = max(0, (int) config('services.mercadopago.processing_window_hours', 0));
 
-        // active com expires_at vencido → suspended + bloqueia user imediatamente (sem grace period)
         $expired = ProfessionalSubscription::whereIn('status', ['active', 'overdue'])
             ->whereNotNull('expires_at')
             ->where('expires_at', '<', $now)
             ->get();
 
+        $blockedCount = 0;
+
         foreach ($expired as $sub) {
+            if (
+                $windowHours > 0
+                && !empty($sub->mp_preapproval_id)
+                && $sub->expires_at
+                && $now->lte($sub->expires_at->copy()->addHours($windowHours))
+            ) {
+                continue;
+            }
+
             $sub->update(['status' => 'suspended']);
+            $blockedCount++;
 
             $user = $sub->user;
             if ($user) {
@@ -32,7 +44,7 @@ class CheckOverdueSubscriptions extends Command
             }
         }
 
-        $this->info("{$expired->count()} assinaturas expiradas → acesso bloqueado.");
+        $this->info("{$blockedCount} assinaturas expiradas -> acesso bloqueado.");
 
         return self::SUCCESS;
     }

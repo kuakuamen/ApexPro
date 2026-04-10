@@ -52,8 +52,8 @@ return [
         'test_public_key'   => env('MP_TEST_PUBLIC_KEY'),
         'mode'              => env('MP_MODE', 'live'),
         'webhook_secret'    => env('MP_WEBHOOK_SECRET'),
-
         'back_url'          => env('MP_BACK_URL'),
+        'processing_window_hours' => env('MP_PROCESSING_WINDOW_HOURS', 3),
     ],
 
 ];
