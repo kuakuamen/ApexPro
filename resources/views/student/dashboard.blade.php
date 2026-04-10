@@ -2,157 +2,243 @@
 
 @section('content')
 @php
-    $hour = now()->setTimezone('America/Sao_Paulo')->hour;
+    use Carbon\Carbon;
+
+    $now   = Carbon::now()->setTimezone('America/Sao_Paulo');
+    $hour  = $now->hour;
     $greeting = $hour < 12 ? 'Bom dia' : ($hour < 18 ? 'Boa tarde' : 'Boa noite');
     $firstName = explode(' ', auth()->user()->name)[0];
 
+    // Data formatada
+    $days   = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+    $months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    $dateStr = $days[$now->dayOfWeek] . ', ' . $now->day . ' ' . $months[$now->month - 1];
+
+    // Medidas
     $last = $weightHistory->last();
     $imc = null;
-    $imcLabel = null;
+    $bodyFat = $last?->body_fat;
     if ($last && $last->height > 0) {
         $h = $last->height > 3 ? $last->height / 100 : $last->height;
-        $imc = $last->weight / ($h * $h);
-        if ($imc < 18.5)      $imcLabel = 'Abaixo do peso';
-        elseif ($imc < 25)    $imcLabel = 'Peso normal';
-        elseif ($imc < 30)    $imcLabel = 'Sobrepeso';
-        else                  $imcLabel = 'Obesidade';
+        $imc = round($last->weight / ($h * $h), 1);
     }
+
+    // Dias da semana para o tracker (Seg=1 ... Dom=7)
+    $weekLabels = ['S','T','Q','Q','S','S','D'];
+    $todayIso   = $now->dayOfWeekIso; // 1=Seg, 7=Dom
 @endphp
 
-<div class="space-y-5 pt-4">
+<style>
+    .dash-bg {
+        min-height: 100vh;
+        background: #0d0f1a;
+    }
+    /* Hero card gradiente */
+    .workout-hero {
+        background: linear-gradient(135deg, #2d1b69 0%, #1a1040 40%, #0f172a 100%);
+        border: 1px solid rgba(124,58,237,0.3);
+        border-radius: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    .workout-hero::before {
+        content:'';
+        position:absolute;
+        top:-40px;right:-40px;
+        width:180px;height:180px;
+        background: radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%);
+        border-radius:50%;
+    }
+    /* Stat cards */
+    .stat-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        padding: 14px 10px;
+        text-align: center;
+        flex: 1;
+    }
+    /* Day circles */
+    .day-circle {
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 700;
+        flex-shrink: 0;
+    }
+    .day-done    { background: linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; }
+    .day-today   { background: rgba(99,102,241,0.2); border: 2px solid #6366f1; color:#a5b4fc; }
+    .day-pending { background: rgba(255,255,255,0.06); color: #4b5563; }
 
-    {{-- Greeting --}}
-    <div class="flex items-center justify-between">
-        <div>
-            <p class="text-sm text-slate-400 font-medium">{{ $greeting }},</p>
-            <h1 class="text-2xl font-extrabold text-white leading-tight">{{ $firstName }} 👋</h1>
-        </div>
-        @if(auth()->user()->profile_photo_url)
-            <img src="{{ auth()->user()->profile_photo_url }}" class="w-12 h-12 rounded-2xl object-cover border-2 border-cyan-500/30">
-        @else
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                {{ substr(auth()->user()->name, 0, 1) }}
-            </div>
-        @endif
-    </div>
+    /* Week progress bar */
+    .week-bar-bg { background: rgba(255,255,255,0.08); border-radius: 99px; height: 6px; overflow:hidden; }
+    .week-bar-fill { background: linear-gradient(90deg,#6366f1,#8b5cf6); border-radius: 99px; height: 6px; transition: width 0.6s ease; }
 
-    {{-- Quick Stats --}}
-    @if($last)
-    <div class="grid grid-cols-3 gap-3">
-        <div class="bg-zinc-900/70 border border-teal-900/40 rounded-2xl p-3 text-center">
-            <p class="text-xl font-extrabold text-white">{{ $last->weight ?? '—' }}</p>
-            <p class="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">kg</p>
-        </div>
-        <div class="bg-zinc-900/70 border border-teal-900/40 rounded-2xl p-3 text-center">
-            <p class="text-xl font-extrabold text-white">{{ $imc ? number_format($imc, 1) : '—' }}</p>
-            <p class="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">IMC</p>
-        </div>
-        <div class="bg-zinc-900/70 border border-teal-900/40 rounded-2xl p-3 text-center">
-            <p class="text-xl font-extrabold text-white">{{ $last->body_fat ? $last->body_fat . '%' : '—' }}</p>
-            <p class="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Gordura</p>
-        </div>
-    </div>
-    @endif
+    /* Last workout card */
+    .last-workout-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex; align-items: center; gap: 12px;
+    }
+    /* Streak card */
+    .streak-card {
+        background: linear-gradient(135deg, rgba(234,88,12,0.25) 0%, rgba(154,52,18,0.15) 100%);
+        border: 1px solid rgba(234,88,12,0.3);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex; align-items: center; gap: 12px;
+    }
+    /* Initiar btn */
+    .btn-start {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 12px;
+        padding: 10px 20px;
+        font-size: 14px; font-weight: 700; color: #fff;
+        text-decoration: none;
+        transition: all 0.2s;
+        active: scale(0.97);
+    }
+    .btn-start:hover { background: rgba(255,255,255,0.2); color:#fff; }
+</style>
 
-    {{-- Treino Ativo --}}
-    @if($activeWorkout)
-    <div class="relative overflow-hidden rounded-2xl" style="background:linear-gradient(135deg,rgba(6,182,212,0.15) 0%,rgba(124,58,237,0.12) 100%);border:1px solid rgba(6,182,212,0.25);">
-        <div class="absolute top-0 right-0 w-32 h-32 opacity-5">
-            <svg fill="currentColor" viewBox="0 0 24 24" class="text-cyan-400 w-full h-full"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        </div>
-        <div class="p-5">
-            <p class="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-2">Treino Atual</p>
-            <h2 class="text-xl font-extrabold text-white mb-1">{{ $activeWorkout->name }}</h2>
-            @if($activeWorkout->goal)
-                <p class="text-sm text-slate-400 mb-4">{{ $activeWorkout->goal }}</p>
+<div class="dash-bg pt-4 pb-2 space-y-4">
+
+    {{-- HEADER --}}
+    <div class="flex items-center justify-between px-1">
+        <div class="flex items-center gap-3">
+            {{-- Avatar --}}
+            @if(auth()->user()->profile_photo_url)
+                <img src="{{ auth()->user()->profile_photo_url }}" class="w-11 h-11 rounded-2xl object-cover border-2 border-purple-500/30">
+            @else
+                <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                     style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">
+                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                </div>
             @endif
-            <div class="flex items-center gap-3 mb-4 text-sm text-slate-300">
-                <span class="flex items-center gap-1">
-                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    {{ $activeWorkout->days->count() }} dias
-                </span>
-                <span class="flex items-center gap-1">
-                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                    {{ $activeWorkout->days->sum(fn($d) => $d->exercises->count()) }} exercícios
-                </span>
+            <div>
+                <p class="text-white font-bold text-base leading-tight">Olá, {{ $firstName }} 👋</p>
+                <p class="text-slate-400 text-xs">{{ $dateStr }}</p>
             </div>
-            <a href="{{ route('workouts.show', $activeWorkout) }}"
-               class="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-sm text-white active:scale-95 transition-transform"
-               style="background:linear-gradient(135deg,#0891b2,#7c3aed);">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Iniciar Treino
-            </a>
         </div>
+        {{-- Bell --}}
+        <button class="w-10 h-10 rounded-2xl flex items-center justify-center" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);">
+            <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+        </button>
+    </div>
+
+    {{-- WORKOUT HERO CARD --}}
+    @if($activeWorkout)
+    <div class="workout-hero p-5">
+        <div class="flex items-start justify-between mb-3">
+            <div>
+                <p class="text-purple-300 text-xs font-bold uppercase tracking-widest mb-1">Treino do Dia</p>
+                <h2 class="text-white text-2xl font-extrabold leading-tight">{{ $activeWorkout->name }}</h2>
+                <p class="text-slate-400 text-sm mt-1">
+                    {{ $activeWorkout->goal ?? 'Sem objetivo definido' }}
+                    @php $totalEx = $activeWorkout->days->sum(fn($d) => $d->exercises->count()); @endphp
+                    · {{ $totalEx }} exercícios
+                </p>
+            </div>
+            <div class="text-right flex-shrink-0 ml-3">
+                <span class="text-white text-2xl font-extrabold">{{ $weekDaysWorked }}</span>
+                <p class="text-slate-400 text-xs">de {{ $totalWorkoutDays }} dias</p>
+            </div>
+        </div>
+        <a href="{{ route('workouts.show', $activeWorkout) }}" class="btn-start mt-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            Iniciar Treino
+        </a>
     </div>
     @else
-    <div class="bg-zinc-900/70 border border-teal-900/30 rounded-2xl p-5 text-center">
-        <div class="w-12 h-12 rounded-2xl bg-teal-900/40 flex items-center justify-center mx-auto mb-3">
-            <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        </div>
-        <p class="text-slate-300 font-medium">Nenhum treino ativo</p>
-        <p class="text-slate-500 text-sm mt-1">Aguarde seu personal trainer atribuir um treino.</p>
+    <div class="workout-hero p-5 text-center">
+        <p class="text-purple-300 text-xs font-bold uppercase tracking-widest mb-2">Treino do Dia</p>
+        <p class="text-white font-bold text-lg">Sem treino ativo</p>
+        <p class="text-slate-400 text-sm mt-1">Aguarde seu personal trainer criar um treino.</p>
     </div>
     @endif
 
-    {{-- Última Avaliação --}}
+    {{-- STATS ROW --}}
     @if($last)
-    <div>
-        <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Última Avaliação</h3>
-            <span class="text-xs text-slate-500">{{ \Carbon\Carbon::parse($last->date)->format('d/m/Y') }}</span>
+    <div class="flex gap-3">
+        <div class="stat-card">
+            <p class="text-white text-xl font-extrabold">{{ $last->weight ?? '—' }}</p>
+            <p class="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">kg · Peso</p>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-            @if($last->muscle_mass)
-            <div class="bg-zinc-900/70 border border-teal-900/30 rounded-2xl p-4 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(6,182,212,0.15);">
-                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                </div>
-                <div>
-                    <p class="text-lg font-extrabold text-white">{{ $last->muscle_mass }} kg</p>
-                    <p class="text-[10px] text-slate-400 uppercase">Massa Musc.</p>
-                </div>
-            </div>
-            @endif
-            @if($imc)
-            <div class="bg-zinc-900/70 border border-teal-900/30 rounded-2xl p-4 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(124,58,237,0.15);">
-                    <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <div>
-                    <p class="text-lg font-extrabold text-white">{{ number_format($imc, 1) }}</p>
-                    <p class="text-[10px] text-slate-400 uppercase">{{ $imcLabel }}</p>
-                </div>
-            </div>
-            @endif
-            @if($last->waist)
-            <div class="bg-zinc-900/70 border border-teal-900/30 rounded-2xl p-4 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(16,185,129,0.15);">
-                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M3 12h18M3 18h18"/></svg>
-                </div>
-                <div>
-                    <p class="text-lg font-extrabold text-white">{{ $last->waist }} cm</p>
-                    <p class="text-[10px] text-slate-400 uppercase">Cintura</p>
-                </div>
-            </div>
-            @endif
-            @if($last->chest)
-            <div class="bg-zinc-900/70 border border-teal-900/30 rounded-2xl p-4 flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(234,179,8,0.15);">
-                    <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                </div>
-                <div>
-                    <p class="text-lg font-extrabold text-white">{{ $last->chest }} cm</p>
-                    <p class="text-[10px] text-slate-400 uppercase">Peito</p>
-                </div>
-            </div>
-            @endif
+        <div class="stat-card">
+            <p class="text-white text-xl font-extrabold">{{ $imc ?? '—' }}</p>
+            <p class="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">IMC</p>
+        </div>
+        <div class="stat-card">
+            <p class="text-xl font-extrabold {{ $bodyFat && $bodyFat > 25 ? 'text-pink-400' : 'text-white' }}">
+                {{ $bodyFat ? $bodyFat . '%' : '—' }}
+            </p>
+            <p class="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">Gordura</p>
+        </div>
+    </div>
+    @endif
+
+    {{-- ESTA SEMANA --}}
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:18px;">
+        <div class="flex items-center justify-between mb-4">
+            <p class="text-white font-bold text-sm">Esta Semana</p>
+            <p class="text-purple-400 text-sm font-bold">{{ $weekDaysWorked }} / {{ $totalWorkoutDays }} dias</p>
         </div>
 
-        <a href="{{ route('student.evolution') }}"
-           class="mt-3 flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold text-cyan-400 border border-cyan-900/50 bg-cyan-950/20 active:scale-95 transition-transform">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
-            Ver evolução completa
-        </a>
+        {{-- Day circles --}}
+        <div class="flex justify-between mb-4">
+            @foreach($weekLabels as $idx => $label)
+                @php
+                    $isoDay  = $idx + 1; // 1=Seg...7=Dom
+                    $isDone  = in_array($isoDay, $logsThisWeek);
+                    $isToday = $isoDay === $todayIso;
+                    $class   = $isDone ? 'day-done' : ($isToday ? 'day-today' : 'day-pending');
+                @endphp
+                <div class="day-circle {{ $class }}">{{ $label }}</div>
+            @endforeach
+        </div>
+
+        {{-- Progress bar --}}
+        <div class="week-bar-bg">
+            <div class="week-bar-fill" style="width: {{ $totalWorkoutDays > 0 ? round(($weekDaysWorked / $totalWorkoutDays) * 100) : 0 }}%"></div>
+        </div>
+    </div>
+
+    {{-- ÚLTIMO TREINO --}}
+    @if($lastTrainingDate)
+    <a href="{{ $activeWorkout ? route('workouts.show', $activeWorkout) : route('workouts.index') }}" class="last-workout-card" style="text-decoration:none;">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(99,102,241,0.15);">
+            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Último Treino</p>
+            <p class="text-white text-sm font-bold mt-0.5">{{ $activeWorkout?->name ?? 'Treino' }}</p>
+            <p class="text-slate-400 text-xs mt-0.5">
+                há {{ $lastTrainingDaysAgo }} {{ $lastTrainingDaysAgo == 1 ? 'dia' : 'dias' }}
+            </p>
+        </div>
+        <svg class="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+    </a>
+    @endif
+
+    {{-- STREAK --}}
+    @if($streak > 0)
+    <div class="streak-card">
+        <span class="text-3xl flex-shrink-0">🔥</span>
+        <div>
+            <p class="text-orange-300 font-extrabold text-base">{{ $streak }} {{ $streak == 1 ? 'dia consecutivo' : 'dias consecutivos' }}!</p>
+            <p class="text-orange-400/70 text-sm">Continue assim, {{ $firstName }}!</p>
+        </div>
     </div>
     @endif
 

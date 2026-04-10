@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\BodyMeasurement;
 use App\Models\ProfessionalStudent;
+use App\Models\WorkoutLog;
+use Carbon\Carbon;
 
 class StudentController extends Controller
 {
@@ -31,13 +33,54 @@ class StudentController extends Controller
             $activeWorkout->load('days.exercises');
         }
 
-        // Histórico de peso (últimos 5 registros para o gráfico simples)
+        // Histórico de peso (últimos 5 registros)
         $weightHistory = $user->measurements()
             ->orderBy('date', 'asc')
             ->take(5)
             ->get();
 
-        return view('student.dashboard', compact('user', 'professional', 'activeWorkout', 'weightHistory'));
+        // Dias da semana com atividade (lun-dom da semana atual)
+        $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY);
+        $weekEnd   = Carbon::now()->endOfWeek(Carbon::SUNDAY);
+        $logsThisWeek = WorkoutLog::where('student_id', $user->id)
+            ->whereBetween('date', [$weekStart->toDateString(), $weekEnd->toDateString()])
+            ->pluck('date')
+            ->map(fn($d) => Carbon::parse($d)->dayOfWeekIso) // 1=seg ... 7=dom
+            ->unique()
+            ->values()
+            ->toArray();
+
+        // Total de dias treinados na semana
+        $weekDaysWorked = count($logsThisWeek);
+        $totalWorkoutDays = $activeWorkout ? $activeWorkout->days->count() : 5;
+
+        // Streak — dias consecutivos até hoje com pelo menos 1 log
+        $streak = 0;
+        $checkDay = Carbon::today();
+        while (true) {
+            $hasLog = WorkoutLog::where('student_id', $user->id)
+                ->whereDate('date', $checkDay->toDateString())
+                ->exists();
+            if (!$hasLog) break;
+            $streak++;
+            $checkDay->subDay();
+        }
+
+        // Último treino concluído (dia com logs, antes de hoje)
+        $lastTrainingDate = WorkoutLog::where('student_id', $user->id)
+            ->whereDate('date', '<', Carbon::today()->toDateString())
+            ->orderByDesc('date')
+            ->value('date');
+
+        $lastTrainingDaysAgo = $lastTrainingDate
+            ? Carbon::parse($lastTrainingDate)->diffInDays(Carbon::today())
+            : null;
+
+        return view('student.dashboard', compact(
+            'user', 'professional', 'activeWorkout', 'weightHistory',
+            'logsThisWeek', 'weekDaysWorked', 'totalWorkoutDays',
+            'streak', 'lastTrainingDate', 'lastTrainingDaysAgo'
+        ));
     }
 
     /**
