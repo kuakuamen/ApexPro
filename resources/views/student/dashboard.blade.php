@@ -195,7 +195,9 @@
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:18px;">
         <div class="flex items-center justify-between mb-4">
             <p class="text-white font-bold text-sm">Esta Semana</p>
-            <p class="text-purple-400 text-sm font-bold">{{ $weekDaysWorked }} / {{ $totalWorkoutDays }} dias</p>
+            @if($weekDaysWorked > 0)
+                <p class="text-purple-400 text-sm font-bold">{{ $weekDaysWorked }} {{ $weekDaysWorked === 1 ? 'dia' : 'dias' }} 🔥</p>
+            @endif
         </div>
 
         {{-- Day circles --}}
