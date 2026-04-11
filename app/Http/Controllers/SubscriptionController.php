@@ -418,7 +418,22 @@ class SubscriptionController extends Controller
                 'mp_external_reference' => $externalRef,
             ]);
 
-            return $this->processAsaas($asaas, $user, $plan, $subscription, $transaction, $paymentMethod, $request, isTrial: false, previousExpiresAt: $previousExpiresAt);
+            try {
+                return $this->processAsaas($asaas, $user, $plan, $subscription, $transaction, $paymentMethod, $request, isTrial: false, previousExpiresAt: $previousExpiresAt);
+            } catch (\Exception $e) {
+                // Desfaz transação criada mas mantém subscription existente (apenas restaura status anterior)
+                $transaction->delete();
+                if ($keepAccessDuringRenewal) {
+                    $subscription->update(['status' => 'active']);
+                } elseif ($existingSubscription?->status === 'cancelled') {
+                    $subscription->update(['status' => 'cancelled']);
+                }
+
+                Log::error('Asaas processRenew failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+                return back()->withInput()->withErrors([
+                    'payment' => 'Erro ao processar pagamento: ' . $e->getMessage(),
+                ]);
+            }
         });
     }
 
