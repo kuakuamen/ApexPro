@@ -208,7 +208,7 @@ class AsaasService
      */
     public function tokenizeCreditCard(string $customerId, array $cardData, array $holderInfo): string
     {
-        $response = $this->http()->post('/creditCards/tokenizeCreditCard', [
+        $response = $this->http()->post('/creditCard/tokenizeCreditCard', [
             'customer'   => $customerId,
             'creditCard' => [
                 'holderName'  => $cardData['holder_name'],
