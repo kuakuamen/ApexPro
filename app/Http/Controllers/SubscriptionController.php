@@ -369,8 +369,11 @@ class SubscriptionController extends Controller
                     ->with('info', 'Você está no período de teste gratuito até ' . $existingSubscription->trial_ends_at->format('d/m/Y') . '. A cobrança inicia automaticamente após esse período.');
             }
 
-            // Assinatura já ativa para o mesmo plano → não renova
-            if ($existingSubscription && $existingSubscription->plan_id === $planId && $existingSubscription->canAccessPlatform()) {
+            // Assinatura já ativa para o mesmo plano → não renova (ignorar se cancelada)
+            if ($existingSubscription
+                && $existingSubscription->status !== 'cancelled'
+                && $existingSubscription->plan_id === $planId
+                && $existingSubscription->canAccessPlatform()) {
                 return redirect()->route('personal.dashboard')
                     ->with('info', 'Sua assinatura já está ativa até ' . $existingSubscription->expires_at?->format('d/m/Y') . '.');
             }
