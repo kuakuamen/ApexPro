@@ -35,7 +35,8 @@
             </div>
             <h1 class="text-2xl font-bold text-white mb-2">Processando Pagamento</h1>
             <p class="text-sm text-zinc-400 mb-4">A cobranca foi criada. O acesso sera liberado somente apos a confirmacao do pagamento.</p>
-            <p class="text-xs text-zinc-500 mb-8">Se o status nao atualizar em ate 60s, recarregue a pagina.</p>
+            <p id="payment-status-note" class="text-xs text-zinc-500 mb-2">Estamos consultando automaticamente o status da cobranca.</p>
+            <p id="payment-status-meta" class="text-xs text-zinc-600 mb-8">Nenhuma confirmacao recebida ainda.</p>
             <a href="{{ route('plans.index') }}" class="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">Voltar aos planos</a>
 
             @else
@@ -53,7 +54,83 @@
 
 @if(in_array($transaction->status, ['in_process', 'pending']))
 <script>
-    setTimeout(() => window.location.reload(), 8000);
+    (() => {
+        const pollUrl = @json(route('subscription.status', $transaction->mp_external_reference));
+        const resultUrl = @json(route('subscription.payment-result', $transaction->mp_external_reference));
+        const dashboardUrl = @json(route('personal.dashboard'));
+        const noteEl = document.getElementById('payment-status-note');
+        const metaEl = document.getElementById('payment-status-meta');
+        const startedAt = Date.now();
+        let lastStatus = @json($transaction->status);
+        let timerId = null;
+
+        const terminalStatuses = new Set(['approved', 'rejected', 'cancelled', 'refunded', 'charged_back']);
+
+        function formatElapsed(ms) {
+            const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+        }
+
+        function setMeta(message) {
+            if (metaEl) {
+                metaEl.textContent = message;
+            }
+        }
+
+        async function pollStatus() {
+            try {
+                const response = await fetch(pollUrl, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    cache: 'no-store',
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                lastStatus = data.status || lastStatus;
+
+                if (data.is_approved || data.status === 'approved') {
+                    if (noteEl) {
+                        noteEl.textContent = 'Pagamento confirmado. Redirecionando para o dashboard...';
+                    }
+                    setMeta(`Aprovado apos ${formatElapsed(Date.now() - startedAt)}.`);
+                    clearInterval(timerId);
+                    window.location.href = dashboardUrl;
+                    return;
+                }
+
+                if (terminalStatuses.has(data.status) && data.status !== 'approved') {
+                    if (noteEl) {
+                        noteEl.textContent = 'Status final recebido. Atualizando a tela...';
+                    }
+                    setMeta(`Status final: ${data.status}.`);
+                    clearInterval(timerId);
+                    window.location.href = resultUrl;
+                    return;
+                }
+
+                setMeta(`Ultima consulta: ${formatElapsed(Date.now() - startedAt)} aguardando confirmacao (${lastStatus}).`);
+            } catch (error) {
+                setMeta('Falha temporaria ao consultar o status. Tentando novamente...');
+            }
+        }
+
+        pollStatus();
+        timerId = setInterval(pollStatus, 5000);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                pollStatus();
+            }
+        });
+    })();
 </script>
 @endif
 @endsection
