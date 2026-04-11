@@ -29,16 +29,17 @@ class AsaasWebhookController extends Controller
 
         match ($event) {
             'PAYMENT_RECEIVED',
-            'PAYMENT_CONFIRMED'        => $this->handlePaymentConfirmed($payload),
-            'PAYMENT_OVERDUE'          => $this->handlePaymentOverdue($payload),
+            'PAYMENT_CONFIRMED',
+            'PAYMENT_APPROVED_BY_RISK_ANALYSIS'  => $this->handlePaymentConfirmed($payload),
+            'PAYMENT_OVERDUE'                    => $this->handlePaymentOverdue($payload),
             'PAYMENT_DECLINED',
-            'PAYMENT_REPROVED_BY_RISK_ANALYSIS' => $this->handlePaymentDeclined($payload),
+            'PAYMENT_REPROVED_BY_RISK_ANALYSIS'  => $this->handlePaymentDeclined($payload),
             'PAYMENT_REFUNDED',
-            'PAYMENT_CHARGEBACK'       => $this->handlePaymentRefunded($payload),
-            'PAYMENT_DELETED'          => $this->handlePaymentDeleted($payload),
+            'PAYMENT_CHARGEBACK'                 => $this->handlePaymentRefunded($payload),
+            'PAYMENT_DELETED'                    => $this->handlePaymentDeleted($payload),
             'SUBSCRIPTION_DELETED',
-            'SUBSCRIPTION_INACTIVATED' => $this->handleSubscriptionDeleted($payload),
-            default                    => Log::info('Asaas Webhook: evento ignorado', ['event' => $event]),
+            'SUBSCRIPTION_INACTIVATED'           => $this->handleSubscriptionDeleted($payload),
+            default                              => Log::info('Asaas Webhook: evento ignorado', ['event' => $event]),
         };
 
         return response()->json(['ok' => true]);
