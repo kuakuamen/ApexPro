@@ -220,46 +220,62 @@ class WebhookController extends Controller
             'subscription_id' => $subscription->id,
         ]);
 
+        $isCurrentPreapproval = $subscription->mp_preapproval_id === $preapprovalId;
+
         switch ($mpStatus) {
             case 'authorized':
                 $this->handlePreapprovalAuthorized($subscription, $info, $preapprovalId);
                 break;
 
             case 'paused':
-                $subscription->update([
-                    'status'                => 'overdue',
-                    'mp_preapproval_status' => 'paused',
-                ]);
+                if ($isCurrentPreapproval) {
+                    $subscription->update([
+                        'status'                => 'overdue',
+                        'mp_preapproval_status' => 'paused',
+                    ]);
+                }
+
                 $this->syncLatestPendingCardTransaction($subscription, [
                     'mp_preapproval_id' => $preapprovalId,
                     'mp_status_detail'  => 'paused',
                     'status'            => 'rejected',
                     'failure_reason'    => 'preapproval_paused',
-                ]);
-                Log::info('MP Webhook: preapproval paused -> subscription overdue', [
+                ], $preapprovalId);
+
+                Log::info('MP Webhook: preapproval paused processed', [
                     'subscription_id' => $subscription->id,
+                    'current_preapproval' => $isCurrentPreapproval,
                 ]);
                 break;
 
             case 'cancelled':
-                $updateData = [
-                    'status'                => 'cancelled',
-                    'mp_preapproval_status' => 'cancelled',
-                ];
-                $subscription->update($updateData);
+                if ($isCurrentPreapproval) {
+                    $updateData = [
+                        'status'                => 'cancelled',
+                        'mp_preapproval_status' => 'cancelled',
+                    ];
+                    $subscription->update($updateData);
+                }
+
                 $this->syncLatestPendingCardTransaction($subscription, [
                     'mp_preapproval_id' => $preapprovalId,
                     'mp_status_detail'  => 'cancelled',
                     'status'            => 'cancelled',
                     'failure_reason'    => 'preapproval_cancelled',
-                ]);
+                ], $preapprovalId);
 
-                // Desativar user apenas se o acesso ja venceu
                 $user = $subscription->user;
-                if ($user && ($subscription->expires_at === null || $subscription->expires_at->isPast())) {
+                if (
+                    $isCurrentPreapproval
+                    && $user
+                    && ($subscription->expires_at === null || $subscription->expires_at->isPast())
+                ) {
                     $user->update(['is_active' => false]);
                 }
-                Log::info('MP Webhook: preapproval cancelled', ['subscription_id' => $subscription->id]);
+                Log::info('MP Webhook: preapproval cancelled processed', [
+                    'subscription_id' => $subscription->id,
+                    'current_preapproval' => $isCurrentPreapproval,
+                ]);
                 break;
 
             default:
@@ -286,7 +302,7 @@ class WebhookController extends Controller
         $this->syncLatestPendingCardTransaction($subscription, [
             'mp_preapproval_id' => $preapprovalId,
             'mp_status_detail'  => 'authorized',
-        ]);
+        ], $preapprovalId);
 
         Log::info('MP Webhook: preapproval authorized synchronized without activation', [
             'subscription_id' => $subscription->id,
@@ -294,13 +310,17 @@ class WebhookController extends Controller
         ]);
     }
 
-    protected function syncLatestPendingCardTransaction(ProfessionalSubscription $subscription, array $attributes): void
+    protected function syncLatestPendingCardTransaction(ProfessionalSubscription $subscription, array $attributes, ?string $preapprovalId = null): void
     {
-        $pendingTransaction = SubscriptionTransaction::where('subscription_id', $subscription->id)
+        $query = SubscriptionTransaction::where('subscription_id', $subscription->id)
             ->where('payment_method', 'credit_card')
-            ->where('status', 'pending')
-            ->latest()
-            ->first();
+            ->where('status', 'pending');
+
+        if ($preapprovalId !== null) {
+            $query->where('mp_preapproval_id', $preapprovalId);
+        }
+
+        $pendingTransaction = $query->latest()->first();
 
         if ($pendingTransaction) {
             $pendingTransaction->update($attributes);
