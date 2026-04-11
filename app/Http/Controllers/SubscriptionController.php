@@ -188,8 +188,10 @@ class SubscriptionController extends Controller
         $validated = $request->validate($rules);
 
         return DB::transaction(function () use ($validated, $plan, $planId, $paymentMethod, $request, $asaas) {
-            $trialDays   = (int) config('services.asaas.trial_days', 7);
-            $trialEndsAt = Carbon::now()->addDays($trialDays);
+            // PIX: paga primeiro, acessa depois. Cartão: trial de 7 dias imediato.
+            $isPixPayment = $paymentMethod === 'pix';
+            $trialDays    = $isPixPayment ? 0 : (int) config('services.asaas.trial_days', 7);
+            $trialEndsAt  = $trialDays > 0 ? Carbon::now()->addDays($trialDays) : null;
 
             $user = User::create([
                 'name'                    => $validated['name'],
@@ -203,7 +205,7 @@ class SubscriptionController extends Controller
                 'cref'                    => $validated['cref'] ?? null,
                 'password'                => Hash::make($validated['password']),
                 'role'                    => 'personal',
-                'is_active'               => true,   // acesso liberado durante trial
+                'is_active'               => !$isPixPayment, // PIX: bloqueado até pagar; Cartão: trial imediato
                 'plan_name'               => $plan['name'],
                 'max_students'            => $plan['max_students'],
                 'trial_ends_at'           => $trialEndsAt,
@@ -216,8 +218,8 @@ class SubscriptionController extends Controller
                 'plan_name'     => $plan['name'],
                 'max_students'  => $plan['max_students'],
                 'price'         => $plan['price'],
-                'status'        => 'trial',
-                'starts_at'     => Carbon::now(),
+                'status'        => $isPixPayment ? 'pending' : 'trial',
+                'starts_at'     => $isPixPayment ? null : Carbon::now(),
                 'expires_at'    => $trialEndsAt,
                 'trial_ends_at' => $trialEndsAt,
             ]);
@@ -234,7 +236,7 @@ class SubscriptionController extends Controller
             ]);
 
             try {
-                return $this->processAsaas($asaas, $user, $plan, $subscription, $transaction, $paymentMethod, $request, isTrial: true);
+                return $this->processAsaas($asaas, $user, $plan, $subscription, $transaction, $paymentMethod, $request, isTrial: !$isPixPayment);
             } catch (\Exception $e) {
                 if (Auth::check() && Auth::id() === $user->id) {
                     Auth::logout();
