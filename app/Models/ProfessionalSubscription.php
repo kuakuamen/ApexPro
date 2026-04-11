@@ -79,7 +79,7 @@ class ProfessionalSubscription extends Model
 
     public function canAccessPlatform(): bool
     {
-        if (in_array($this->status, ['suspended', 'cancelled'])) {
+        if ($this->status === 'suspended') {
             return false;
         }
 

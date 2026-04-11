@@ -46,7 +46,7 @@ class CheckSubscription
 
             $subscription = $user->professionalSubscription;
 
-            if (!$subscription || in_array($subscription->status, ['suspended', 'cancelled'], true)) {
+            if (!$subscription || $subscription->status === 'suspended') {
                 return redirect()->route('subscription.renew');
             }
 
