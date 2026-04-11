@@ -292,12 +292,22 @@ class WebhookController extends Controller
             ? Carbon::parse($info['next_payment_date'])
             : Carbon::now()->addDays(30);
 
-        $subscription->update([
+        $updateData = [
             'mp_preapproval_id'     => $preapprovalId,
             'mp_preapproval_status' => 'authorized',
             'mp_card_id'            => $info['card_id'] ?? $subscription->mp_card_id,
             'next_billing_at'       => $nextBillingAt,
-        ]);
+        ];
+
+        if ($subscription->expires_at && $subscription->expires_at->isFuture()) {
+            $updateData['status'] = 'active';
+        }
+
+        $subscription->update($updateData);
+
+        if (($updateData['status'] ?? null) === 'active' && $subscription->user) {
+            $subscription->user->update(['is_active' => true]);
+        }
 
         $this->syncLatestPendingCardTransaction($subscription, [
             'mp_preapproval_id' => $preapprovalId,
