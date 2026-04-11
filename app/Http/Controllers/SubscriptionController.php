@@ -130,18 +130,12 @@ class SubscriptionController extends Controller
             return redirect()->route('subscription.renew.checkout', ['plan' => $planId]);
         }
 
-        $trialDays = $this->signupTrialDays();
-
         return view('plans.checkout', [
             'plan'          => $this->plans[$planId],
             'isRenewal'     => false,
             'defaultMethod' => 'pix',
-            'trialEnabled'  => $trialDays > 0,
-            'trialDays'     => $trialDays,
-            'trialAmount'   => $trialDays > 0 ? 1.00 : 0,
-            'mpPublicKey'   => ((string) config('services.mercadopago.mode', 'live') === 'test'
-                ? config('services.mercadopago.test_public_key')
-                : config('services.mercadopago.public_key')),
+            'trialEnabled'  => true,
+            'trialDays'     => (int) config('services.asaas.trial_days', 7),
         ]);
     }
 
@@ -180,6 +174,16 @@ class SubscriptionController extends Controller
             'password'       => ['required', 'confirmed', Rules\Password::defaults()],
             'payment_method' => ['required', 'in:pix,credit_card'],
         ];
+
+        if ($paymentMethod === 'credit_card') {
+            $rules['card_holder_name']    = ['required', 'string', 'max:100'];
+            $rules['card_number']         = ['required', 'string'];
+            $rules['card_expiry_month']   = ['required', 'string'];
+            $rules['card_expiry_year']    = ['required', 'string'];
+            $rules['card_cvv']            = ['required', 'string', 'min:3', 'max:4'];
+            $rules['card_zip']            = ['nullable', 'string'];
+            $rules['card_address_number'] = ['nullable', 'string'];
+        }
 
         $validated = $request->validate($rules);
 
@@ -327,15 +331,11 @@ class SubscriptionController extends Controller
         }
 
         return view('plans.checkout', [
-            'plan'            => $this->plans[$planId],
-            'isRenewal'       => true,
-            'defaultMethod'   => request()->query('method', 'pix'),
-            'trialEnabled'    => false,
-            'trialDays'       => 0,
-            'trialAmount'     => 0,
-            'mpPublicKey'     => ((string) config('services.mercadopago.mode', 'live') === 'test'
-                ? config('services.mercadopago.test_public_key')
-                : config('services.mercadopago.public_key')),
+            'plan'          => $this->plans[$planId],
+            'isRenewal'     => true,
+            'defaultMethod' => request()->query('method', 'pix'),
+            'trialEnabled'  => false,
+            'trialDays'     => 0,
         ]);
     }
 
@@ -451,6 +451,25 @@ class SubscriptionController extends Controller
             default       => 'PIX',
         };
 
+        // 3.1 Tokenizar cartão se necessário
+        $cardToken = null;
+        if ($paymentMethod === 'credit_card') {
+            $cardToken = $asaas->tokenizeCreditCard($customerId, [
+                'holder_name'  => $request->input('card_holder_name'),
+                'number'       => preg_replace('/\D/', '', $request->input('card_number', '')),
+                'expiry_month' => $request->input('card_expiry_month'),
+                'expiry_year'  => $request->input('card_expiry_year'),
+                'ccv'          => $request->input('card_cvv'),
+            ], [
+                'name'           => $user->name,
+                'email'          => $user->email,
+                'cpf'            => $user->cpf,
+                'zip'            => preg_replace('/\D/', '', $request->input('card_zip', '01310100')),
+                'address_number' => $request->input('card_address_number', '0'),
+                'phone'          => $user->phone ?? '',
+            ]);
+        }
+
         // 4. Criar assinatura Asaas
         $asaasSubscription = $asaas->createSubscription([
             'customer_id'        => $customerId,
@@ -459,6 +478,7 @@ class SubscriptionController extends Controller
             'next_due_date'      => $nextDueDate,
             'description'        => 'Plano ' . $plan['name'] . ' - ApexPro AI',
             'external_reference' => $transaction->mp_external_reference,
+            'credit_card_token'  => $cardToken,
         ]);
 
         // 5. Salvar asaas_subscription_id
@@ -696,39 +716,30 @@ class SubscriptionController extends Controller
         return view('subscription.pix-waiting', compact('transaction'));
     }
 
-    public function paymentResult(string $ref, MercadoPagoService $mpService)
+    public function paymentResult(string $ref, AsaasService $asaas)
     {
         $transaction = SubscriptionTransaction::where('mp_external_reference', $ref)->firstOrFail();
 
         if ($transaction->status !== 'approved') {
             try {
-                // Pagamento atual ou preapproval recorrente
-                if (!empty($transaction->mp_payment_id)) {
-                    $paymentInfo  = $mpService->getPaymentStatus((string) $transaction->mp_payment_id);
-                    $remoteStatus = $paymentInfo['status'] ?? null;
-                } elseif (!empty($transaction->mp_preapproval_id)) {
-                    $info = $mpService->getPreapproval($transaction->mp_preapproval_id);
-                    $remoteStatus = match ($info['status'] ?? '') {
-                        'authorized', 'pending' => 'pending',
-                        'paused'                => 'rejected',
-                        'cancelled'             => 'cancelled',
-                        default                 => $info['status'] ?? null,
+                $asaasPaymentId = $transaction->asaas_payment_id;
+                if ($asaasPaymentId) {
+                    $payment      = $asaas->getPayment($asaasPaymentId);
+                    $remoteStatus = match ($payment['status'] ?? '') {
+                        'RECEIVED', 'CONFIRMED' => 'approved',
+                        'OVERDUE', 'REFUNDED'   => 'rejected',
+                        default                 => 'pending',
                     };
-                } else {
-                    $remoteStatus = null;
-                }
 
-                if ($remoteStatus === 'approved') {
-                    $transaction->update(['status' => 'approved', 'paid_at' => Carbon::now()]);
-                    $this->activateSubscription($transaction->fresh());
-                } elseif ($remoteStatus && $remoteStatus !== 'approved') {
-                    $transaction->update(['status' => in_array($remoteStatus, ['in_process']) ? 'pending' : $remoteStatus]);
+                    if ($remoteStatus === 'approved') {
+                        $transaction->update(['status' => 'approved', 'paid_at' => Carbon::now()]);
+                        $this->activateSubscription($transaction->fresh());
+                    } elseif ($remoteStatus !== 'pending') {
+                        $transaction->update(['status' => $remoteStatus]);
+                    }
                 }
             } catch (\Throwable $e) {
-                Log::warning('Falha ao sincronizar status no paymentResult', [
-                    'ref'   => $ref,
-                    'error' => $e->getMessage(),
-                ]);
+                Log::warning('paymentResult Asaas error', ['ref' => $ref, 'error' => $e->getMessage()]);
             }
         }
 
@@ -745,7 +756,7 @@ class SubscriptionController extends Controller
         return view('subscription.payment-result', compact('transaction'));
     }
 
-    public function checkStatus(string $ref, MercadoPagoService $mpService)
+    public function checkStatus(string $ref, AsaasService $asaas)
     {
         $transaction = SubscriptionTransaction::where('mp_external_reference', $ref)->first();
 
@@ -755,32 +766,24 @@ class SubscriptionController extends Controller
 
         if ($transaction->status !== 'approved') {
             try {
-                if (!empty($transaction->mp_payment_id)) {
-                    $paymentInfo  = $mpService->getPaymentStatus((string) $transaction->mp_payment_id);
-                    $remoteStatus = $paymentInfo['status'] ?? null;
-                } elseif (!empty($transaction->mp_preapproval_id)) {
-                    $info = $mpService->getPreapproval($transaction->mp_preapproval_id);
-                    $remoteStatus = match ($info['status'] ?? '') {
-                        'authorized', 'pending' => 'pending',
-                        'paused'                => 'rejected',
-                        'cancelled'             => 'cancelled',
-                        default                 => $info['status'] ?? null,
+                $asaasPaymentId = $transaction->asaas_payment_id;
+                if ($asaasPaymentId) {
+                    $payment      = $asaas->getPayment($asaasPaymentId);
+                    $remoteStatus = match ($payment['status'] ?? '') {
+                        'RECEIVED', 'CONFIRMED' => 'approved',
+                        'OVERDUE', 'REFUNDED'   => 'rejected',
+                        default                 => 'pending',
                     };
-                } else {
-                    $remoteStatus = null;
-                }
 
-                if ($remoteStatus === 'approved') {
-                    $transaction->update(['status' => 'approved', 'paid_at' => Carbon::now()]);
-                    $this->activateSubscription($transaction->fresh());
-                } elseif ($remoteStatus && $remoteStatus !== 'approved') {
-                    $transaction->update(['status' => in_array($remoteStatus, ['in_process']) ? 'pending' : $remoteStatus]);
+                    if ($remoteStatus === 'approved') {
+                        $transaction->update(['status' => 'approved', 'paid_at' => Carbon::now()]);
+                        $this->activateSubscription($transaction->fresh());
+                    } elseif ($remoteStatus === 'rejected') {
+                        $transaction->update(['status' => 'rejected']);
+                    }
                 }
             } catch (\Throwable $e) {
-                Log::warning('Falha ao sincronizar status MP via polling', [
-                    'ref'   => $ref,
-                    'error' => $e->getMessage(),
-                ]);
+                Log::warning('checkStatus Asaas error', ['ref' => $ref, 'error' => $e->getMessage()]);
             }
         }
 
