@@ -75,8 +75,9 @@ class AsaasWebhookController extends Controller
             return;
         }
 
-        // Não reativa assinatura que foi cancelada pelo usuário
-        if ($subscription->status === 'cancelled') {
+        // Não reativa assinatura cancelada pelo usuário — EXCETO se veio de uma renovação
+        // (nesse caso asaas_subscription_id já foi atualizado para o novo ID)
+        if ($subscription->status === 'cancelled' && $subscription->asaas_subscription_id !== $asaasSubId) {
             Log::info('Asaas Webhook: pagamento ignorado pois assinatura foi cancelada pelo usuário', [
                 'subscription_id' => $subscription->id,
             ]);
