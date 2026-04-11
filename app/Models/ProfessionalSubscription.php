@@ -57,7 +57,7 @@ class ProfessionalSubscription extends Model
 
     public function isInProcessingWindow(): bool
     {
-        if (in_array($this->status, ['suspended', 'cancelled'])) {
+        if (!in_array($this->status, ['active', 'overdue'], true)) {
             return false;
         }
 
