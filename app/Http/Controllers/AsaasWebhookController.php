@@ -29,11 +29,12 @@ class AsaasWebhookController extends Controller
 
         match ($event) {
             'PAYMENT_RECEIVED',
-            'PAYMENT_CONFIRMED'    => $this->handlePaymentConfirmed($payload),
-            'PAYMENT_OVERDUE'      => $this->handlePaymentOverdue($payload),
-            'PAYMENT_DELETED'      => $this->handlePaymentDeleted($payload),
-            'SUBSCRIPTION_DELETED' => $this->handleSubscriptionDeleted($payload),
-            default                => null,
+            'PAYMENT_CONFIRMED'        => $this->handlePaymentConfirmed($payload),
+            'PAYMENT_OVERDUE'          => $this->handlePaymentOverdue($payload),
+            'PAYMENT_DELETED'          => $this->handlePaymentDeleted($payload),
+            'SUBSCRIPTION_DELETED',
+            'SUBSCRIPTION_INACTIVATED' => $this->handleSubscriptionDeleted($payload),
+            default                    => null,
         };
 
         return response()->json(['ok' => true]);
@@ -158,7 +159,7 @@ class AsaasWebhookController extends Controller
 
     protected function handleSubscriptionDeleted(array $payload): void
     {
-        $asaasSubId = $payload['subscription']['id'] ?? null;
+        $asaasSubId = $payload['subscription']['id'] ?? ($payload['id'] ?? null);
 
         if (!$asaasSubId) {
             return;

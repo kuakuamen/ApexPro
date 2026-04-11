@@ -43,10 +43,8 @@
                     action="{{ $isRenewal ? route('subscription.renew.process', $plan['id']) : route('plans.process', $plan['id']) }}">
                     @csrf
 
-                    {{-- Campos ocultos preenchidos pelo JS --}}
+                    {{-- Campos ocultos --}}
                     <input type="hidden" name="payment_method" id="payment_method_input" value="pix">
-                    <input type="hidden" name="card_token" id="card_token_input" value="">
-                    <input type="hidden" name="installments" id="installments_input" value="1">
 
                     {{-- ===== DADOS DE CADASTRO (apenas novos usuários) ===== --}}
                     @if (!$isRenewal)
@@ -250,7 +248,73 @@
                             @endif
 
                             <div id="card-errors" class="mb-4 hidden rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200"></div>
-                            <div id="cardPaymentBrick_container"></div>
+
+                            {{-- Formulário de cartão Asaas --}}
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">Nome no cartão *</label>
+                                    <input type="text" id="card_holder_name" name="card_holder_name" autocomplete="cc-name"
+                                           placeholder="Como está impresso no cartão"
+                                           class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition uppercase">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">Número do cartão *</label>
+                                    <input type="text" id="card_number" name="card_number" autocomplete="cc-number"
+                                           maxlength="19" placeholder="0000 0000 0000 0000"
+                                           class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition font-mono tracking-widest">
+                                </div>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Mês *</label>
+                                        <select id="card_expiry_month" name="card_expiry_month" autocomplete="cc-exp-month"
+                                                class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-3 py-2.5 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition">
+                                            <option value="">Mês</option>
+                                            @for($m = 1; $m <= 12; $m++)
+                                            <option value="{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}">{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}</option>
+                                            @endfor
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Ano *</label>
+                                        <select id="card_expiry_year" name="card_expiry_year" autocomplete="cc-exp-year"
+                                                class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-3 py-2.5 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition">
+                                            <option value="">Ano</option>
+                                            @for($y = date('Y'); $y <= date('Y') + 10; $y++)
+                                            <option value="{{ $y }}">{{ $y }}</option>
+                                            @endfor
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">CVV *</label>
+                                        <input type="text" id="card_cvv" name="card_cvv" autocomplete="cc-csc"
+                                               maxlength="4" placeholder="123"
+                                               class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition font-mono">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">CEP do titular</label>
+                                        <input type="text" id="card_zip" name="card_zip" autocomplete="postal-code"
+                                               maxlength="9" placeholder="00000-000"
+                                               class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Nº do endereço</label>
+                                        <input type="text" id="card_address_number" name="card_address_number"
+                                               placeholder="123"
+                                               class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition">
+                                    </div>
+                                </div>
+
+                                <button type="button" id="btn-card" onclick="submitCard()"
+                                        class="w-full flex items-center justify-center gap-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-black font-semibold px-6 py-3.5 transition-all mt-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                    </svg>
+                                    {{ $trialEnabled ? 'Começar 7 dias grátis' : 'Confirmar Assinatura' }}
+                                </button>
+                                <p class="text-center text-xs text-zinc-500">🔒 Pagamento seguro via Asaas. Dados criptografados.</p>
+                            </div>
                         </div>
                     </div>
 
@@ -347,18 +411,12 @@
 }
 </style>
 
-<script src="https://sdk.mercadopago.com/js/v2"></script>
 <script>
 (function () {
-    const mpPublicKey    = @json($mpPublicKey);
-    const planPrice      = Number(@json($plan['price']));
     const trialEnabled   = @json($trialEnabled ?? false);
     const form           = document.getElementById('checkout-form');
     const pmInput        = document.getElementById('payment_method_input');
-    const cardTokenInput = document.getElementById('card_token_input');
-    const installInput   = document.getElementById('installments_input');
     const cardErrors     = document.getElementById('card-errors');
-    let brickReady       = false;
 
     // ── Data de nascimento (3 selects → hidden) ──────────────────────────────
     const birthDay   = document.getElementById('birth_day');
@@ -451,47 +509,58 @@
             panelCard.classList.remove('hidden');
             if (summaryPix)  summaryPix.classList.add('hidden');
             if (summaryCard) summaryCard.classList.remove('hidden');
-            if (!brickReady) initBrick();
+            // card form is already rendered
         }
     };
 
-    // ── MP Brick ──────────────────────────────────────────────────────────────
+    // ── Card helpers ──────────────────────────────────────────────────────────
     function showCardError(msg) {
         cardErrors.textContent = msg || 'Erro no cartão.';
         cardErrors.classList.remove('hidden');
     }
 
-    async function initBrick() {
-        if (!mpPublicKey) { showCardError('Chave pública MP não configurada.'); return; }
-        brickReady = true;
-        try {
-            const mp     = new MercadoPago(mpPublicKey, { locale: 'pt-BR' });
-            const bricks = mp.bricks();
-            await bricks.create('cardPayment', 'cardPaymentBrick_container', {
-                initialization: { amount: planPrice },
-                customization: {
-                    visual: { style: { theme: 'dark' }, hideRedirectionPanel: true },
-                    paymentMethods: { maxInstallments: 1 },
-                },
-                callbacks: {
-                    onReady: () => {},
-                    onError: (err) => showCardError(err?.message || 'Erro no formulário de cartão.'),
-                    onSubmit: (cardFormData) => {
-                        cardErrors.classList.add('hidden');
-                        const token = cardFormData?.token;
-                        if (!token) { showCardError('Token do cartão não gerado. Verifique os dados.'); return; }
-                        cardTokenInput.value = token;
-                        installInput.value   = cardFormData?.installments || 1;
-                        pmInput.value        = 'credit_card';
-                        form.submit();
-                    },
-                },
-            });
-        } catch (err) {
-            showCardError('Erro ao carregar formulário: ' + (err?.message || err));
-            brickReady = false;
-        }
+    // ── Card number mask ──────────────────────────────────────────────────────
+    const cardNumberField = document.getElementById('card_number');
+    if (cardNumberField) {
+        cardNumberField.addEventListener('input', function () {
+            let v = this.value.replace(/\D/g, '').substring(0, 16);
+            v = v.replace(/(.{4})/g, '$1 ').trim();
+            this.value = v;
+        });
     }
+
+    // ── CEP mask ──────────────────────────────────────────────────────────────
+    const cardZipField = document.getElementById('card_zip');
+    if (cardZipField) {
+        cardZipField.addEventListener('input', function () {
+            let v = this.value.replace(/\D/g, '').substring(0, 8);
+            if (v.length > 5) v = v.substring(0, 5) + '-' + v.substring(5);
+            this.value = v;
+        });
+    }
+
+    // ── Submit card ───────────────────────────────────────────────────────────
+    window.submitCard = function () {
+        cardErrors.classList.add('hidden');
+
+        const holderName   = document.getElementById('card_holder_name')?.value?.trim();
+        const cardNumber   = document.getElementById('card_number')?.value?.replace(/\D/g, '');
+        const expiryMonth  = document.getElementById('card_expiry_month')?.value;
+        const expiryYear   = document.getElementById('card_expiry_year')?.value;
+        const cvv          = document.getElementById('card_cvv')?.value?.trim();
+
+        if (!holderName)                     { showCardError('Informe o nome impresso no cartão.'); return; }
+        if (!cardNumber || cardNumber.length < 13) { showCardError('Número do cartão inválido.'); return; }
+        if (!expiryMonth || !expiryYear)     { showCardError('Informe o mês e ano de validade.'); return; }
+        if (!cvv || cvv.length < 3)          { showCardError('CVV inválido.'); return; }
+
+        pmInput.value = 'credit_card';
+
+        const btn = document.getElementById('btn-card');
+        if (btn) { btn.disabled = true; btn.textContent = 'Processando...'; }
+
+        form.submit();
+    };
     // ── Auto-select method (when coming from "Mudar Plano") ──────────────────
     const defaultMethod = @json($defaultMethod ?? 'pix');
     if (defaultMethod === 'credit_card') {
