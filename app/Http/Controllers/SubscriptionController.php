@@ -358,10 +358,42 @@ class SubscriptionController extends Controller
         $user = Auth::user();
 
         return DB::transaction(function () use ($user, $plan, $planId, $paymentMethod, $request, $mpService) {
+            $existingSubscription = ProfessionalSubscription::where('user_id', $user->id)->first();
+            $useImmediateRenewalCharge = $this->shouldUseImmediateRenewalCharge($existingSubscription, $paymentMethod);
+
+            if ($useImmediateRenewalCharge) {
+                $subscription = $existingSubscription
+                    ?: ProfessionalSubscription::create([
+                        'user_id'      => $user->id,
+                        'plan_id'      => $planId,
+                        'plan_name'    => $plan['name'],
+                        'max_students' => $plan['max_students'],
+                        'price'        => $plan['price'],
+                        'status'       => 'pending',
+                    ]);
+
+                $transaction = SubscriptionTransaction::create([
+                    'subscription_id'       => $subscription->id,
+                    'user_id'               => $user->id,
+                    'plan_id'               => $planId,
+                    'amount'                => $plan['price'],
+                    'payment_method'        => $paymentMethod,
+                    'status'                => 'pending',
+                    'mp_external_reference' => $this->makeRenewalChargeReference(),
+                ]);
+
+                return $this->processImmediateRenewalCardCharge(
+                    $mpService,
+                    $user,
+                    $plan,
+                    $subscription,
+                    $transaction,
+                    $request
+                );
+            }
             // Cancelar preapproval antigo se existir (troca de plano ou renovação manual)
             // Exceção: se o preapproval é de um trial ainda ativo (next_billing_at no futuro
             // e nenhum pagamento aprovado além do R$1 de validação), preservar o preapproval
-            $existingSubscription = ProfessionalSubscription::where('user_id', $user->id)->first();
             if ($existingSubscription && !empty($existingSubscription->mp_preapproval_id)) {
                 $isTrialActive = $existingSubscription->status === 'active'
                     && $existingSubscription->next_billing_at
@@ -422,6 +454,106 @@ class SubscriptionController extends Controller
 
             return $this->processMP($mpService, $user, $plan, $transaction, $paymentMethod, $request, isTrial: false);
         });
+    }
+
+    protected function shouldUseImmediateRenewalCharge(?ProfessionalSubscription $subscription, string $paymentMethod): bool
+    {
+        if ($paymentMethod !== 'credit_card') {
+            return false;
+        }
+
+        if (!$subscription) {
+            return true;
+        }
+
+        return !$subscription->canAccessPlatform();
+    }
+
+    protected function makeRenewalChargeReference(): string
+    {
+        return 'rrn-' . str_replace('-', '', (string) Str::uuid());
+    }
+
+    protected function processImmediateRenewalCardCharge(
+        MercadoPagoService $mpService,
+        User $user,
+        array $plan,
+        ProfessionalSubscription $subscription,
+        SubscriptionTransaction $transaction,
+        Request $request
+    ) {
+        $cardToken = (string) $request->input('card_token');
+
+        try {
+            $paymentResult = $mpService->createCardPayment(
+                $user,
+                $plan,
+                $cardToken,
+                (int) $request->input('installments', 1),
+                $transaction->mp_external_reference
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Falha na cobranca imediata da renovacao', [
+                'user_id' => $user->id,
+                'error'   => $e->getMessage(),
+            ]);
+
+            $transaction->delete();
+
+            return back()->withInput()->withErrors([
+                'payment' => 'Nao foi possivel cobrar o cartao agora. Tente novamente.',
+            ]);
+        }
+
+        $paymentStatus = (string) ($paymentResult['status'] ?? 'pending');
+        $transactionStatus = match ($paymentStatus) {
+            'approved'  => 'approved',
+            'rejected'  => 'rejected',
+            'cancelled' => 'cancelled',
+            default     => 'pending',
+        };
+
+        $transaction->update([
+            'status'           => $transactionStatus,
+            'mp_payment_id'    => $paymentResult['mp_payment_id'] ?? null,
+            'mp_status_detail' => $paymentResult['status_detail'] ?? $paymentStatus,
+            'card_last_four'   => $paymentResult['card_last_four'] ?? null,
+            'card_brand'       => $paymentResult['card_brand'] ?? null,
+            'failure_reason'   => in_array($transactionStatus, ['rejected', 'cancelled'], true)
+                ? ($paymentResult['failure_reason'] ?? $paymentResult['status_detail'] ?? $paymentStatus)
+                : null,
+            'mp_raw_response'  => $paymentResult['raw_response'] ?? null,
+            'paid_at'          => $transactionStatus === 'approved' ? Carbon::now() : null,
+        ]);
+
+        if ($transactionStatus === 'approved') {
+            $subscription->update([
+                'plan_id'      => $plan['id'],
+                'plan_name'    => $plan['name'],
+                'max_students' => $plan['max_students'],
+                'price'        => $plan['price'],
+            ]);
+
+            $this->activateSubscriptionUntil($transaction->fresh(), Carbon::now()->addDays(30));
+
+            Auth::login($user->fresh());
+
+            return redirect()
+                ->route('personal.dashboard')
+                ->with('success', 'Pagamento confirmado! Seu acesso foi reativado.');
+        }
+
+        if (in_array($transactionStatus, ['rejected', 'cancelled'], true)) {
+            $subscription->update(['status' => 'suspended']);
+            $user->update(['is_active' => false]);
+
+            return redirect()->route('subscription.payment-result', ['ref' => $transaction->mp_external_reference]);
+        }
+
+        Auth::login($user->fresh());
+
+        return redirect()->route('subscription.payment-result', ['ref' => $transaction->mp_external_reference])
+            ->with('info', 'Estamos confirmando a cobranca da renovacao.');
     }
 
     protected function processMP(MercadoPagoService $mpService, User $user, array $plan, SubscriptionTransaction $transaction, string $paymentMethod, Request $request, bool $isTrial = false)
@@ -597,8 +729,11 @@ class SubscriptionController extends Controller
 
         if ($transaction->status !== 'approved') {
             try {
-                // Preapproval (cartão recorrente)
-                if (!empty($transaction->mp_preapproval_id)) {
+                // Pagamento atual ou preapproval recorrente
+                if (!empty($transaction->mp_payment_id)) {
+                    $paymentInfo  = $mpService->getPaymentStatus((string) $transaction->mp_payment_id);
+                    $remoteStatus = $paymentInfo['status'] ?? null;
+                } elseif (!empty($transaction->mp_preapproval_id)) {
                     $info = $mpService->getPreapproval($transaction->mp_preapproval_id);
                     $remoteStatus = match ($info['status'] ?? '') {
                         'authorized', 'pending' => 'pending',
@@ -606,10 +741,6 @@ class SubscriptionController extends Controller
                         'cancelled'             => 'cancelled',
                         default                 => $info['status'] ?? null,
                     };
-                } elseif (!empty($transaction->mp_payment_id)) {
-                    // PIX / pagamento avulso
-                    $paymentInfo  = $mpService->getPaymentStatus((string) $transaction->mp_payment_id);
-                    $remoteStatus = $paymentInfo['status'] ?? null;
                 } else {
                     $remoteStatus = null;
                 }
@@ -651,7 +782,10 @@ class SubscriptionController extends Controller
 
         if ($transaction->status !== 'approved') {
             try {
-                if (!empty($transaction->mp_preapproval_id)) {
+                if (!empty($transaction->mp_payment_id)) {
+                    $paymentInfo  = $mpService->getPaymentStatus((string) $transaction->mp_payment_id);
+                    $remoteStatus = $paymentInfo['status'] ?? null;
+                } elseif (!empty($transaction->mp_preapproval_id)) {
                     $info = $mpService->getPreapproval($transaction->mp_preapproval_id);
                     $remoteStatus = match ($info['status'] ?? '') {
                         'authorized', 'pending' => 'pending',
@@ -659,9 +793,6 @@ class SubscriptionController extends Controller
                         'cancelled'             => 'cancelled',
                         default                 => $info['status'] ?? null,
                     };
-                } elseif (!empty($transaction->mp_payment_id)) {
-                    $paymentInfo  = $mpService->getPaymentStatus((string) $transaction->mp_payment_id);
-                    $remoteStatus = $paymentInfo['status'] ?? null;
                 } else {
                     $remoteStatus = null;
                 }
