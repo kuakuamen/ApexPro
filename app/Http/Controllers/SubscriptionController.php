@@ -392,6 +392,13 @@ class SubscriptionController extends Controller
 
             $keepAccessDuringRenewal = $existingSubscription?->canAccessPlatform() ?? false;
 
+            // Captura expires_at anterior se era cancelada com acesso ainda válido
+            // (usado em processAsaas para não cobrar em dobro)
+            $previousExpiresAt = ($existingSubscription?->status === 'cancelled'
+                && $existingSubscription?->expires_at?->isFuture())
+                ? $existingSubscription->expires_at
+                : null;
+
             $subscription = ProfessionalSubscription::updateOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -418,7 +425,7 @@ class SubscriptionController extends Controller
                 'mp_external_reference' => $externalRef,
             ]);
 
-            return $this->processAsaas($asaas, $user, $plan, $subscription, $transaction, $paymentMethod, $request, isTrial: false);
+            return $this->processAsaas($asaas, $user, $plan, $subscription, $transaction, $paymentMethod, $request, isTrial: false, previousExpiresAt: $previousExpiresAt);
         });
     }
 
@@ -432,7 +439,8 @@ class SubscriptionController extends Controller
         SubscriptionTransaction $transaction,
         string $paymentMethod,
         Request $request,
-        bool $isTrial = false
+        bool $isTrial = false,
+        ?Carbon $previousExpiresAt = null
     ) {
         // Trial só para quem NUNCA teve assinatura antes (primeira vez)
         $alreadyHadSubscription = ProfessionalSubscription::where('user_id', $user->id)
@@ -443,17 +451,9 @@ class SubscriptionController extends Controller
             ? (int) config('services.asaas.trial_days', 7)
             : 0;
 
-        // Se o usuário reativou e ainda tem acesso válido de um plano anterior cancelado,
-        // a primeira cobrança só ocorre quando esse acesso expirar (sem cobrar em dobro)
-        $previousSub = ProfessionalSubscription::where('user_id', $user->id)
-            ->where('status', 'cancelled')
-            ->whereNotNull('expires_at')
-            ->where('expires_at', '>', Carbon::now())
-            ->latest()
-            ->first();
-
-        if ($previousSub && $previousSub->expires_at->isFuture()) {
-            $nextDueDate = $previousSub->expires_at->format('Y-m-d');
+        // Se reativou com acesso ainda válido → primeira cobrança só após expirar (sem cobrar em dobro)
+        if ($previousExpiresAt && $previousExpiresAt->isFuture()) {
+            $nextDueDate = $previousExpiresAt->format('Y-m-d');
         } else {
             $nextDueDate = Carbon::now()->addDays($trialDays)->format('Y-m-d');
         }
