@@ -431,8 +431,23 @@ class SubscriptionController extends Controller
         Request $request,
         bool $isTrial = false
     ) {
-        $trialDays   = $isTrial ? (int) config('services.asaas.trial_days', 7) : 0;
-        $nextDueDate = Carbon::now()->addDays($trialDays)->format('Y-m-d');
+        $trialDays = $isTrial ? (int) config('services.asaas.trial_days', 7) : 0;
+
+        // Se o usuário reativou e ainda tem acesso válido de um plano anterior cancelado,
+        // a primeira cobrança só ocorre quando esse acesso expirar (sem cobrar em dobro)
+        $previousSub = ProfessionalSubscription::where('user_id', $user->id)
+            ->where('status', 'cancelled')
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '>', Carbon::now())
+            ->latest()
+            ->first();
+
+        if ($previousSub && $previousSub->expires_at->isFuture()) {
+            // Começa a cobrar somente após o acesso anterior expirar
+            $nextDueDate = $previousSub->expires_at->format('Y-m-d');
+        } else {
+            $nextDueDate = Carbon::now()->addDays($trialDays)->format('Y-m-d');
+        }
 
         // 1. Criar/buscar cliente Asaas
         $customer = $asaas->createOrFindCustomer([
