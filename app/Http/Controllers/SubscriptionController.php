@@ -797,7 +797,7 @@ class SubscriptionController extends Controller
         ]);
     }
 
-    public function cancelSubscription(Request $request, MercadoPagoService $mpService)
+    public function cancelSubscription(Request $request, AsaasService $asaas)
     {
         /** @var User $user */
         $user         = Auth::user();
@@ -807,21 +807,21 @@ class SubscriptionController extends Controller
             return back()->withErrors(['cancel' => 'Nenhuma assinatura encontrada.']);
         }
 
-        if (!empty($subscription->mp_preapproval_id)) {
+        // Cancela no Asaas se houver assinatura vinculada
+        if (!empty($subscription->asaas_subscription_id)) {
             try {
-                $mpService->cancelPreapproval($subscription->mp_preapproval_id);
+                $asaas->cancelSubscription($subscription->asaas_subscription_id);
             } catch (\Throwable $e) {
-                Log::warning('Falha ao cancelar preapproval no MP', [
-                    'preapproval_id' => $subscription->mp_preapproval_id,
-                    'user_id'        => $user->id,
-                    'error'          => $e->getMessage(),
+                Log::warning('Falha ao cancelar assinatura no Asaas', [
+                    'asaas_subscription_id' => $subscription->asaas_subscription_id,
+                    'user_id'               => $user->id,
+                    'error'                 => $e->getMessage(),
                 ]);
             }
         }
 
         $subscription->update([
-            'status'                => 'cancelled',
-            'mp_preapproval_status' => 'cancelled',
+            'status' => 'cancelled',
         ]);
 
         Log::info('Subscription cancelled by user', ['user_id' => $user->id, 'subscription_id' => $subscription->id]);
