@@ -31,10 +31,12 @@ class AsaasWebhookController extends Controller
             'PAYMENT_RECEIVED',
             'PAYMENT_CONFIRMED'        => $this->handlePaymentConfirmed($payload),
             'PAYMENT_OVERDUE'          => $this->handlePaymentOverdue($payload),
+            'PAYMENT_REFUNDED',
+            'PAYMENT_CHARGEBACK'       => $this->handlePaymentRefunded($payload),
             'PAYMENT_DELETED'          => $this->handlePaymentDeleted($payload),
             'SUBSCRIPTION_DELETED',
             'SUBSCRIPTION_INACTIVATED' => $this->handleSubscriptionDeleted($payload),
-            default                    => null,
+            default                    => Log::info('Asaas Webhook: evento ignorado', ['event' => $event]),
         };
 
         return response()->json(['ok' => true]);
@@ -197,6 +199,36 @@ class AsaasWebhookController extends Controller
         }
 
         Log::info('Asaas: assinatura cancelada', ['subscription_id' => $subscription->id]);
+    }
+
+    // ── Estorno / Chargeback ───────────────────────────────────────────────────
+
+    protected function handlePaymentRefunded(array $payload): void
+    {
+        $payment    = $payload['payment'] ?? [];
+        $asaasSubId = $payment['subscription'] ?? null;
+
+        $subscription = $this->findSubscription($asaasSubId, $payment['id'] ?? null);
+
+        if (!$subscription) {
+            return;
+        }
+
+        $subscription->update(['status' => 'overdue']);
+
+        $user = $subscription->user;
+        if ($user) {
+            $user->update(['is_active' => false]);
+        }
+
+        // Marca transação como estornada
+        $asaasPaymentId = $payment['id'] ?? null;
+        if ($asaasPaymentId) {
+            SubscriptionTransaction::where('asaas_payment_id', $asaasPaymentId)
+                ->update(['status' => 'refunded']);
+        }
+
+        Log::info('Asaas: pagamento estornado → acesso bloqueado', ['subscription_id' => $subscription->id]);
     }
 
     // ── Helper ─────────────────────────────────────────────────────────────────
