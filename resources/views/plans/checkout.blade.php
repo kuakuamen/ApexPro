@@ -37,16 +37,16 @@
 
         <div class="lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-start">
 
-            {{-- Formulário principal --}}
+            {{-- FormulÃ¡rio principal --}}
             <section class="lg:col-span-7">
                 <form id="checkout-form" method="POST"
                     action="{{ $isRenewal ? route('subscription.renew.process', $plan['id']) : route('plans.process', $plan['id']) }}">
                     @csrf
 
                     {{-- Campos ocultos --}}
-                    <input type="hidden" name="payment_method" id="payment_method_input" value="pix">
+                    <input type="hidden" name="payment_method" id="payment_method_input" value="{{ $defaultMethod === 'credit_card' ? 'credit_card' : 'pix' }}">
 
-                    {{-- ===== DADOS DE CADASTRO (apenas novos usuários) ===== --}}
+                    {{-- ===== DADOS DE CADASTRO (apenas novos usuÃ¡rios) ===== --}}
                     @if (!$isRenewal)
                     <div class="bg-zinc-900/50 rounded-2xl border border-white/5 p-6 sm:p-8 shadow-xl mb-6">
                         <h2 class="text-lg font-semibold text-white mb-6">Dados de Acesso</h2>
@@ -87,8 +87,8 @@
                                         @endfor
                                     </select>
                                     <select id="birth_month" class="rounded-lg bg-zinc-800/80 border border-white/10 px-3 py-2.5 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('birth_date') border-red-500 @enderror">
-                                        <option value="">Mês</option>
-                                        @foreach(['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $i => $m)
+                                        <option value="">MÃªs</option>
+                                        @foreach(['Janeiro','Fevereiro','MarÃ§o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $i => $m)
                                             <option value="{{ $i + 1 }}">{{ $m }}</option>
                                         @endforeach
                                     </select>
@@ -103,9 +103,9 @@
                                 @error('birth_date')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- Gênero --}}
+                            {{-- GÃªnero --}}
                             <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Gênero *</label>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">GÃªnero *</label>
                                 <select name="gender" required
                                     class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('gender') border-red-500 @enderror">
                                     <option value="">Selecione</option>
@@ -124,14 +124,14 @@
                                 @error('phone')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- CREF / CRN e Profissão --}}
+                            {{-- CREF / CRN e ProfissÃ£o --}}
                             <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Profissão</label>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">ProfissÃ£o</label>
                                 <select name="profession"
                                     class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('profession') border-red-500 @enderror">
                                     <option value="">Selecione</option>
                                     <option value="Personal Trainer" @selected(old('profession') === 'Personal Trainer')>Personal Trainer</option>
-                                    <option value="Educador Físico" @selected(old('profession') === 'Educador Físico')>Educador Físico</option>
+                                    <option value="Educador FÃ­sico" @selected(old('profession') === 'Educador FÃ­sico')>Educador FÃ­sico</option>
                                     <option value="Nutricionista" @selected(old('profession') === 'Nutricionista')>Nutricionista</option>
                                     <option value="Fisioterapeuta" @selected(old('profession') === 'Fisioterapeuta')>Fisioterapeuta</option>
                                     <option value="Outro" @selected(old('profession') === 'Outro')>Outro</option>
@@ -164,7 +164,7 @@
                     </div>
                     @endif
 
-                    {{-- ===== MÉTODO DE PAGAMENTO ===== --}}
+                    {{-- ===== MÃ‰TODO DE PAGAMENTO ===== --}}
                     <div class="bg-zinc-900/50 rounded-2xl border border-white/5 p-6 sm:p-8 shadow-xl">
                         <h2 class="text-lg font-semibold text-white mb-6">Forma de Pagamento</h2>
 
@@ -182,12 +182,12 @@
                                 class="flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all tab-btn relative"
                                 onclick="switchTab('card')">
                                 @if(!$isRenewal && $trialEnabled)
-                                <span style="position:absolute;top:-10px;right:8px;background:#10b981;color:#000;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;white-space:nowrap;">7 DIAS GRÁTIS</span>
+                                <span style="position:absolute;top:-10px;right:8px;background:#10b981;color:#000;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;white-space:nowrap;">{{ $trialDays }} DIAS GRATIS</span>
                                 @endif
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                 </svg>
-                                Cartão de Crédito
+                                CartÃ£o de CrÃ©dito
                             </button>
                         </div>
 
@@ -199,7 +199,7 @@
                                 </svg>
                                 <div>
                                     <p class="font-medium">Pagamento via PIX</p>
-                                    <p class="mt-1 text-teal-300/80">Após confirmar, você receberá um QR Code para realizar o pagamento. O acesso é liberado automaticamente após a confirmação.</p>
+                                    <p class="mt-1 text-teal-300/80">ApÃ³s confirmar, vocÃª receberÃ¡ um QR Code para realizar o pagamento. O acesso Ã© liberado automaticamente apÃ³s a confirmaÃ§Ã£o.</p>
                                 </div>
                             </div>
                             <button type="submit" id="btn-pix"
@@ -208,7 +208,7 @@
                             </button>
                         </div>
 
-                        {{-- Cartão panel --}}
+                        {{-- CartÃ£o panel --}}
                         <div id="panel-card" class="hidden">
 
                             @if(!$isRenewal && $trialEnabled)
@@ -218,10 +218,10 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 <div>
-                                    <p class="font-semibold text-emerald-300">7 dias grátis para novos usuários</p>
+                                    <p class="font-semibold text-emerald-300">{{ $trialDays }} dias gratis para novos usuarios</p>
                                     <p class="mt-1 text-emerald-200/80">
-                                        Cadastre seu cartão agora e tenha <strong>7 dias de acesso gratuito</strong>.<br>
-                                        No <strong>8º dia</strong>, a cobrança de <strong>R$ {{ number_format($plan['price'], 2, ',', '.') }}/mês</strong> inicia automaticamente. Cancele quando quiser.
+                                        Cadastre seu cartao agora e tenha <strong>{{ $trialDays }} dias de acesso gratuito</strong>.<br>
+                                        Apos esse periodo, a cobranca de <strong>R$ {{ number_format($plan['price'], 2, ',', '.') }}/mes</strong> inicia automaticamente. Cancele quando quiser.
                                     </p>
                                 </div>
                             </div>
@@ -247,73 +247,25 @@
                             </div>
                             @endif
 
-                            <div id="card-errors" class="mb-4 hidden rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200"></div>
-
-                            {{-- Formulário de cartão Asaas --}}
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">Nome no cartão *</label>
-                                    <input type="text" id="card_holder_name" name="card_holder_name" autocomplete="cc-name"
-                                           placeholder="Como está impresso no cartão"
-                                           class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition uppercase">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">Número do cartão *</label>
-                                    <input type="text" id="card_number" name="card_number" autocomplete="cc-number"
-                                           maxlength="19" placeholder="0000 0000 0000 0000"
-                                           class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition font-mono tracking-widest">
-                                </div>
-                                <div class="grid grid-cols-3 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Mês *</label>
-                                        <select id="card_expiry_month" name="card_expiry_month" autocomplete="cc-exp-month"
-                                                class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-3 py-2.5 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition">
-                                            <option value="">Mês</option>
-                                            @for($m = 1; $m <= 12; $m++)
-                                            <option value="{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}">{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}</option>
-                                            @endfor
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Ano *</label>
-                                        <select id="card_expiry_year" name="card_expiry_year" autocomplete="cc-exp-year"
-                                                class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-3 py-2.5 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition">
-                                            <option value="">Ano</option>
-                                            @for($y = date('Y'); $y <= date('Y') + 10; $y++)
-                                            <option value="{{ $y }}">{{ $y }}</option>
-                                            @endfor
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">CVV *</label>
-                                        <input type="text" id="card_cvv" name="card_cvv" autocomplete="cc-csc"
-                                               maxlength="4" placeholder="123"
-                                               class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition font-mono">
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">CEP do titular</label>
-                                        <input type="text" id="card_zip" name="card_zip" autocomplete="postal-code"
-                                               maxlength="9" placeholder="00000-000"
-                                               class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Nº do endereço</label>
-                                        <input type="text" id="card_address_number" name="card_address_number"
-                                               placeholder="123"
-                                               class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition">
-                                    </div>
+                                                        <div class="space-y-4">
+                                <div class="rounded-xl border border-white/10 bg-zinc-800/40 p-5 text-sm text-zinc-300">
+                                    <p class="font-medium text-white">Checkout seguro do Asaas</p>
+                                    <p class="mt-2 text-zinc-400">
+                                        Ao continuar, voce sera redirecionado para o checkout hospedado do Asaas para concluir o pagamento com seguranca.
+                                    </p>
+                                    <p class="mt-2 text-zinc-500">
+                                        Os dados do cartao nao passam mais pelo ApexPro.
+                                    </p>
                                 </div>
 
-                                <button type="button" id="btn-card" onclick="submitCard()"
+                                <button type="submit" id="btn-card"
                                         class="w-full flex items-center justify-center gap-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-black font-semibold px-6 py-3.5 transition-all mt-2">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                                     </svg>
-                                    {{ $trialEnabled ? 'Começar 7 dias grátis' : 'Confirmar Assinatura' }}
+                                    {{ $trialEnabled ? 'Continuar para o checkout' : 'Pagar com cartao' }}
                                 </button>
-                                <p class="text-center text-xs text-zinc-500">🔒 Pagamento seguro via Asaas. Dados criptografados.</p>
+                                <p class="text-center text-xs text-zinc-500">Pagamento seguro via checkout hospedado do Asaas.</p>
                             </div>
                         </div>
                     </div>
@@ -334,7 +286,7 @@
                         </div>
                         <div>
                             <p class="font-semibold text-white">{{ $plan['name'] }}</p>
-                            <p class="text-sm text-zinc-400">Até {{ number_format($plan['max_students']) }} alunos</p>
+                            <p class="text-sm text-zinc-400">AtÃ© {{ number_format($plan['max_students']) }} alunos</p>
                         </div>
                     </div>
 
@@ -349,29 +301,29 @@
                         @endforeach
                     </ul>
 
-                    {{-- Resumo de cobrança --}}
+                    {{-- Resumo de cobranÃ§a --}}
                     @if(!$isRenewal)
                     <div id="summary-pix" class="pt-4 border-t border-white/10">
                         <div class="flex justify-between items-center">
                             <span class="text-zinc-400 text-sm">Total hoje (PIX)</span>
                             <span class="text-2xl font-bold text-white">R$ {{ number_format($plan['price'], 2, ',', '.') }}</span>
                         </div>
-                        <p class="mt-3 text-xs text-zinc-500 text-center">Cobrança mensal recorrente. Cancele quando quiser.</p>
+                        <p class="mt-3 text-xs text-zinc-500 text-center">CobranÃ§a mensal recorrente. Cancele quando quiser.</p>
                     </div>
                     <div id="summary-card" class="pt-4 border-t border-white/10 hidden">
                         @if($trialEnabled)
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-zinc-400 text-sm">Hoje</span>
-                            <span class="text-lg font-bold text-emerald-400">Grátis</span>
+                            <span class="text-lg font-bold text-emerald-400">GrÃ¡tis</span>
                         </div>
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-zinc-400 text-sm">A partir do 8º dia</span>
-                            <span class="text-lg font-bold text-white">R$ {{ number_format($plan['price'], 2, ',', '.') }}/mês</span>
+                            <span class="text-zinc-400 text-sm">A partir do fim do trial</span>
+                            <span class="text-lg font-bold text-white">R$ {{ number_format($plan['price'], 2, ',', '.') }}/mÃªs</span>
                         </div>
                         <div class="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
-                            <span class="text-sm font-semibold text-emerald-300">7 dias grátis incluídos</span>
+                            <span class="text-sm font-semibold text-emerald-300">{{ $trialDays }} dias gratis incluidos</span>
                         </div>
-                        <p class="mt-3 text-xs text-zinc-500 text-center">Cancele antes do 8º dia e não será cobrado o plano.</p>
+                        <p class="mt-3 text-xs text-zinc-500 text-center">Cancele antes do fim do trial e nao sera cobrado o plano.</p>
                         @else
                         <div class="flex justify-between items-center">
                             <span class="text-zinc-400 text-sm">Primeira cobranca</span>
@@ -413,160 +365,101 @@
 
 <script>
 (function () {
-    const trialEnabled   = @json($trialEnabled ?? false);
-    const form           = document.getElementById('checkout-form');
-    const pmInput        = document.getElementById('payment_method_input');
-    const cardErrors     = document.getElementById('card-errors');
-
-    // ── Data de nascimento (3 selects → hidden) ──────────────────────────────
-    const birthDay   = document.getElementById('birth_day');
+    const form = document.getElementById('checkout-form');
+    const pmInput = document.getElementById('payment_method_input');
+    const birthDay = document.getElementById('birth_day');
     const birthMonth = document.getElementById('birth_month');
-    const birthYear  = document.getElementById('birth_year');
+    const birthYear = document.getElementById('birth_year');
     const birthInput = document.getElementById('birth_date_input');
 
     if (birthDay && birthMonth && birthYear && birthInput) {
-        function updateBirthDate() {
-            const d = birthDay.value, m = birthMonth.value, y = birthYear.value;
-            if (d && m && y) {
-                birthInput.value = y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-            } else {
-                birthInput.value = '';
-            }
-        }
+        const updateBirthDate = () => {
+            const d = birthDay.value;
+            const m = birthMonth.value;
+            const y = birthYear.value;
 
-        // Pré-popular se old() tiver valor
+            birthInput.value = d && m && y
+                ? `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+                : '';
+        };
+
         if (birthInput.value) {
             const parts = birthInput.value.split('-');
             if (parts.length === 3) {
-                birthYear.value  = parts[0];
-                birthMonth.value = parseInt(parts[1]).toString();
-                birthDay.value   = parseInt(parts[2]).toString();
+                birthYear.value = parts[0];
+                birthMonth.value = String(parseInt(parts[1], 10));
+                birthDay.value = String(parseInt(parts[2], 10));
             }
         }
 
-        [birthDay, birthMonth, birthYear].forEach(el => el.addEventListener('change', updateBirthDate));
+        [birthDay, birthMonth, birthYear].forEach((el) => el.addEventListener('change', updateBirthDate));
 
-        form.addEventListener('submit', function(e) {
+        form?.addEventListener('submit', (event) => {
             if (!birthInput.value) {
-                e.preventDefault();
-                birthDay.classList.add('border-red-500');
-                birthMonth.classList.add('border-red-500');
-                birthYear.classList.add('border-red-500');
+                event.preventDefault();
+                [birthDay, birthMonth, birthYear].forEach((el) => el.classList.add('border-red-500'));
                 birthDay.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }, true);
     }
 
-    // ── CPF mask ──────────────────────────────────────────────────────────────
     const cpfField = document.getElementById('cpf_input');
     if (cpfField) {
         cpfField.addEventListener('input', function () {
-            let v = this.value.replace(/\D/g, '').substring(0, 11);
-            v = v.replace(/(\d{3})(\d)/, '$1.$2');
-            v = v.replace(/(\d{3})\.(\d{3})(\d)/, '$1.$2.$3');
-            v = v.replace(/(\d{3})\.(\d{3})\.(\d{3})(\d{1,2})$/, '$1.$2.$3-$4');
-            this.value = v;
+            let value = this.value.replace(/\D/g, '').substring(0, 11);
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})\.(\d{3})(\d)/, '$1.$2.$3');
+            value = value.replace(/(\d{3})\.(\d{3})\.(\d{3})(\d{1,2})$/, '$1.$2.$3-$4');
+            this.value = value;
         });
     }
 
-    // ── Telefone mask ─────────────────────────────────────────────────────────
     const phoneField = document.getElementById('phone_input');
     if (phoneField) {
         phoneField.addEventListener('input', function () {
-            let v = this.value.replace(/\D/g, '').substring(0, 11);
-            if (v.length <= 10) {
-                v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-            } else {
-                v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
-            }
-            this.value = v;
+            let value = this.value.replace(/\D/g, '').substring(0, 11);
+            value = value.length <= 10
+                ? value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3')
+                : value.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+            this.value = value.trim();
         });
     }
 
-    // ── Tab switching ─────────────────────────────────────────────────────────
     window.switchTab = function (tab) {
-        const tabPix    = document.getElementById('tab-pix');
-        const tabCard   = document.getElementById('tab-card');
-        const panelPix  = document.getElementById('panel-pix');
+        const tabPix = document.getElementById('tab-pix');
+        const tabCard = document.getElementById('tab-card');
+        const panelPix = document.getElementById('panel-pix');
         const panelCard = document.getElementById('panel-card');
-
-        const summaryPix  = document.getElementById('summary-pix');
+        const summaryPix = document.getElementById('summary-pix');
         const summaryCard = document.getElementById('summary-card');
 
         if (tab === 'pix') {
             pmInput.value = 'pix';
-            tabPix.classList.add('tab-active');
-            tabCard.classList.remove('tab-active');
-            panelPix.classList.remove('hidden');
-            panelCard.classList.add('hidden');
-            if (summaryPix)  summaryPix.classList.remove('hidden');
-            if (summaryCard) summaryCard.classList.add('hidden');
-        } else {
-            pmInput.value = 'credit_card';
-            tabCard.classList.add('tab-active');
-            tabPix.classList.remove('tab-active');
-            panelPix.classList.add('hidden');
-            panelCard.classList.remove('hidden');
-            if (summaryPix)  summaryPix.classList.add('hidden');
-            if (summaryCard) summaryCard.classList.remove('hidden');
-            // card form is already rendered
+            tabPix?.classList.add('tab-active');
+            tabCard?.classList.remove('tab-active');
+            panelPix?.classList.remove('hidden');
+            panelCard?.classList.add('hidden');
+            summaryPix?.classList.remove('hidden');
+            summaryCard?.classList.add('hidden');
+            return;
         }
-    };
-
-    // ── Card helpers ──────────────────────────────────────────────────────────
-    function showCardError(msg) {
-        cardErrors.textContent = msg || 'Erro no cartão.';
-        cardErrors.classList.remove('hidden');
-    }
-
-    // ── Card number mask ──────────────────────────────────────────────────────
-    const cardNumberField = document.getElementById('card_number');
-    if (cardNumberField) {
-        cardNumberField.addEventListener('input', function () {
-            let v = this.value.replace(/\D/g, '').substring(0, 16);
-            v = v.replace(/(.{4})/g, '$1 ').trim();
-            this.value = v;
-        });
-    }
-
-    // ── CEP mask ──────────────────────────────────────────────────────────────
-    const cardZipField = document.getElementById('card_zip');
-    if (cardZipField) {
-        cardZipField.addEventListener('input', function () {
-            let v = this.value.replace(/\D/g, '').substring(0, 8);
-            if (v.length > 5) v = v.substring(0, 5) + '-' + v.substring(5);
-            this.value = v;
-        });
-    }
-
-    // ── Submit card ───────────────────────────────────────────────────────────
-    window.submitCard = function () {
-        cardErrors.classList.add('hidden');
-
-        const holderName   = document.getElementById('card_holder_name')?.value?.trim();
-        const cardNumber   = document.getElementById('card_number')?.value?.replace(/\D/g, '');
-        const expiryMonth  = document.getElementById('card_expiry_month')?.value;
-        const expiryYear   = document.getElementById('card_expiry_year')?.value;
-        const cvv          = document.getElementById('card_cvv')?.value?.trim();
-
-        if (!holderName)                     { showCardError('Informe o nome impresso no cartão.'); return; }
-        if (!cardNumber || cardNumber.length < 13) { showCardError('Número do cartão inválido.'); return; }
-        if (!expiryMonth || !expiryYear)     { showCardError('Informe o mês e ano de validade.'); return; }
-        if (!cvv || cvv.length < 3)          { showCardError('CVV inválido.'); return; }
 
         pmInput.value = 'credit_card';
-
-        const btn = document.getElementById('btn-card');
-        if (btn) { btn.disabled = true; btn.textContent = 'Processando...'; }
-
-        form.submit();
+        tabCard?.classList.add('tab-active');
+        tabPix?.classList.remove('tab-active');
+        panelPix?.classList.add('hidden');
+        panelCard?.classList.remove('hidden');
+        summaryPix?.classList.add('hidden');
+        summaryCard?.classList.remove('hidden');
     };
-    // ── Auto-select method (when coming from "Mudar Plano") ──────────────────
+
     const defaultMethod = @json($defaultMethod ?? 'pix');
     if (defaultMethod === 'credit_card') {
         switchTab('card');
+    } else {
+        switchTab('pix');
     }
-
 })();
 </script>
 @endsection
+
