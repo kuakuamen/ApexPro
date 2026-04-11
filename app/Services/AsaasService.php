@@ -111,6 +111,8 @@ class AsaasService
             $payload['creditCardToken'] = $data['credit_card_token'];
         }
 
+        Log::info('Asaas createSubscription payload', $payload);
+
         $response = $this->http()->post('/subscriptions', $payload);
 
         if (!$response->successful()) {
