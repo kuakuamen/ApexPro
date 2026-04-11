@@ -10,11 +10,13 @@ class AsaasService
 {
     protected string $baseUrl;
     protected string $apiKey;
+    protected string $checkoutBaseUrl;
 
     public function __construct()
     {
         $this->apiKey  = (string) config('services.asaas.api_key');
         $this->baseUrl = (string) config('services.asaas.base_url', 'https://sandbox.asaas.com/api/v3');
+        $this->checkoutBaseUrl = (string) config('services.asaas.checkout_base_url', 'https://asaas.com/checkoutSession/show?id=');
     }
 
     // ── HTTP Client ────────────────────────────────────────────────────────────
@@ -125,6 +127,68 @@ class AsaasService
     }
 
     /**
+     * Cria um checkout hospedado no Asaas.
+     */
+    public function createCheckout(array $payload): array
+    {
+        $response = $this->http()->post('/checkouts', $payload);
+
+        if (!$response->successful()) {
+            $err = $response->json()['errors'][0]['description'] ?? 'Erro desconhecido';
+            Log::error('Asaas createCheckout failed', ['body' => $response->json(), 'payload' => $payload]);
+            throw new \RuntimeException("Erro ao criar checkout no Asaas: {$err}");
+        }
+
+        return $response->json();
+    }
+
+    public function getCheckoutUrl(string $checkoutId): string
+    {
+        return rtrim($this->checkoutBaseUrl, '=') . '=' . $checkoutId;
+    }
+
+    public function getCheckout(string $checkoutId): array
+    {
+        $response = $this->http()->get("/checkouts/{$checkoutId}");
+
+        if (!$response->successful()) {
+            throw new \RuntimeException("Checkout Asaas nao encontrado: {$checkoutId}");
+        }
+
+        return $response->json();
+    }
+
+    public function listSubscriptions(array $filters = []): array
+    {
+        $response = $this->http()->get('/subscriptions', $filters);
+
+        if (!$response->successful()) {
+            throw new \RuntimeException('Nao foi possivel consultar assinaturas no Asaas.');
+        }
+
+        return $response->json()['data'] ?? [];
+    }
+
+    public function findLatestSubscriptionByCustomer(string $customerId): ?array
+    {
+        $subscriptions = $this->listSubscriptions([
+            'customer' => $customerId,
+            'limit' => 20,
+            'offset' => 0,
+        ]);
+
+        if (empty($subscriptions)) {
+            return null;
+        }
+
+        usort($subscriptions, function (array $a, array $b) {
+            return strcmp((string) ($b['dateCreated'] ?? ''), (string) ($a['dateCreated'] ?? ''));
+        });
+
+        return $subscriptions[0] ?? null;
+    }
+
+    /**
      * Busca dados de uma assinatura.
      */
     public function getSubscription(string $id): array
@@ -161,6 +225,17 @@ class AsaasService
             'subscription' => $subscriptionId,
             'limit'        => 5,
         ]);
+
+        return $response->json()['data'] ?? [];
+    }
+
+    public function listPayments(array $filters = []): array
+    {
+        $response = $this->http()->get('/payments', $filters);
+
+        if (!$response->successful()) {
+            throw new \RuntimeException('Nao foi possivel consultar pagamentos no Asaas.');
+        }
 
         return $response->json()['data'] ?? [];
     }
@@ -233,7 +308,6 @@ class AsaasService
                 'phone'         => preg_replace('/\D/', '', $holderInfo['phone'] ?? ''),
             ],
         ];
-        Log::info('Asaas tokenize payload', $payload);
         $response = $this->http()->post('/creditCard/tokenizeCreditCard', $payload);
 
         if (!$response->successful()) {

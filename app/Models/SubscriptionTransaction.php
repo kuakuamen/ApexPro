@@ -28,6 +28,7 @@ class SubscriptionTransaction extends Model
         'mp_raw_response',
         // Asaas
         'asaas_payment_id',
+        'asaas_checkout_id',
         'asaas_raw_response',
         // Datas
         'paid_at',

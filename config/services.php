@@ -62,9 +62,17 @@ return [
         'env'           => env('ASAAS_ENV', 'sandbox'),
         'base_url'      => env('ASAAS_ENV', 'sandbox') === 'production'
                             ? 'https://api.asaas.com/v3'
-                            : 'https://sandbox.asaas.com/api/v3',
+                            : 'https://api-sandbox.asaas.com/v3',
+        'checkout_base_url' => env(
+            'ASAAS_CHECKOUT_BASE_URL',
+            env('ASAAS_ENV', 'sandbox') === 'production'
+                ? 'https://asaas.com/checkoutSession/show?id='
+                : 'https://sandbox.asaas.com/checkoutSession/show?id='
+        ),
         'webhook_token' => env('ASAAS_WEBHOOK_TOKEN'),
         'trial_days'    => (int) env('ASAAS_TRIAL_DAYS', 7),
+        'checkout_expire_minutes' => (int) env('ASAAS_CHECKOUT_EXPIRE_MINUTES', 60),
+        'processing_window_hours' => (int) env('ASAAS_PROCESSING_WINDOW_HOURS', 3),
     ],
 
 ];
