@@ -215,7 +215,7 @@ class AsaasService
      */
     public function tokenizeCreditCard(string $customerId, array $cardData, array $holderInfo): string
     {
-        $response = $this->http()->post('/creditCard/tokenizeCreditCard', [
+        $payload = [
             'customer'   => $customerId,
             'creditCard' => [
                 'holderName'  => $cardData['holder_name'],
@@ -232,7 +232,9 @@ class AsaasService
                 'addressNumber' => $holderInfo['address_number'] ?? '0',
                 'phone'         => preg_replace('/\D/', '', $holderInfo['phone'] ?? ''),
             ],
-        ]);
+        ];
+        Log::info('Asaas tokenize payload', $payload);
+        $response = $this->http()->post('/creditCard/tokenizeCreditCard', $payload);
 
         if (!$response->successful()) {
             $err = $response->json()['errors'][0]['description'] ?? 'Dados do cartão inválidos';
