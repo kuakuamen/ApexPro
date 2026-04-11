@@ -379,17 +379,9 @@ class SubscriptionController extends Controller
                     ->with('info', 'Sua assinatura já está ativa até ' . $existingSubscription->expires_at?->format('d/m/Y') . '.');
             }
 
-            // Cancela assinatura Asaas anterior se existir
-            if ($existingSubscription && $existingSubscription->asaas_subscription_id) {
-                try {
-                    $asaas->cancelSubscription($existingSubscription->asaas_subscription_id);
-                } catch (\Throwable $e) {
-                    Log::warning('Falha ao cancelar assinatura Asaas antiga', [
-                        'asaas_subscription_id' => $existingSubscription->asaas_subscription_id,
-                        'error'                 => $e->getMessage(),
-                    ]);
-                }
-            }
+            // Não cancelamos a assinatura Asaas anterior aqui — o cancelamento dispara
+            // SUBSCRIPTION_DELETED que conflita com a renovação em andamento.
+            // O Asaas mantém múltiplas assinaturas por cliente sem problema.
 
             $keepAccessDuringRenewal = $existingSubscription?->canAccessPlatform() ?? false;
 
