@@ -919,7 +919,7 @@
 <section id="guarantee">
   <div class="guarantee-inner fade-up">
     <span class="guarantee-icon">🛡️</span>
-    <h2 class="guarantee-title">Teste a <span>ApexPro</span> por <span>7 dias</span> sem risco.</h2>
+    <h2 class="guarantee-title">Assine a <span>ApexPro</span> com cobranca <span>mensal</span> simples.</h2>
     <p class="guarantee-text">Se não gostar por qualquer motivo, devolvemos seu dinheiro. Sem burocracia. Sem perguntas.</p>
   </div>
 </section>

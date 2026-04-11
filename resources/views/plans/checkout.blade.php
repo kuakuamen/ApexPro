@@ -183,7 +183,7 @@
                             <button type="button" id="tab-card"
                                 class="flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all tab-btn relative"
                                 onclick="switchTab('card')">
-                                @if(!$isRenewal)
+                                @if(!$isRenewal && $trialEnabled)
                                 <span style="position:absolute;top:-10px;right:8px;background:#10b981;color:#000;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;white-space:nowrap;">7 DIAS GRÁTIS</span>
                                 @endif
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,7 +213,7 @@
                         {{-- Cartão panel --}}
                         <div id="panel-card" class="hidden">
 
-                            @if(!$isRenewal)
+                            @if(!$isRenewal && $trialEnabled)
                             {{-- Trial banner --}}
                             <div class="mb-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-4 text-sm text-emerald-200 flex gap-3 items-start">
                                 <svg class="w-5 h-5 mt-0.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,6 +225,16 @@
                                         Cadastre seu cartão agora e tenha <strong>7 dias de acesso gratuito</strong>.<br>
                                         No <strong>8º dia</strong>, a cobrança de <strong>R$ {{ number_format($plan['price'], 2, ',', '.') }}/mês</strong> inicia automaticamente. Cancele quando quiser.
                                     </p>
+                                </div>
+                            </div>
+                            @elseif(!$isRenewal)
+                            <div class="mb-5 rounded-xl bg-blue-500/10 border border-blue-500/20 p-4 text-sm text-blue-200 flex gap-3 items-start">
+                                <svg class="w-5 h-5 mt-0.5 shrink-0 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                <div>
+                                    <p class="font-medium">Assinatura mensal sem trial</p>
+                                    <p class="mt-1 text-blue-300/80">Ao confirmar, a primeira cobranca do cartao sera processada para iniciar a assinatura mensal.</p>
                                 </div>
                             </div>
                             @else
@@ -285,6 +295,7 @@
                         <p class="mt-3 text-xs text-zinc-500 text-center">Cobrança mensal recorrente. Cancele quando quiser.</p>
                     </div>
                     <div id="summary-card" class="pt-4 border-t border-white/10 hidden">
+                        @if($trialEnabled)
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-zinc-400 text-sm">Hoje</span>
                             <span class="text-lg font-bold text-emerald-400">Grátis</span>
@@ -297,6 +308,13 @@
                             <span class="text-sm font-semibold text-emerald-300">7 dias grátis incluídos</span>
                         </div>
                         <p class="mt-3 text-xs text-zinc-500 text-center">Cancele antes do 8º dia e não será cobrado o plano.</p>
+                        @else
+                        <div class="flex justify-between items-center">
+                            <span class="text-zinc-400 text-sm">Primeira cobranca</span>
+                            <span class="text-2xl font-bold text-white">R$ {{ number_format($plan['price'], 2, ',', '.') }}</span>
+                        </div>
+                        <p class="mt-3 text-xs text-zinc-500 text-center">A assinatura mensal inicia apos a confirmacao da primeira cobranca no cartao.</p>
+                        @endif
                     </div>
                     @else
                     <div class="flex justify-between items-center pt-4 border-t border-white/10">

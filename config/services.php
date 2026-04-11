@@ -54,6 +54,7 @@ return [
         'webhook_secret'    => env('MP_WEBHOOK_SECRET'),
         'back_url'          => env('MP_BACK_URL'),
         'processing_window_hours' => env('MP_PROCESSING_WINDOW_HOURS', 3),
+        'signup_trial_days' => env('MP_SIGNUP_TRIAL_DAYS', 0),
     ],
 
 ];
