@@ -10,13 +10,11 @@ return new class extends Migration
         // Add 'trial' to professional_subscriptions.status
         DB::statement("ALTER TABLE professional_subscriptions MODIFY COLUMN status ENUM('pending','active','trial','overdue','suspended','cancelled') NOT NULL DEFAULT 'pending'");
 
-        // Add 'boleto' to subscription_transactions.payment_method
-        DB::statement("ALTER TABLE subscription_transactions MODIFY COLUMN payment_method ENUM('pix','credit_card','boleto') NOT NULL");
+        // payment_method mantém apenas pix e credit_card (boleto é mapeado para pix no webhook)
     }
 
     public function down(): void
     {
         DB::statement("ALTER TABLE professional_subscriptions MODIFY COLUMN status ENUM('pending','active','overdue','suspended','cancelled') NOT NULL DEFAULT 'pending'");
-        DB::statement("ALTER TABLE subscription_transactions MODIFY COLUMN payment_method ENUM('pix','credit_card') NOT NULL");
     }
 };

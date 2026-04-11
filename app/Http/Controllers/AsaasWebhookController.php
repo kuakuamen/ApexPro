@@ -40,6 +40,16 @@ class AsaasWebhookController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    // ── Mapeia billingType do Asaas → nosso payment_method ────────────────────
+
+    protected function mapBillingType(string $billingType): string
+    {
+        return match (strtoupper($billingType)) {
+            'CREDIT_CARD' => 'credit_card',
+            default       => 'pix',   // PIX, BOLETO e undefined → tudo vira pix
+        };
+    }
+
     // ── Pagamento confirmado (PIX recebido ou cartão aprovado) ─────────────────
 
     protected function handlePaymentConfirmed(array $payload): void
@@ -73,7 +83,7 @@ class AsaasWebhookController extends Controller
             'expires_at'          => $expiresAt,
             'last_paid_at'        => $now,
             'next_billing_at'     => $expiresAt,
-            'last_payment_method' => strtolower($payment['billingType'] ?? 'pix'),
+            'last_payment_method' => $this->mapBillingType($payment['billingType'] ?? 'PIX'),
         ]);
 
         // Atualiza usuário
@@ -95,7 +105,7 @@ class AsaasWebhookController extends Controller
                 'user_id'         => $subscription->user_id,
                 'plan_id'         => $subscription->plan_id,
                 'amount'          => (float) ($payment['value'] ?? $subscription->price),
-                'payment_method'  => strtolower($payment['billingType'] ?? 'pix'),
+                'payment_method'  => $this->mapBillingType($payment['billingType'] ?? 'PIX'),
                 'status'          => 'approved',
                 'paid_at'         => $now,
             ]
