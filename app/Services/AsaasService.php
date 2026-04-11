@@ -143,7 +143,7 @@ class AsaasService
      */
     public function cancelSubscription(string $id): bool
     {
-        $response = $this->http()->delete("/subscriptions/{$id}");
+        $response = $this->http()->post("/subscriptions/{$id}/inactivate");
         Log::info('Asaas cancelSubscription', [
             'id'     => $id,
             'status' => $response->status(),
