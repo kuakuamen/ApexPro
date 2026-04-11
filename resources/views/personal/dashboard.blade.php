@@ -97,7 +97,10 @@
                     <p class="text-xs font-bold uppercase tracking-wide text-gray-400">Minha Assinatura</p>
                     <p class="mt-0.5 text-base font-bold text-white">{{ $sub->plan_name }}</p>
                     <p class="text-xs text-gray-400 mt-0.5">
-                        @if($sub->status === 'active')
+                        @if($sub->status === 'trial')
+                            <span class="text-teal-400 font-semibold">Trial gratuito</span>
+                            &mdash; expira em {{ $sub->trial_ends_at ? $sub->trial_ends_at->format('d/m/Y') : ($sub->expires_at ? $sub->expires_at->format('d/m/Y') : '—') }}
+                        @elseif($sub->status === 'active')
                             <span class="text-green-400 font-semibold">Ativa</span>
                             &mdash; vence em {{ $sub->expires_at ? $sub->expires_at->format('d/m/Y') : '—' }}
                         @elseif($sub->status === 'cancelled')
@@ -119,7 +122,7 @@
                     Histórico
                 </a>
 
-                @if(in_array($sub->status, ['active','overdue']))
+                @if(in_array($sub->status, ['active','overdue','trial']))
                     {{-- Renovar com PIX (só quando assinou via PIX ou está vencendo em ≤7 dias) --}}
                     @if($showPixRenew)
                     <form method="POST" action="{{ route('subscription.renew.process', $sub->plan_id) }}">
@@ -140,7 +143,7 @@
                     </button>
 
                     {{-- Cancelar --}}
-                    @if($sub->status === 'active')
+                    @if(in_array($sub->status, ['active','trial']))
                     <button onclick="document.getElementById('modal-cancel-sub').classList.remove('hidden')"
                         class="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 px-4 py-2 text-sm font-medium transition-all">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
