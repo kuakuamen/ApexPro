@@ -229,7 +229,11 @@ class AsaasService
 
         if (!$response->successful()) {
             $err = $response->json()['errors'][0]['description'] ?? 'Dados do cartão inválidos';
-            Log::error('Asaas tokenize failed', ['body' => $response->json()]);
+            Log::error('Asaas tokenize failed', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+                'json'   => $response->json(),
+            ]);
             throw new \RuntimeException("Erro ao tokenizar cartão: {$err}");
         }
 
