@@ -42,6 +42,7 @@ class User extends Authenticatable
         'cref',
         'max_students',
         'subscription_expires_at',
+        'trial_ends_at',
         'plan_name',
         'mp_customer_id',
         'assessment_frequency',
@@ -74,6 +75,7 @@ class User extends Authenticatable
             'license_active' => 'boolean',
             'license_expires_at' => 'date',
             'subscription_expires_at' => 'datetime',
+            'trial_ends_at'           => 'datetime',
         ];
     }
     

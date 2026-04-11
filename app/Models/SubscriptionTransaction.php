@@ -26,6 +26,10 @@ class SubscriptionTransaction extends Model
         'failure_reason',
         'mp_status_detail',
         'mp_raw_response',
+        // Asaas
+        'asaas_payment_id',
+        'asaas_raw_response',
+        // Datas
         'paid_at',
         'refunded_at',
     ];
@@ -33,11 +37,12 @@ class SubscriptionTransaction extends Model
     protected function casts(): array
     {
         return [
-            'pix_expires_at'  => 'datetime',
-            'paid_at'         => 'datetime',
-            'refunded_at'     => 'datetime',
-            'mp_raw_response' => 'array',
-            'amount'          => 'decimal:2',
+            'pix_expires_at'     => 'datetime',
+            'paid_at'            => 'datetime',
+            'refunded_at'        => 'datetime',
+            'mp_raw_response'    => 'array',
+            'asaas_raw_response' => 'array',
+            'amount'             => 'decimal:2',
         ];
     }
 
