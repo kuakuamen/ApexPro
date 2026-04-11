@@ -18,6 +18,11 @@ use Illuminate\Validation\Rules;
 
 class SubscriptionController extends Controller
 {
+    protected function signupTrialDays(): int
+    {
+        return max(0, (int) config('services.mercadopago.signup_trial_days', 0));
+    }
+
     public function __construct()
     {
         $this->loadPlans();
@@ -124,13 +129,15 @@ class SubscriptionController extends Controller
             return redirect()->route('subscription.renew.checkout', ['plan' => $planId]);
         }
 
+        $trialDays = $this->signupTrialDays();
+
         return view('plans.checkout', [
             'plan'          => $this->plans[$planId],
             'isRenewal'     => false,
             'defaultMethod' => 'pix',
-            'trialEnabled'  => true,
-            'trialDays'     => 7,
-            'trialAmount'   => 1.00,
+            'trialEnabled'  => $trialDays > 0,
+            'trialDays'     => $trialDays,
+            'trialAmount'   => $trialDays > 0 ? 1.00 : 0,
             'mpPublicKey'   => ((string) config('services.mercadopago.mode', 'live') === 'test'
                 ? config('services.mercadopago.test_public_key')
                 : config('services.mercadopago.public_key')),
@@ -224,7 +231,15 @@ class SubscriptionController extends Controller
             }
 
             try {
-                return $this->processMP($mpService, $user, $plan, $transaction, $paymentMethod, $request, isTrial: true);
+                return $this->processMP(
+                    $mpService,
+                    $user,
+                    $plan,
+                    $transaction,
+                    $paymentMethod,
+                    $request,
+                    isTrial: $this->signupTrialDays() > 0
+                );
             } catch (\Exception $e) {
                 // Rollback em caso de falha na criação do pagamento/preapproval
                 if (Auth::check() && Auth::id() === $user->id) {
@@ -495,7 +510,7 @@ class SubscriptionController extends Controller
         }
 
         $cardToken = (string) $request->input('card_token');
-        $trialDays = 1;
+        $trialDays = $this->signupTrialDays();
         $preRef = 'sub-' . $transaction->mp_external_reference;
 
         try {
