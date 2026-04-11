@@ -124,7 +124,7 @@ class WebhookController extends Controller
 
         switch ($status) {
             case 'approved':
-                $this->handleApproved($transaction);
+                $this->handleApproved($transaction, $mpService);
                 break;
             case 'rejected':
                 $transaction->status = 'rejected';
@@ -341,7 +341,7 @@ class WebhookController extends Controller
     // Helpers existentes (pagamento avulso)
     // -------------------------------------------------------------------------
 
-    protected function handleApproved(SubscriptionTransaction $transaction): void
+    protected function handleApproved(SubscriptionTransaction $transaction, MercadoPagoService $mpService): void
     {
         $transaction->status = 'approved';
         $transaction->paid_at = Carbon::now();
@@ -350,15 +350,34 @@ class WebhookController extends Controller
         $subscription = $transaction->subscription;
         if ($subscription) {
             $now = Carbon::now();
-            $nextBillingAt = $now->copy()->addDays(30);
+            $nextBillingAt = $subscription->next_billing_at && $subscription->next_billing_at->isFuture()
+                ? $subscription->next_billing_at->copy()
+                : $now->copy()->addDays(30);
+
+            if (!empty($transaction->mp_preapproval_id)) {
+                try {
+                    $preapprovalInfo = $mpService->getPreapproval($transaction->mp_preapproval_id);
+                    if (!empty($preapprovalInfo['next_payment_date'])) {
+                        $nextBillingAt = Carbon::parse($preapprovalInfo['next_payment_date']);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('MP Webhook: failed to sync next payment date after approved charge', [
+                        'transaction_id' => $transaction->id,
+                        'preapproval_id' => $transaction->mp_preapproval_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
             $subscription->update([
                 'status'              => 'active',
+                'mp_preapproval_id'   => $transaction->mp_preapproval_id ?: $subscription->mp_preapproval_id,
                 'starts_at'           => $now,
                 'expires_at'          => $nextBillingAt,
                 'last_payment_method' => $transaction->payment_method,
                 'last_paid_at'        => $now,
                 'next_billing_at'     => $nextBillingAt,
+                'mp_preapproval_status' => $transaction->mp_preapproval_id ? 'authorized' : $subscription->mp_preapproval_status,
             ]);
 
             $user = $subscription->user;
