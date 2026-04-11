@@ -15,11 +15,15 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\AsaasWebhookController;
 use Illuminate\Support\Facades\Auth;
 
 
 // Webhook Mercado Pago (sem CSRF, sem auth)
-Route::post('/webhooks/mercadopago', [WebhookController::class, 'handle'])->name('webhook.mercadopago'); // recebe payment e preapproval
+Route::post('/webhooks/mercadopago', [WebhookController::class, 'handle'])->name('webhook.mercadopago');
+
+// Webhook Asaas (sem CSRF, sem auth)
+Route::post('/webhooks/asaas', [AsaasWebhookController::class, 'handle'])->name('webhook.asaas');
 
 // Rotas de Assinatura (PÃƒÂºblicas)
 Route::get('/planos', [SubscriptionController::class, 'index'])->name('plans.index');

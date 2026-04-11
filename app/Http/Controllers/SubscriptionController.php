@@ -6,6 +6,7 @@ use App\Models\ProfessionalSubscription;
 use App\Models\SubscriptionTransaction;
 use App\Models\User;
 use App\Rules\Cpf;
+use App\Services\AsaasService;
 use App\Services\MercadoPagoService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -144,24 +145,24 @@ class SubscriptionController extends Controller
         ]);
     }
 
-    public function processPayment(Request $request, $planId, MercadoPagoService $mpService)
+    public function processPayment(Request $request, $planId, AsaasService $asaas)
     {
         if (!isset($this->plans[$planId])) {
             abort(404);
         }
 
         if (Auth::check() && Auth::user()?->role === 'personal') {
-            return $this->processRenew($request, $planId, $mpService);
+            return $this->processRenew($request, $planId, $asaas);
         }
 
-        $plan = $this->plans[$planId];
+        $plan          = $this->plans[$planId];
         $paymentMethod = $request->input('payment_method', 'pix');
         if ($paymentMethod === 'card') {
             $paymentMethod = 'credit_card';
         }
         $request->merge(['payment_method' => $paymentMethod]);
 
-        // Normalize CPF before validation so unique check matches stored format
+        // Normaliza CPF
         if ($request->has('cpf')) {
             $request->merge(['cpf' => preg_replace('/[^0-9]/', '', $request->input('cpf'))]);
         }
@@ -180,38 +181,41 @@ class SubscriptionController extends Controller
             'payment_method' => ['required', 'in:pix,credit_card'],
         ];
 
-        if ($paymentMethod === 'credit_card') {
-            $rules['card_token']   = ['required', 'string'];
-            $rules['installments'] = ['required', 'integer', 'min:1', 'max:1'];
-        }
-
         $validated = $request->validate($rules);
 
-        return DB::transaction(function () use ($validated, $plan, $planId, $paymentMethod, $request, $mpService) {
+        return DB::transaction(function () use ($validated, $plan, $planId, $paymentMethod, $request, $asaas) {
+            $trialDays   = (int) config('services.asaas.trial_days', 7);
+            $trialEndsAt = Carbon::now()->addDays($trialDays);
+
             $user = User::create([
-                'name'         => $validated['name'],
-                'email'        => $validated['email'],
-                'cpf'          => preg_replace('/[^0-9]/', '', $validated['cpf']),
-                'birth_date'   => $validated['birth_date'],
-                'gender'       => $validated['gender'],
-                'phone'        => $validated['phone'],
-                'address'      => $validated['address'] ?? null,
-                'profession'   => $validated['profession'] ?? null,
-                'cref'         => $validated['cref'] ?? null,
-                'password'     => Hash::make($validated['password']),
-                'role'         => 'personal',
-                'is_active'    => false,
-                'plan_name'    => $plan['name'],
-                'max_students' => $plan['max_students'],
+                'name'                    => $validated['name'],
+                'email'                   => $validated['email'],
+                'cpf'                     => preg_replace('/[^0-9]/', '', $validated['cpf']),
+                'birth_date'              => $validated['birth_date'],
+                'gender'                  => $validated['gender'],
+                'phone'                   => $validated['phone'],
+                'address'                 => $validated['address'] ?? null,
+                'profession'              => $validated['profession'] ?? null,
+                'cref'                    => $validated['cref'] ?? null,
+                'password'                => Hash::make($validated['password']),
+                'role'                    => 'personal',
+                'is_active'               => true,   // acesso liberado durante trial
+                'plan_name'               => $plan['name'],
+                'max_students'            => $plan['max_students'],
+                'trial_ends_at'           => $trialEndsAt,
+                'subscription_expires_at' => $trialEndsAt,
             ]);
 
             $subscription = ProfessionalSubscription::create([
-                'user_id'      => $user->id,
-                'plan_id'      => $planId,
-                'plan_name'    => $plan['name'],
-                'max_students' => $plan['max_students'],
-                'price'        => $plan['price'],
-                'status'       => 'pending',
+                'user_id'       => $user->id,
+                'plan_id'       => $planId,
+                'plan_name'     => $plan['name'],
+                'max_students'  => $plan['max_students'],
+                'price'         => $plan['price'],
+                'status'        => 'trial',
+                'starts_at'     => Carbon::now(),
+                'expires_at'    => $trialEndsAt,
+                'trial_ends_at' => $trialEndsAt,
             ]);
 
             $externalRef = Str::uuid()->toString();
@@ -225,23 +229,9 @@ class SubscriptionController extends Controller
                 'mp_external_reference' => $externalRef,
             ]);
 
-            // PIX: login imediato para ver a tela de espera
-            if ($paymentMethod === 'pix') {
-                Auth::login($user);
-            }
-
             try {
-                return $this->processMP(
-                    $mpService,
-                    $user,
-                    $plan,
-                    $transaction,
-                    $paymentMethod,
-                    $request,
-                    isTrial: $this->signupTrialDays() > 0
-                );
+                return $this->processAsaas($asaas, $user, $plan, $subscription, $transaction, $paymentMethod, $request, isTrial: true);
             } catch (\Exception $e) {
-                // Rollback em caso de falha na criação do pagamento/preapproval
                 if (Auth::check() && Auth::id() === $user->id) {
                     Auth::logout();
                 }
@@ -249,9 +239,9 @@ class SubscriptionController extends Controller
                 $subscription->delete();
                 $user->delete();
 
-                $apiError = $mpService->extractApiErrorDetails($e);
+                Log::error('Asaas processPayment failed', ['error' => $e->getMessage()]);
                 return back()->withInput()->withErrors([
-                    'payment' => 'Erro ao processar pagamento: ' . ($apiError ?: $e->getMessage()),
+                    'payment' => 'Erro ao processar pagamento: ' . $e->getMessage(),
                 ]);
             }
         });
@@ -349,13 +339,13 @@ class SubscriptionController extends Controller
         ]);
     }
 
-    public function processRenew(Request $request, $planId, MercadoPagoService $mpService)
+    public function processRenew(Request $request, $planId, AsaasService $asaas)
     {
         if (!isset($this->plans[$planId])) {
             abort(404);
         }
 
-        $plan = $this->plans[$planId];
+        $plan          = $this->plans[$planId];
         $paymentMethod = $request->input('payment_method', 'pix');
         if ($paymentMethod === 'card') {
             $paymentMethod = 'credit_card';
@@ -363,60 +353,35 @@ class SubscriptionController extends Controller
         $request->merge(['payment_method' => $paymentMethod]);
 
         $rules = ['payment_method' => ['required', 'in:pix,credit_card']];
-        if ($paymentMethod === 'credit_card') {
-            $rules['card_token']   = ['required', 'string'];
-            $rules['installments'] = ['required', 'integer', 'min:1', 'max:1'];
-        }
         $request->validate($rules);
 
         /** @var User $user */
         $user = Auth::user();
 
-        try {
-            return DB::transaction(function () use ($user, $plan, $planId, $paymentMethod, $request, $mpService) {
+        return DB::transaction(function () use ($user, $plan, $planId, $paymentMethod, $request, $asaas) {
             $existingSubscription = ProfessionalSubscription::where('user_id', $user->id)->first();
 
-            if ($this->hasCurrentAccessForRequestedPlan($existingSubscription, $planId)) {
+            // Trial ainda ativo → não faz nada
+            if ($existingSubscription && $existingSubscription->isInTrial()) {
                 return redirect()->route('personal.dashboard')
-                    ->with('info', 'Sua assinatura ja esta ativa ate ' . $existingSubscription->expires_at->format('d/m/Y \a\s H:i') . '.');
+                    ->with('info', 'Você está no período de teste gratuito até ' . $existingSubscription->trial_ends_at->format('d/m/Y') . '. A cobrança inicia automaticamente após esse período.');
             }
 
-            $openRenewalAttempt = $this->findOpenRenewalAttempt($existingSubscription, $planId, $paymentMethod);
-            if ($openRenewalAttempt) {
-                return redirect()->route('subscription.payment-result', ['ref' => $openRenewalAttempt->mp_external_reference])
-                    ->with('info', 'Sua renovacao ja esta em processamento. Aguarde a confirmacao da cobranca.');
+            // Assinatura já ativa para o mesmo plano → não renova
+            if ($existingSubscription && $existingSubscription->plan_id === $planId && $existingSubscription->canAccessPlatform()) {
+                return redirect()->route('personal.dashboard')
+                    ->with('info', 'Sua assinatura já está ativa até ' . $existingSubscription->expires_at?->format('d/m/Y') . '.');
             }
 
-            // Cancelar preapproval antigo se existir (troca de plano ou renovação manual)
-            // Exceção: se o preapproval é de um trial ainda ativo (next_billing_at no futuro
-            // e nenhum pagamento aprovado além do R$1 de validação), preservar o preapproval
-            if ($existingSubscription && !empty($existingSubscription->mp_preapproval_id)) {
-                $isTrialActive = $existingSubscription->status === 'active'
-                    && $existingSubscription->next_billing_at
-                    && $existingSubscription->next_billing_at->isFuture()
-                    && SubscriptionTransaction::where('user_id', $user->id)
-                        ->where('status', 'approved')
-                        ->where('amount', '>', 1.50) // só conta pagamentos reais (> R$1,00 de validação)
-                        ->doesntExist();
-
-                if (!$isTrialActive) {
-                    try {
-                        $mpService->cancelPreapproval($existingSubscription->mp_preapproval_id);
-                    } catch (\Throwable $e) {
-                        Log::warning('Falha ao cancelar preapproval antigo na renovacao', [
-                            'preapproval_id' => $existingSubscription->mp_preapproval_id,
-                            'error'          => $e->getMessage(),
-                        ]);
-                    }
-                } else {
-                    Log::info('Trial ativo: preapproval preservado na tentativa de renovacao', [
-                        'user_id'        => $user->id,
-                        'preapproval_id' => $existingSubscription->mp_preapproval_id,
-                        'next_billing_at'=> $existingSubscription->next_billing_at,
+            // Cancela assinatura Asaas anterior se existir
+            if ($existingSubscription && $existingSubscription->asaas_subscription_id) {
+                try {
+                    $asaas->cancelSubscription($existingSubscription->asaas_subscription_id);
+                } catch (\Throwable $e) {
+                    Log::warning('Falha ao cancelar assinatura Asaas antiga', [
+                        'asaas_subscription_id' => $existingSubscription->asaas_subscription_id,
+                        'error'                 => $e->getMessage(),
                     ]);
-                    // Retornar sem fazer nada — o trial já está ativo
-                    return redirect()->route('personal.dashboard')
-                        ->with('info', 'Você está no período de teste gratuito. A cobrança do plano inicia automaticamente em ' . $existingSubscription->next_billing_at->format('d/m/Y \à\s H:i') . '.');
                 }
             }
 
@@ -425,14 +390,15 @@ class SubscriptionController extends Controller
             $subscription = ProfessionalSubscription::updateOrCreate(
                 ['user_id' => $user->id],
                 [
-                    'plan_id'               => $planId,
-                    'plan_name'             => $plan['name'],
-                    'max_students'          => $plan['max_students'],
-                    'price'                 => $plan['price'],
-                    'status'                => $keepAccessDuringRenewal ? 'active' : 'pending',
-                    'mp_preapproval_id'     => null,
-                    'mp_preapproval_status' => null,
-                    'next_billing_at'       => null,
+                    'plan_id'                => $planId,
+                    'plan_name'              => $plan['name'],
+                    'max_students'           => $plan['max_students'],
+                    'price'                  => $plan['price'],
+                    'status'                 => $keepAccessDuringRenewal ? 'active' : 'pending',
+                    'asaas_subscription_id'  => null,
+                    'mp_preapproval_id'      => null,
+                    'mp_preapproval_status'  => null,
+                    'next_billing_at'        => null,
                 ]
             );
 
@@ -447,51 +413,121 @@ class SubscriptionController extends Controller
                 'mp_external_reference' => $externalRef,
             ]);
 
-            return $this->processMP($mpService, $user, $plan, $transaction, $paymentMethod, $request, isTrial: false);
-            });
-        } catch (\Throwable $e) {
-            $apiError = $mpService->extractApiErrorDetails($e) ?: $e->getMessage();
-
-            return back()->withInput()->withErrors([
-                'payment' => 'Erro ao criar a renovacao: ' . $apiError,
-            ]);
-        }
+            return $this->processAsaas($asaas, $user, $plan, $subscription, $transaction, $paymentMethod, $request, isTrial: false);
+        });
     }
 
-    protected function hasCurrentAccessForRequestedPlan(?ProfessionalSubscription $subscription, string $planId): bool
-    {
-        if (!$subscription || !$subscription->expires_at || !$subscription->expires_at->isFuture()) {
-            return false;
+    // ── Asaas ─────────────────────────────────────────────────────────────────
+
+    protected function processAsaas(
+        AsaasService $asaas,
+        User $user,
+        array $plan,
+        ProfessionalSubscription $subscription,
+        SubscriptionTransaction $transaction,
+        string $paymentMethod,
+        Request $request,
+        bool $isTrial = false
+    ) {
+        $trialDays   = $isTrial ? (int) config('services.asaas.trial_days', 7) : 0;
+        $nextDueDate = Carbon::now()->addDays($trialDays)->format('Y-m-d');
+
+        // 1. Criar/buscar cliente Asaas
+        $customer = $asaas->createOrFindCustomer([
+            'name'  => $user->name,
+            'email' => $user->email,
+            'cpf'   => $user->cpf,
+            'phone' => $user->phone ?? '',
+        ]);
+        $customerId = $customer['id'];
+
+        // 2. Salvar customer_id na subscription
+        $subscription->update(['asaas_customer_id' => $customerId]);
+
+        // 3. Montar billing type
+        $billingType = match ($paymentMethod) {
+            'credit_card' => 'CREDIT_CARD',
+            'boleto'      => 'BOLETO',
+            default       => 'PIX',
+        };
+
+        // 4. Criar assinatura Asaas
+        $asaasSubscription = $asaas->createSubscription([
+            'customer_id'        => $customerId,
+            'billing_type'       => $billingType,
+            'value'              => $plan['price'],
+            'next_due_date'      => $nextDueDate,
+            'description'        => 'Plano ' . $plan['name'] . ' - ApexPro AI',
+            'external_reference' => $transaction->mp_external_reference,
+        ]);
+
+        // 5. Salvar asaas_subscription_id
+        $subscription->update([
+            'asaas_subscription_id' => $asaasSubscription['id'],
+            'next_billing_at'       => Carbon::parse($nextDueDate),
+        ]);
+
+        $transaction->update([
+            'asaas_raw_response' => $asaasSubscription,
+        ]);
+
+        Log::info('Asaas: assinatura criada', [
+            'asaas_id'   => $asaasSubscription['id'],
+            'user_id'    => $user->id,
+            'is_trial'   => $isTrial,
+            'due_date'   => $nextDueDate,
+            'billing'    => $billingType,
+        ]);
+
+        // 6. Para PIX/BOLETO → buscar QR Code do primeiro pagamento
+        if (in_array($paymentMethod, ['pix', 'boleto'])) {
+            try {
+                $payments = $asaas->getSubscriptionPayments($asaasSubscription['id']);
+                if (!empty($payments)) {
+                    $firstPayment = $payments[0];
+                    $transaction->update(['asaas_payment_id' => $firstPayment['id']]);
+
+                    if ($paymentMethod === 'pix') {
+                        $pixData = $asaas->getPixQrCode($firstPayment['id']);
+                        $transaction->update([
+                            'pix_qr_code'        => $pixData['payload'] ?? null,
+                            'pix_qr_code_base64' => $pixData['encodedImage'] ?? null,
+                            'pix_expires_at'     => !empty($pixData['expirationDate'])
+                                                     ? Carbon::parse($pixData['expirationDate'])
+                                                     : Carbon::now()->addDays($trialDays + 1),
+                        ]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Asaas: não foi possível obter QR Code do primeiro pagamento', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // Trial: login imediato + acesso liberado + mostra QR para pagar quando quiser
+            Auth::login($user->fresh());
+
+            if ($isTrial) {
+                return redirect()->route('personal.dashboard')
+                    ->with('success', "🎉 Seu período de teste de {$trialDays} dias está liberado! A cobrança do plano começa em " . Carbon::parse($nextDueDate)->format('d/m/Y') . '. Você receberá o link de pagamento por e-mail.');
+            }
+
+            return redirect()->route('subscription.pix-waiting', ['ref' => $transaction->mp_external_reference]);
         }
 
-        return $subscription->plan_id === $planId && $subscription->canAccessPlatform();
+        // 7. Para cartão → acesso liberado (cobrança automática no vencimento)
+        Auth::login($user->fresh());
+
+        if ($isTrial) {
+            return redirect()->route('personal.dashboard')
+                ->with('success', "🎉 Seu período de teste de {$trialDays} dias está liberado! O cartão será cobrado automaticamente em " . Carbon::parse($nextDueDate)->format('d/m/Y') . '.');
+        }
+
+        return redirect()->route('personal.dashboard')
+            ->with('success', 'Assinatura criada! O cartão será cobrado automaticamente na data de vencimento.');
     }
 
-    protected function findOpenRenewalAttempt(
-        ?ProfessionalSubscription $subscription,
-        string $planId,
-        string $paymentMethod
-    ): ?SubscriptionTransaction {
-        if (!$subscription || $paymentMethod !== 'credit_card') {
-            return null;
-        }
-
-        if ($subscription->plan_id !== $planId || empty($subscription->mp_preapproval_id)) {
-            return null;
-        }
-
-        if ($subscription->mp_preapproval_status !== 'authorized') {
-            return null;
-        }
-
-        return SubscriptionTransaction::where('subscription_id', $subscription->id)
-            ->where('plan_id', $planId)
-            ->where('payment_method', 'credit_card')
-            ->where('status', 'pending')
-            ->where('mp_preapproval_id', $subscription->mp_preapproval_id)
-            ->latest()
-            ->first();
-    }
+    // ── MercadoPago (mantido para compatibilidade) ─────────────────────────────
 
     protected function processMP(MercadoPagoService $mpService, User $user, array $plan, SubscriptionTransaction $transaction, string $paymentMethod, Request $request, bool $isTrial = false)
     {

@@ -20,6 +20,11 @@ class ProfessionalSubscription extends Model
         'mp_preapproval_status',
         'mp_customer_id',
         'mp_card_id',
+        // Asaas
+        'asaas_customer_id',
+        'asaas_subscription_id',
+        'trial_ends_at',
+        // Datas
         'starts_at',
         'expires_at',
         'grace_until',
@@ -31,13 +36,21 @@ class ProfessionalSubscription extends Model
     protected function casts(): array
     {
         return [
-            'starts_at'    => 'datetime',
-            'expires_at'   => 'datetime',
-            'grace_until'  => 'datetime',
-            'last_paid_at' => 'datetime',
+            'starts_at'       => 'datetime',
+            'expires_at'      => 'datetime',
+            'grace_until'     => 'datetime',
+            'last_paid_at'    => 'datetime',
             'next_billing_at' => 'datetime',
-            'price'        => 'decimal:2',
+            'trial_ends_at'   => 'datetime',
+            'price'           => 'decimal:2',
         ];
+    }
+
+    public function isInTrial(): bool
+    {
+        return $this->status === 'trial'
+            && $this->trial_ends_at
+            && $this->trial_ends_at->isFuture();
     }
 
     public function user(): BelongsTo
@@ -52,6 +65,9 @@ class ProfessionalSubscription extends Model
 
     public function isActive(): bool
     {
+        if ($this->status === 'trial' && $this->trial_ends_at && $this->trial_ends_at->isFuture()) {
+            return true;
+        }
         return $this->status === 'active' && $this->expires_at && $this->expires_at->isFuture();
     }
 
