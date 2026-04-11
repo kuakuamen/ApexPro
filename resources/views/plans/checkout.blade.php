@@ -233,8 +233,8 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                 </svg>
                                 <div>
-                                    <p class="font-medium">Renovacao imediata</p>
-                                    <p class="mt-1 text-blue-300/80">Ao confirmar, tentaremos cobrar a mensalidade agora. Se aprovado, seu acesso volta na hora.</p>
+                                    <p class="font-medium">Assinatura recorrente mensal</p>
+                                    <p class="mt-1 text-blue-300/80">Ao confirmar, sua renovacao entra em processamento. O acesso volta assim que a primeira cobranca da assinatura for confirmada.</p>
                                 </div>
                             </div>
                             @endif
@@ -300,10 +300,10 @@
                     </div>
                     @else
                     <div class="flex justify-between items-center pt-4 border-t border-white/10">
-                        <span class="text-zinc-400 text-sm">Total hoje</span>
+                        <span class="text-zinc-400 text-sm">Total mensal</span>
                         <span class="text-2xl font-bold text-white">R$ {{ number_format($plan['price'], 2, ',', '.') }}</span>
                     </div>
-                    <p class="mt-3 text-xs text-zinc-500 text-center">Se aprovado, seu acesso volta na hora.</p>
+                    <p class="mt-3 text-xs text-zinc-500 text-center">Sua recorrencia sera reativada e o acesso volta assim que a cobranca for confirmada.</p>
                     @endif
                 </div>
             </section>
