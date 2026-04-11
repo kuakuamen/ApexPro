@@ -31,6 +31,7 @@ class AsaasWebhookController extends Controller
             'PAYMENT_RECEIVED',
             'PAYMENT_CONFIRMED'        => $this->handlePaymentConfirmed($payload),
             'PAYMENT_OVERDUE'          => $this->handlePaymentOverdue($payload),
+            'PAYMENT_DECLINED'         => $this->handlePaymentDeclined($payload),
             'PAYMENT_REFUNDED',
             'PAYMENT_CHARGEBACK'       => $this->handlePaymentRefunded($payload),
             'PAYMENT_DELETED'          => $this->handlePaymentDeleted($payload),
@@ -162,6 +163,52 @@ class AsaasWebhookController extends Controller
         }
 
         Log::info('Asaas: pagamento vencido → acesso bloqueado', ['subscription_id' => $subscription->id]);
+    }
+
+    // ── Pagamento recusado (cartão negado) ────────────────────────────────────
+
+    protected function handlePaymentDeclined(array $payload): void
+    {
+        $payment    = $payload['payment'] ?? [];
+        $asaasSubId = $payment['subscription'] ?? null;
+
+        $subscription = $this->findSubscription($asaasSubId, $payment['id'] ?? null);
+
+        if (!$subscription) {
+            return;
+        }
+
+        // Se ainda está em trial válido, não bloqueia
+        if ($subscription->status === 'trial') {
+            $trialEndsAt = $subscription->trial_ends_at ?? $subscription->expires_at;
+            if ($trialEndsAt && Carbon::parse($trialEndsAt)->isFuture()) {
+                Log::info('Asaas Webhook: declined ignorado pois trial ainda vigente', [
+                    'subscription_id' => $subscription->id,
+                ]);
+                return;
+            }
+        }
+
+        // Só bloqueia se o acesso já expirou (não cancela por uma recusa isolada)
+        if ($subscription->expires_at && $subscription->expires_at->isFuture()) {
+            Log::info('Asaas Webhook: declined ignorado pois acesso ainda vigente', [
+                'subscription_id' => $subscription->id,
+                'expires_at'      => $subscription->expires_at,
+            ]);
+            return;
+        }
+
+        $subscription->update(['status' => 'overdue']);
+
+        $user = $subscription->user;
+        if ($user) {
+            $user->update(['is_active' => false]);
+        }
+
+        Log::info('Asaas: pagamento recusado + acesso expirado → bloqueado', [
+            'subscription_id' => $subscription->id,
+            'payment_id'      => $payment['id'] ?? null,
+        ]);
     }
 
     // ── Pagamento cancelado ────────────────────────────────────────────────────
