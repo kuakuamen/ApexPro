@@ -402,6 +402,9 @@ class SubscriptionController extends Controller
             // O Asaas mantÃ©m mÃºltiplas assinaturas por cliente sem problema.
 
             $keepAccessDuringRenewal = $existingSubscription?->canAccessPlatform() ?? false;
+            $renewalStatus = $existingSubscription?->status === 'cancelled'
+                ? 'cancelled'
+                : ($keepAccessDuringRenewal ? 'active' : 'pending');
 
             // Captura expires_at anterior se era cancelada com acesso ainda vÃ¡lido
             // (usado em processAsaas para nÃ£o cobrar em dobro)
@@ -417,7 +420,7 @@ class SubscriptionController extends Controller
                     'plan_name'              => $plan['name'],
                     'max_students'           => $plan['max_students'],
                     'price'                  => $plan['price'],
-                    'status'                 => $keepAccessDuringRenewal ? 'active' : 'pending',
+                    'status'                 => $renewalStatus,
                     'asaas_subscription_id'  => null,
                     'mp_preapproval_id'      => null,
                     'mp_preapproval_status'  => null,
