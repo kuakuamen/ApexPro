@@ -73,7 +73,7 @@ class ProfessionalSubscription extends Model
 
     public function isInProcessingWindow(): bool
     {
-        if (!in_array($this->status, ['active', 'overdue'], true)) {
+        if ($this->status !== 'active') {
             return false;
         }
 
@@ -85,13 +85,13 @@ class ProfessionalSubscription extends Model
             return false;
         }
 
-        $hours = max(0, (int) config('services.asaas.processing_window_hours', 0));
+        $timezone = (string) config('app.timezone', 'America/Sao_Paulo');
+        $cutoffHour = max(0, min(23, (int) config('services.asaas.block_cutoff_hour', 6)));
+        $expiresAt = $this->expires_at->copy()->timezone($timezone);
+        $cutoffAt = $expiresAt->copy()->addDay()->setTime($cutoffHour, 0, 0);
+        $now = Carbon::now($timezone);
 
-        if ($hours <= 0) {
-            return false;
-        }
-
-        return Carbon::now()->lte($this->expires_at->copy()->addHours($hours));
+        return $now->lte($cutoffAt);
     }
 
     public function canAccessPlatform(): bool
