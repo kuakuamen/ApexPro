@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -281,6 +282,27 @@ class AsaasService
         }
 
         return $response->json()['data'] ?? [];
+    }
+
+    public function getEarliestPendingDueDate(string $subscriptionId, string $timezone = 'America/Sao_Paulo'): ?Carbon
+    {
+        $payments = $this->listPayments([
+            'subscription' => $subscriptionId,
+            'status' => 'PENDING',
+            'limit' => 100,
+        ]);
+
+        if (empty($payments)) {
+            return null;
+        }
+
+        $dates = collect($payments)
+            ->pluck('dueDate')
+            ->filter()
+            ->map(fn ($dueDate) => Carbon::parse($dueDate, $timezone))
+            ->sort();
+
+        return $dates->first();
     }
 
     // ── Pagamentos ─────────────────────────────────────────────────────────────

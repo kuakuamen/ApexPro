@@ -108,9 +108,12 @@
                             &mdash; vence em {{ $sub->expires_at ? $sub->expires_at->format('d/m/Y') : '—' }}
                         @elseif($hasPendingReactivation)
                             <span class=\"text-yellow-400 font-semibold\">Reativacao pendente</span>
-                            @if($sub->next_billing_at)
-                                &mdash; primeira cobranca em {{ $sub->next_billing_at->format('d/m/Y') }}
-                            @endif
+                        @php
+                            $nextBillingDisplay = $sub->display_next_billing_at ?? $sub->next_billing_at;
+                        @endphp
+                        @if($nextBillingDisplay)
+                            &mdash; primeira cobranca em {{ $nextBillingDisplay->format('d/m/Y') }}
+                        @endif
                             @if($sub->expires_at && $sub->expires_at->isFuture())
                                 &mdash; acesso ate {{ $sub->expires_at->format('d/m/Y') }}
                             @endif
