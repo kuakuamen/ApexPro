@@ -14,8 +14,8 @@ class CheckOverdueSubscriptions extends Command
 
     public function handle(): int
     {
-        $now = Carbon::now();
-        $windowHours = max(0, (int) config('services.mercadopago.processing_window_hours', 0));
+        $timezone = (string) config('app.timezone', 'America/Sao_Paulo');
+        $now = Carbon::now($timezone);
 
         $expired = ProfessionalSubscription::whereIn('status', ['active', 'overdue'])
             ->whereNotNull('expires_at')
@@ -25,9 +25,11 @@ class CheckOverdueSubscriptions extends Command
         $blockedCount = 0;
 
         foreach ($expired as $sub) {
+            $windowHours = max(0, (int) config('services.asaas.processing_window_hours', 0));
+
             if (
                 $windowHours > 0
-                && !empty($sub->mp_preapproval_id)
+                && !empty($sub->asaas_subscription_id)
                 && $sub->expires_at
                 && $now->lte($sub->expires_at->copy()->addHours($windowHours))
             ) {
