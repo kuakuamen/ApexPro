@@ -98,7 +98,7 @@ class ProfessionalSubscription extends Model
 
     public function canAccessPlatform(): bool
     {
-        if (in_array($this->status, ['suspended', 'overdue'])) {
+        if (in_array($this->status, ['suspended', 'overdue', 'cancelled'], true)) {
             return false;
         }
 
