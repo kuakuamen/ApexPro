@@ -40,6 +40,31 @@ class SubscriptionController extends Controller
 
     protected function syncLatestAsaasSubscription(ProfessionalSubscription $subscription, AsaasService $asaas): void
     {
+        $transaction = $subscription->transactions()
+            ->whereNotNull('asaas_checkout_id')
+            ->latest('id')
+            ->first();
+
+        if ($transaction?->asaas_checkout_id) {
+            $payment = $asaas->findLatestPaymentByCheckoutId($transaction->asaas_checkout_id);
+            if (!empty($payment)) {
+                $remoteSubscription = !empty($payment['subscription'])
+                    ? $asaas->getSubscription($payment['subscription'])
+                    : null;
+
+                $nextBillingAt = $this->parseAsaasBillingAt($remoteSubscription['nextDueDate'] ?? $payment['dueDate'] ?? null);
+
+                $subscription->update([
+                    'status' => 'pending',
+                    'asaas_customer_id' => $payment['customer'] ?? $subscription->asaas_customer_id,
+                    'asaas_subscription_id' => $payment['subscription'] ?? $subscription->asaas_subscription_id,
+                    'next_billing_at' => $nextBillingAt ?? $subscription->next_billing_at,
+                ]);
+
+                return;
+            }
+        }
+
         if (empty($subscription->asaas_customer_id)) {
             return;
         }
