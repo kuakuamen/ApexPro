@@ -55,7 +55,7 @@ class SubscriptionController extends Controller
                 $nextBillingAt = $this->parseAsaasBillingAt($remoteSubscription['nextDueDate'] ?? $payment['dueDate'] ?? null);
 
                 $subscription->update([
-                    'status' => 'pending',
+                    'status' => $subscription->status === 'cancelled' ? 'pending' : $subscription->status,
                     'asaas_customer_id' => $payment['customer'] ?? $subscription->asaas_customer_id,
                     'asaas_subscription_id' => $payment['subscription'] ?? $subscription->asaas_subscription_id,
                     'next_billing_at' => $nextBillingAt ?? $subscription->next_billing_at,
@@ -82,7 +82,7 @@ class SubscriptionController extends Controller
                     $nextBillingAt = $this->parseAsaasBillingAt($remoteSubscription['nextDueDate'] ?? null);
 
                     $subscription->update([
-                        'status' => 'pending',
+                        'status' => $subscription->status === 'cancelled' ? 'pending' : $subscription->status,
                         'asaas_customer_id' => $customer['id'],
                         'asaas_subscription_id' => $remoteSubscription['id'] ?? $subscription->asaas_subscription_id,
                         'next_billing_at' => $nextBillingAt ?? $subscription->next_billing_at,
