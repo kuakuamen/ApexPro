@@ -59,6 +59,10 @@ class AsaasService
             'cpfCnpj'     => preg_replace('/\D/', '', $data['cpf']),
             'email'       => $data['email'],
             'mobilePhone' => preg_replace('/\D/', '', $data['phone'] ?? ''),
+            'postalCode'  => preg_replace('/\D/', '', $data['postal_code'] ?? ''),
+            'address'     => $data['address'] ?? null,
+            'addressNumber' => $data['address_number'] ?? null,
+            'province'    => $data['province'] ?? null,
         ]);
 
         if (!$response->successful()) {

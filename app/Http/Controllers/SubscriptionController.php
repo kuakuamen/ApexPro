@@ -167,7 +167,12 @@ class SubscriptionController extends Controller
             'birth_date'     => ['required', 'date'],
             'gender'         => ['required', 'string'],
             'phone'          => ['required', 'string', 'max:20'],
-            'address'        => ['nullable', 'string', 'max:255'],
+            'address_cep'    => ['required', 'regex:/^\d{5}-\d{3}$/'],
+            'address_state'  => ['required', 'string', 'size:2'],
+            'address_city'   => ['required', 'string', 'max:255'],
+            'address_street' => ['required', 'string', 'max:255'],
+            'address_neighborhood' => ['required', 'string', 'max:255'],
+            'address_number' => ['required', 'string', 'max:30'],
             'profession'     => ['required', 'string', 'max:255'],
             'cref'           => ['required', 'string', 'max:30'],
             'password'       => ['required', 'confirmed', Rules\Password::defaults()],
@@ -180,6 +185,9 @@ class SubscriptionController extends Controller
             $isTrial      = !$isPixPayment && $trialDays > 0;
             $trialEndsAt  = $isTrial ? Carbon::now()->addDays($trialDays) : null;
 
+            $validated['address_state'] = mb_strtoupper($validated['address_state']);
+            $validated['address'] = "{$validated['address_street']}, {$validated['address_number']} - {$validated['address_neighborhood']}, {$validated['address_city']}/{$validated['address_state']} - CEP {$validated['address_cep']}";
+
             $user = User::create([
                 'name'                    => $validated['name'],
                 'email'                   => $validated['email'],
@@ -187,7 +195,13 @@ class SubscriptionController extends Controller
                 'birth_date'              => $validated['birth_date'],
                 'gender'                  => $validated['gender'],
                 'phone'                   => $validated['phone'],
-                'address'                 => $validated['address'] ?? null,
+                'address'                 => $validated['address'],
+                'address_cep'             => $validated['address_cep'],
+                'address_state'           => $validated['address_state'],
+                'address_city'            => $validated['address_city'],
+                'address_street'          => $validated['address_street'],
+                'address_neighborhood'    => $validated['address_neighborhood'],
+                'address_number'          => $validated['address_number'],
                 'profession'              => $validated['profession'] ?? null,
                 'cref'                    => $validated['cref'] ?? null,
                 'password'                => Hash::make($validated['password']),
@@ -450,6 +464,10 @@ class SubscriptionController extends Controller
             'email' => $user->email,
             'cpf'   => $user->cpf,
             'phone' => $user->phone ?? '',
+            'postal_code' => $user->address_cep ?? '',
+            'address' => $user->address_street ?? '',
+            'address_number' => $user->address_number ?? '',
+            'province' => $user->address_neighborhood ?? '',
         ]);
         $customerId = $customer['id'] ?? null;
         $useSavedCustomer = $customerId && $asaas->customerSupportsCheckout($customer);
@@ -490,6 +508,10 @@ class SubscriptionController extends Controller
                 'email' => $user->email,
                 'cpfCnpj' => preg_replace('/\D/', '', (string) $user->cpf),
                 'phone' => preg_replace('/\D/', '', (string) ($user->phone ?? '')),
+                'postalCode' => preg_replace('/\D/', '', (string) ($user->address_cep ?? '')),
+                'address' => $user->address_street ?? '',
+                'addressNumber' => $user->address_number ?? '',
+                'province' => $user->address_neighborhood ?? '',
             ];
         }
 
