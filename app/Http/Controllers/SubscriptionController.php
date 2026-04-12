@@ -19,6 +19,16 @@ use Illuminate\Validation\Rules;
 
 class SubscriptionController extends Controller
 {
+    protected function billingTimezone(): string
+    {
+        return 'America/Sao_Paulo';
+    }
+
+    protected function billingNow(): Carbon
+    {
+        return Carbon::now($this->billingTimezone());
+    }
+
     protected function signupTrialDays(): int
     {
         return max(0, (int) config('services.mercadopago.signup_trial_days', 0));
@@ -183,7 +193,7 @@ class SubscriptionController extends Controller
             $isPixPayment = $paymentMethod === 'pix';
             $trialDays    = $isPixPayment ? 0 : (int) config('services.asaas.trial_days', 7);
             $isTrial      = !$isPixPayment && $trialDays > 0;
-            $trialEndsAt  = $isTrial ? Carbon::now()->addDays($trialDays) : null;
+            $trialEndsAt  = $isTrial ? $this->billingNow()->addDays($trialDays) : null;
 
             $validated['address_state'] = mb_strtoupper($validated['address_state']);
             $validated['address'] = "{$validated['address_street']}, {$validated['address_number']} - {$validated['address_neighborhood']}, {$validated['address_city']}/{$validated['address_state']} - CEP {$validated['address_cep']}";
@@ -456,8 +466,8 @@ class SubscriptionController extends Controller
             : 0;
 
         $nextDueAt = $previousExpiresAt && $previousExpiresAt->isFuture()
-            ? $previousExpiresAt->copy()
-            : Carbon::now()->addDays($trialDays);
+            ? $previousExpiresAt->copy()->timezone($this->billingTimezone())
+            : $this->billingNow()->addDays($trialDays);
 
         $customer = $asaas->createOrFindCustomer([
             'name'  => $user->name,
