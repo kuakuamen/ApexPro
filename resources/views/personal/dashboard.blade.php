@@ -83,6 +83,9 @@
     {{-- Card Minha Assinatura --}}
     @php
         $sub = auth()->user()->professionalSubscription;
+        $hasPendingReactivation = $sub
+            && $sub->status === 'pending'
+            && !empty($sub->asaas_subscription_id);
         $showPixRenew = $sub && in_array($sub->status, ['active','overdue']) &&
             ($sub->last_payment_method === 'pix' || ($sub->expires_at && $sub->expires_at->diffInDays(now(), false) >= -7));
     @endphp
@@ -103,6 +106,14 @@
                         @elseif($sub->status === 'active')
                             <span class="text-green-400 font-semibold">Ativa</span>
                             &mdash; vence em {{ $sub->expires_at ? $sub->expires_at->format('d/m/Y') : '—' }}
+                        @elseif($hasPendingReactivation)
+                            <span class=\"text-yellow-400 font-semibold\">Reativacao pendente</span>
+                            @if($sub->next_billing_at)
+                                &mdash; primeira cobranca em {{ $sub->next_billing_at->format('d/m/Y') }}
+                            @endif
+                            @if($sub->expires_at && $sub->expires_at->isFuture())
+                                &mdash; acesso ate {{ $sub->expires_at->format('d/m/Y') }}
+                            @endif
                         @elseif($sub->status === 'cancelled')
                             <span class="text-red-400 font-semibold">Cancelada</span>
                             @if($sub->expires_at && $sub->expires_at->isFuture())
@@ -122,7 +133,7 @@
                     Histórico
                 </a>
 
-                @if($sub->status === 'cancelled')
+                @if($sub->status === 'cancelled' && !$hasPendingReactivation)
                     <a href="{{ route('plans.checkout', $sub->plan_id) }}"
                         class="inline-flex items-center gap-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 px-4 py-2 text-sm font-medium transition-all">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -130,7 +141,7 @@
                     </a>
                 @endif
 
-                @if(in_array($sub->status, ['active','overdue','trial']))
+                @if(in_array($sub->status, ['active','overdue','trial']) || $hasPendingReactivation)
                     {{-- Renovar com PIX (só quando assinou via PIX ou está vencendo em ≤7 dias) --}}
                     @if($showPixRenew)
                     <form method="POST" action="{{ route('subscription.renew.process', $sub->plan_id) }}">
@@ -151,11 +162,11 @@
                     </button>
 
                     {{-- Cancelar --}}
-                    @if(in_array($sub->status, ['active','trial']))
+                    @if(in_array($sub->status, ['active','trial']) || $hasPendingReactivation)
                     <button onclick="document.getElementById('modal-cancel-sub').classList.remove('hidden')"
                         class="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 px-4 py-2 text-sm font-medium transition-all">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        Cancelar Plano
+                        {{ $hasPendingReactivation ? 'Cancelar Reativacao' : 'Cancelar Plano' }}
                     </button>
                     @endif
                 @endif
@@ -207,8 +218,15 @@
         <div class="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-900 p-6 shadow-2xl">
             <h3 class="text-lg font-bold text-white">Cancelar assinatura?</h3>
             <p class="mt-2 text-sm text-gray-400">
-                Seu acesso permanece ativo até <strong class="text-white">{{ $sub->expires_at ? $sub->expires_at->format('d/m/Y') : 'o fim do período' }}</strong>.
-                Após essa data, o sistema será bloqueado e <strong class="text-red-400">não haverá cobranças futuras</strong>.
+                @if($hasPendingReactivation)
+                    A reativacao pendente sera cancelada e <strong class="text-red-400">nao havera cobrancas futuras</strong>.
+                    @if($sub->expires_at && $sub->expires_at->isFuture())
+                        Seu acesso atual permanece ativo ate <strong class="text-white">{{ $sub->expires_at->format('d/m/Y') }}</strong>.
+                    @endif
+                @else
+                    Seu acesso permanece ativo at?? <strong class="text-white">{{ $sub->expires_at ? $sub->expires_at->format('d/m/Y') : 'o fim do per?odo' }}</strong>.
+                    Ap??s essa data, o sistema ser?? bloqueado e <strong class="text-red-400">n??o haver?? cobran??as futuras</strong>.
+                @endif
             </p>
             <div class="mt-6 flex gap-3 justify-end">
                 <button onclick="document.getElementById('modal-cancel-sub').classList.add('hidden')"
