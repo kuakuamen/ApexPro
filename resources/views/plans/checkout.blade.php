@@ -112,6 +112,48 @@
                             </div>
 
                             <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">CEP *</label>
+                                <input type="text" name="address_cep" id="address_cep_input" value="{{ old('address_cep') }}" required maxlength="9" placeholder="00000-000"
+                                    class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('address_cep') border-red-500 @enderror">
+                                @error('address_cep')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Estado *</label>
+                                <input type="text" name="address_state" id="address_state_input" value="{{ old('address_state') }}" required maxlength="2" placeholder="PR"
+                                    class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 uppercase text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('address_state') border-red-500 @enderror">
+                                @error('address_state')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Cidade *</label>
+                                <input type="text" name="address_city" value="{{ old('address_city') }}" required
+                                    class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('address_city') border-red-500 @enderror">
+                                @error('address_city')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Rua *</label>
+                                <input type="text" name="address_street" value="{{ old('address_street') }}" required
+                                    class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('address_street') border-red-500 @enderror">
+                                @error('address_street')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Numero *</label>
+                                <input type="text" name="address_number" value="{{ old('address_number') }}" required
+                                    class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('address_number') border-red-500 @enderror">
+                                @error('address_number')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Bairro *</label>
+                                <input type="text" name="address_neighborhood" value="{{ old('address_neighborhood') }}" required
+                                    class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('address_neighborhood') border-red-500 @enderror">
+                                @error('address_neighborhood')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div>
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">Profissao</label>
                                 <select name="profession"
                                     class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('profession') border-red-500 @enderror">
@@ -394,6 +436,24 @@
                 ? value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3')
                 : value.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
             this.value = value.trim();
+        });
+    }
+
+    const cepField = document.getElementById('address_cep_input');
+    if (cepField) {
+        cepField.addEventListener('input', function () {
+            let value = this.value.replace(/\D/g, '').substring(0, 8);
+            if (value.length > 5) {
+                value = `${value.substring(0, 5)}-${value.substring(5)}`;
+            }
+            this.value = value;
+        });
+    }
+
+    const stateField = document.getElementById('address_state_input');
+    if (stateField) {
+        stateField.addEventListener('input', function () {
+            this.value = this.value.replace(/[^a-zA-Z]/g, '').substring(0, 2).toUpperCase();
         });
     }
 
