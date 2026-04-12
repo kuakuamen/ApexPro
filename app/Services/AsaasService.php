@@ -49,6 +49,18 @@ class AsaasService
         return null;
     }
 
+    public function listCustomersByCpf(string $cpf): array
+    {
+        $clean    = preg_replace('/\D/', '', $cpf);
+        $response = $this->http()->get('/customers', ['cpfCnpj' => $clean]);
+
+        if (!$response->successful()) {
+            return [];
+        }
+
+        return $response->json()['data'] ?? [];
+    }
+
     /**
      * Cria um novo cliente no Asaas.
      */
