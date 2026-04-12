@@ -83,6 +83,14 @@ class AsaasService
         return $this->createCustomer($data);
     }
 
+    public function customerSupportsCheckout(array $customer): bool
+    {
+        return !empty($customer['address'])
+            && !empty($customer['addressNumber'])
+            && !empty($customer['postalCode'])
+            && !empty($customer['province']);
+    }
+
     // ── Assinaturas ────────────────────────────────────────────────────────────
 
     /**

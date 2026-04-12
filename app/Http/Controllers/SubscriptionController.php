@@ -451,7 +451,8 @@ class SubscriptionController extends Controller
             'cpf'   => $user->cpf,
             'phone' => $user->phone ?? '',
         ]);
-        $customerId = $customer['id'];
+        $customerId = $customer['id'] ?? null;
+        $useSavedCustomer = $customerId && $asaas->customerSupportsCheckout($customer);
 
         $subscription->update([
             'asaas_customer_id' => $customerId,
@@ -463,7 +464,6 @@ class SubscriptionController extends Controller
         $baseResultUrl = route('subscription.payment-result', ['ref' => $transaction->mp_external_reference]);
 
         $payload = [
-            'customer' => $customerId,
             'items' => [[
                 'name' => 'Plano ' . $plan['name'] . ' - ApexPro AI',
                 'description' => $paymentMethod === 'credit_card'
@@ -481,6 +481,17 @@ class SubscriptionController extends Controller
                 'expiredUrl' => $baseResultUrl . '?checkout_state=expired',
             ],
         ];
+
+        if ($useSavedCustomer) {
+            $payload['customer'] = $customerId;
+        } else {
+            $payload['customerData'] = [
+                'name' => $user->name,
+                'email' => $user->email,
+                'cpfCnpj' => preg_replace('/\D/', '', (string) $user->cpf),
+                'phone' => preg_replace('/\D/', '', (string) ($user->phone ?? '')),
+            ];
+        }
 
         if ($paymentMethod === 'credit_card') {
             $payload['subscription'] = [
@@ -502,6 +513,7 @@ class SubscriptionController extends Controller
             'payment_method' => $paymentMethod,
             'is_trial' => $trialDays > 0,
             'next_due_at' => $nextDueAt->toIso8601String(),
+            'uses_saved_customer' => $useSavedCustomer,
         ]);
 
         return redirect()->away($asaas->getCheckoutUrl($checkout['id']));
@@ -724,4 +736,3 @@ class SubscriptionController extends Controller
         return view('personal.subscription.history', compact('transactions'));
     }
 }
-
