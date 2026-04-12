@@ -81,13 +81,11 @@ class ProfessionalSubscription extends Model
             return false;
         }
 
-        if (empty($this->mp_preapproval_id) && empty($this->asaas_subscription_id)) {
+        if (empty($this->asaas_subscription_id)) {
             return false;
         }
 
-        $hours = $this->asaas_subscription_id
-            ? max(0, (int) config('services.asaas.processing_window_hours', 0))
-            : max(0, (int) config('services.mercadopago.processing_window_hours', 0));
+        $hours = max(0, (int) config('services.asaas.processing_window_hours', 0));
 
         if ($hours <= 0) {
             return false;
