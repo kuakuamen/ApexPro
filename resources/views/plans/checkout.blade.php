@@ -4,7 +4,6 @@
 <div class="py-12 sm:py-16 bg-zinc-950 min-h-screen">
     <div class="mx-auto max-w-7xl px-6 lg:px-8">
 
-        {{-- Breadcrumb --}}
         <div class="mb-10">
             <nav class="flex items-center text-sm font-medium text-zinc-400">
                 <a href="{{ route('plans.index') }}" class="hover:text-white transition-colors">Planos</a>
@@ -18,7 +17,6 @@
             </h1>
         </div>
 
-        {{-- Aviso de conta inativa --}}
         @if (session('warning'))
             <div class="mb-6 rounded-xl border border-yellow-500/40 bg-yellow-500/10 p-4 text-sm text-yellow-200 flex items-center gap-3">
                 <svg class="h-5 w-5 flex-shrink-0 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -28,7 +26,6 @@
             </div>
         @endif
 
-        {{-- Erros gerais --}}
         @if ($errors->has('payment'))
             <div class="mb-6 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
                 {{ $errors->first('payment') }}
@@ -36,23 +33,18 @@
         @endif
 
         <div class="lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-start">
-
-            {{-- FormulÃ¡rio principal --}}
             <section class="lg:col-span-7">
                 <form id="checkout-form" method="POST"
                     action="{{ $isRenewal ? route('subscription.renew.process', $plan['id']) : route('plans.process', $plan['id']) }}">
                     @csrf
 
-                    {{-- Campos ocultos --}}
                     <input type="hidden" name="payment_method" id="payment_method_input" value="{{ $defaultMethod === 'credit_card' ? 'credit_card' : 'pix' }}">
 
-                    {{-- ===== DADOS DE CADASTRO (apenas novos usuÃ¡rios) ===== --}}
                     @if (!$isRenewal)
                     <div class="bg-zinc-900/50 rounded-2xl border border-white/5 p-6 sm:p-8 shadow-xl mb-6">
                         <h2 class="text-lg font-semibold text-white mb-6">Dados de Acesso</h2>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            {{-- Nome --}}
                             <div class="sm:col-span-2">
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">Nome completo *</label>
                                 <input type="text" name="name" value="{{ old('name') }}" required
@@ -60,7 +52,6 @@
                                 @error('name')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- Email --}}
                             <div class="sm:col-span-2">
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">E-mail *</label>
                                 <input type="email" name="email" value="{{ old('email') }}" required
@@ -68,7 +59,6 @@
                                 @error('email')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- CPF --}}
                             <div>
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">CPF *</label>
                                 <input type="text" name="cpf" id="cpf_input" value="{{ old('cpf') }}" required maxlength="14" placeholder="000.000.000-00"
@@ -76,7 +66,6 @@
                                 @error('cpf')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- Data de nascimento --}}
                             <div>
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">Data de nascimento *</label>
                                 <div class="grid grid-cols-3 gap-2">
@@ -87,8 +76,8 @@
                                         @endfor
                                     </select>
                                     <select id="birth_month" class="rounded-lg bg-zinc-800/80 border border-white/10 px-3 py-2.5 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('birth_date') border-red-500 @enderror">
-                                        <option value="">MÃªs</option>
-                                        @foreach(['Janeiro','Fevereiro','MarÃ§o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $i => $m)
+                                        <option value="">Mes</option>
+                                        @foreach(['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] as $i => $m)
                                             <option value="{{ $i + 1 }}">{{ $m }}</option>
                                         @endforeach
                                     </select>
@@ -103,9 +92,8 @@
                                 @error('birth_date')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- GÃªnero --}}
                             <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">GÃªnero *</label>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Genero *</label>
                                 <select name="gender" required
                                     class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('gender') border-red-500 @enderror">
                                     <option value="">Selecione</option>
@@ -116,7 +104,6 @@
                                 @error('gender')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- Telefone --}}
                             <div>
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">Telefone *</label>
                                 <input type="text" name="phone" id="phone_input" value="{{ old('phone') }}" required maxlength="15" placeholder="(00) 00000-0000"
@@ -124,14 +111,13 @@
                                 @error('phone')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- CREF / CRN e ProfissÃ£o --}}
                             <div>
-                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">ProfissÃ£o</label>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Profissao</label>
                                 <select name="profession"
                                     class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('profession') border-red-500 @enderror">
                                     <option value="">Selecione</option>
                                     <option value="Personal Trainer" @selected(old('profession') === 'Personal Trainer')>Personal Trainer</option>
-                                    <option value="Educador FÃ­sico" @selected(old('profession') === 'Educador FÃ­sico')>Educador FÃ­sico</option>
+                                    <option value="Educador Fisico" @selected(old('profession') === 'Educador Fisico')>Educador Fisico</option>
                                     <option value="Nutricionista" @selected(old('profession') === 'Nutricionista')>Nutricionista</option>
                                     <option value="Fisioterapeuta" @selected(old('profession') === 'Fisioterapeuta')>Fisioterapeuta</option>
                                     <option value="Outro" @selected(old('profession') === 'Outro')>Outro</option>
@@ -146,7 +132,6 @@
                                 @error('cref')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- Senha --}}
                             <div>
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">Senha *</label>
                                 <input type="password" name="password" required autocomplete="new-password"
@@ -154,7 +139,6 @@
                                 @error('password')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
-                            {{-- Confirmar senha --}}
                             <div>
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">Confirmar senha *</label>
                                 <input type="password" name="password_confirmation" required autocomplete="new-password"
@@ -164,11 +148,9 @@
                     </div>
                     @endif
 
-                    {{-- ===== MÃ‰TODO DE PAGAMENTO ===== --}}
                     <div class="bg-zinc-900/50 rounded-2xl border border-white/5 p-6 sm:p-8 shadow-xl">
                         <h2 class="text-lg font-semibold text-white mb-6">Forma de Pagamento</h2>
 
-                        {{-- Tabs --}}
                         <div class="flex gap-3 mb-6">
                             <button type="button" id="tab-pix"
                                 class="flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all tab-btn tab-active"
@@ -187,11 +169,10 @@
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                 </svg>
-                                CartÃ£o de CrÃ©dito
+                                Cartao de Credito
                             </button>
                         </div>
 
-                        {{-- PIX panel --}}
                         <div id="panel-pix">
                             <div class="rounded-xl bg-teal-500/10 border border-teal-500/20 p-5 text-sm text-teal-200 flex gap-3 items-start mb-6">
                                 <svg class="w-5 h-5 mt-0.5 shrink-0 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,7 +180,7 @@
                                 </svg>
                                 <div>
                                     <p class="font-medium">Pagamento via PIX</p>
-                                    <p class="mt-1 text-teal-300/80">ApÃ³s confirmar, vocÃª receberÃ¡ um QR Code para realizar o pagamento. O acesso Ã© liberado automaticamente apÃ³s a confirmaÃ§Ã£o.</p>
+                                    <p class="mt-1 text-teal-300/80">Apos confirmar, voce recebera um QR Code para realizar o pagamento. O acesso e liberado automaticamente apos a confirmacao.</p>
                                 </div>
                             </div>
                             <button type="submit" id="btn-pix"
@@ -208,11 +189,8 @@
                             </button>
                         </div>
 
-                        {{-- CartÃ£o panel --}}
                         <div id="panel-card" class="hidden">
-
                             @if(!$isRenewal && $trialEnabled)
-                            {{-- Trial banner --}}
                             <div class="mb-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-4 text-sm text-emerald-200 flex gap-3 items-start">
                                 <svg class="w-5 h-5 mt-0.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -247,7 +225,7 @@
                             </div>
                             @endif
 
-                                                        <div class="space-y-4">
+                            <div class="space-y-4">
                                 <div class="rounded-xl border border-white/10 bg-zinc-800/40 p-5 text-sm text-zinc-300">
                                     <p class="font-medium text-white">Checkout seguro do Asaas</p>
                                     <p class="mt-2 text-zinc-400">
@@ -269,11 +247,9 @@
                             </div>
                         </div>
                     </div>
-
                 </form>
             </section>
 
-            {{-- Resumo --}}
             <section class="lg:col-span-5 mt-8 lg:mt-0">
                 <div class="bg-zinc-900/50 rounded-2xl border border-white/5 p-6 sm:p-8 shadow-xl sticky top-24">
                     <h3 class="text-xl font-semibold text-white mb-6">Resumo do Plano</h3>
@@ -286,7 +262,7 @@
                         </div>
                         <div>
                             <p class="font-semibold text-white">{{ $plan['name'] }}</p>
-                            <p class="text-sm text-zinc-400">AtÃ© {{ number_format($plan['max_students']) }} alunos</p>
+                            <p class="text-sm text-zinc-400">Ate {{ number_format($plan['max_students']) }} alunos</p>
                         </div>
                     </div>
 
@@ -301,24 +277,24 @@
                         @endforeach
                     </ul>
 
-                    {{-- Resumo de cobranÃ§a --}}
                     @if(!$isRenewal)
                     <div id="summary-pix" class="pt-4 border-t border-white/10">
                         <div class="flex justify-between items-center">
                             <span class="text-zinc-400 text-sm">Total hoje (PIX)</span>
                             <span class="text-2xl font-bold text-white">R$ {{ number_format($plan['price'], 2, ',', '.') }}</span>
                         </div>
-                        <p class="mt-3 text-xs text-zinc-500 text-center">CobranÃ§a mensal recorrente. Cancele quando quiser.</p>
+                        <p class="mt-3 text-xs text-zinc-500 text-center">Cobranca mensal recorrente. Cancele quando quiser.</p>
                     </div>
+
                     <div id="summary-card" class="pt-4 border-t border-white/10 hidden">
                         @if($trialEnabled)
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-zinc-400 text-sm">Hoje</span>
-                            <span class="text-lg font-bold text-emerald-400">GrÃ¡tis</span>
+                            <span class="text-lg font-bold text-emerald-400">Gratis</span>
                         </div>
                         <div class="flex justify-between items-center mb-4">
                             <span class="text-zinc-400 text-sm">A partir do fim do trial</span>
-                            <span class="text-lg font-bold text-white">R$ {{ number_format($plan['price'], 2, ',', '.') }}/mÃªs</span>
+                            <span class="text-lg font-bold text-white">R$ {{ number_format($plan['price'], 2, ',', '.') }}/mes</span>
                         </div>
                         <div class="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
                             <span class="text-sm font-semibold text-emerald-300">{{ $trialDays }} dias gratis incluidos</span>
@@ -341,7 +317,6 @@
                     @endif
                 </div>
             </section>
-
         </div>
     </div>
 </div>
@@ -462,4 +437,3 @@
 })();
 </script>
 @endsection
-
