@@ -65,6 +65,34 @@ class SubscriptionController extends Controller
             }
         }
 
+        $cpf = $subscription->user?->cpf;
+        if ($transaction?->asaas_checkout_id && $cpf) {
+            foreach ($asaas->listCustomersByCpf($cpf) as $customer) {
+                if (!empty($customer['deleted'])) {
+                    continue;
+                }
+
+                $remoteSubscription = collect($asaas->listSubscriptions([
+                    'customer' => $customer['id'],
+                    'limit' => 20,
+                    'offset' => 0,
+                ]))->firstWhere('checkoutSession', $transaction->asaas_checkout_id);
+
+                if ($remoteSubscription) {
+                    $nextBillingAt = $this->parseAsaasBillingAt($remoteSubscription['nextDueDate'] ?? null);
+
+                    $subscription->update([
+                        'status' => 'pending',
+                        'asaas_customer_id' => $customer['id'],
+                        'asaas_subscription_id' => $remoteSubscription['id'] ?? $subscription->asaas_subscription_id,
+                        'next_billing_at' => $nextBillingAt ?? $subscription->next_billing_at,
+                    ]);
+
+                    return;
+                }
+            }
+        }
+
         if (empty($subscription->asaas_customer_id)) {
             return;
         }
