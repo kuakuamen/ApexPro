@@ -17,7 +17,7 @@ class CheckOverdueSubscriptions extends Command
         $timezone = (string) config('app.timezone', 'America/Sao_Paulo');
         $now = Carbon::now($timezone);
 
-        $expired = ProfessionalSubscription::whereIn('status', ['active', 'overdue'])
+        $expired = ProfessionalSubscription::where('status', 'active')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<', $now)
             ->get();
@@ -25,13 +25,14 @@ class CheckOverdueSubscriptions extends Command
         $blockedCount = 0;
 
         foreach ($expired as $sub) {
-            $windowHours = max(0, (int) config('services.asaas.processing_window_hours', 0));
+            $cutoffHour = max(0, min(23, (int) config('services.asaas.block_cutoff_hour', 6)));
+            $expiresAt = $sub->expires_at?->copy()->timezone($timezone);
+            $cutoffAt = $expiresAt?->copy()->addDay()->setTime($cutoffHour, 0, 0);
 
             if (
-                $windowHours > 0
-                && !empty($sub->asaas_subscription_id)
-                && $sub->expires_at
-                && $now->lte($sub->expires_at->copy()->addHours($windowHours))
+                !empty($sub->asaas_subscription_id)
+                && $cutoffAt
+                && $now->lte($cutoffAt)
             ) {
                 continue;
             }
