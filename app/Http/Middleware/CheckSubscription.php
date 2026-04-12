@@ -44,9 +44,13 @@ class CheckSubscription
                 }
             }
 
+            if (!$user->is_active) {
+                return redirect()->route('subscription.renew');
+            }
+
             $subscription = $user->professionalSubscription;
 
-            if (!$subscription || $subscription->status === 'suspended') {
+            if (!$subscription || in_array($subscription->status, ['suspended', 'cancelled'], true)) {
                 return redirect()->route('subscription.renew');
             }
 
