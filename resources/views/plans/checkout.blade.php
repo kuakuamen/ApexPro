@@ -227,12 +227,9 @@
 
                             <div class="space-y-4">
                                 <div class="rounded-xl border border-white/10 bg-zinc-800/40 p-5 text-sm text-zinc-300">
-                                    <p class="font-medium text-white">Checkout seguro do Asaas</p>
+                                    <p class="font-medium text-white">Checkout seguro</p>
                                     <p class="mt-2 text-zinc-400">
-                                        Ao continuar, voce sera redirecionado para o checkout hospedado do Asaas para concluir o pagamento com seguranca.
-                                    </p>
-                                    <p class="mt-2 text-zinc-500">
-                                        Os dados do cartao nao passam mais pelo ApexPro.
+                                        Ao continuar, voce sera redirecionado para o checkout seguro para concluir o pagamento.
                                     </p>
                                 </div>
 
