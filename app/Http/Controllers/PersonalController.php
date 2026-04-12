@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Rules\Cpf;
 use App\Http\Controllers\SubscriptionController;
+use App\Services\AsaasService;
 
 class PersonalController extends Controller
 {
@@ -35,7 +36,7 @@ class PersonalController extends Controller
     /**
      * Dashboard do Personal: Lista de Alunos.
      */
-    public function dashboard()
+    public function dashboard(AsaasService $asaas)
     {
         /** @var User $user */
         $user = Auth::user();
@@ -96,6 +97,26 @@ class PersonalController extends Controller
             ->values();
 
         $subscriptionPlans = app(SubscriptionController::class)->getPlans();
+
+        $subscription = $user->professionalSubscription;
+        if ($subscription && !empty($subscription->asaas_subscription_id)) {
+            try {
+                $nextRealDueDate = $asaas->getEarliestPendingDueDate(
+                    $subscription->asaas_subscription_id,
+                    config('app.timezone', 'America/Sao_Paulo')
+                );
+
+                if ($nextRealDueDate) {
+                    $subscription->setAttribute('display_next_billing_at', $nextRealDueDate);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to resolve real next billing date from Asaas', [
+                    'user_id' => $user->id,
+                    'subscription_id' => $subscription->id ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return view('personal.dashboard', compact(
             'students',
