@@ -38,6 +38,26 @@ class SubscriptionController extends Controller
         return Carbon::parse($value)->timezone($this->billingTimezone());
     }
 
+    protected function syncLatestAsaasSubscription(ProfessionalSubscription $subscription, AsaasService $asaas): void
+    {
+        if (empty($subscription->asaas_customer_id)) {
+            return;
+        }
+
+        $latestSubscription = $asaas->findLatestSubscriptionByCustomer($subscription->asaas_customer_id);
+        if (!$latestSubscription) {
+            return;
+        }
+
+        $nextBillingAt = $this->parseAsaasBillingAt($latestSubscription['nextDueDate'] ?? null);
+
+        $subscription->update([
+            'status' => $subscription->status === 'cancelled' ? 'pending' : $subscription->status,
+            'asaas_subscription_id' => $latestSubscription['id'] ?? $subscription->asaas_subscription_id,
+            'next_billing_at' => $nextBillingAt ?? $subscription->next_billing_at,
+        ]);
+    }
+
     protected function signupTrialDays(): int
     {
         return max(0, (int) config('services.mercadopago.signup_trial_days', 0));
@@ -716,6 +736,11 @@ class SubscriptionController extends Controller
         $transaction->refresh();
 
         if ($checkoutState === 'success') {
+            if ($transaction->payment_method === 'credit_card' && $transaction->subscription) {
+                $this->syncLatestAsaasSubscription($transaction->subscription, $asaas);
+                $transaction->refresh();
+            }
+
             if (!Auth::check()) {
                 Auth::login($transaction->subscription->user);
             }
@@ -777,6 +802,8 @@ class SubscriptionController extends Controller
 
         $subscription->update([
             'status' => 'cancelled',
+            'asaas_subscription_id' => null,
+            'next_billing_at' => null,
         ]);
 
         Log::info('Subscription cancelled by user', ['user_id' => $user->id, 'subscription_id' => $subscription->id]);
