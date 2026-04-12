@@ -29,6 +29,15 @@ class SubscriptionController extends Controller
         return Carbon::now($this->billingTimezone());
     }
 
+    protected function parseAsaasBillingAt(?string $value): ?Carbon
+    {
+        if (!$value) {
+            return null;
+        }
+
+        return Carbon::parse($value)->timezone($this->billingTimezone());
+    }
+
     protected function signupTrialDays(): int
     {
         return max(0, (int) config('services.mercadopago.signup_trial_days', 0));
@@ -534,9 +543,20 @@ class SubscriptionController extends Controller
 
         $checkout = $asaas->createCheckout($payload);
 
+        $effectiveNextDueAt = $this->parseAsaasBillingAt(data_get($checkout, 'subscription.nextDueDate'));
+
+        if ($effectiveNextDueAt) {
+            $subscription->update([
+                'trial_ends_at' => $trialDays > 0 ? $effectiveNextDueAt : null,
+                'expires_at' => $trialDays > 0 ? $effectiveNextDueAt : $subscription->expires_at,
+                'next_billing_at' => $effectiveNextDueAt,
+            ]);
+        }
+
         $transaction->update([
             'asaas_checkout_id' => $checkout['id'] ?? null,
             'asaas_raw_response' => $checkout,
+            'next_due_at' => ($effectiveNextDueAt ?? $nextDueAt)->toIso8601String(),
         ]);
 
         Log::info('Asaas: checkout criado', [
@@ -545,6 +565,7 @@ class SubscriptionController extends Controller
             'payment_method' => $paymentMethod,
             'is_trial' => $trialDays > 0,
             'next_due_at' => $nextDueAt->toIso8601String(),
+            'effective_next_due_at' => $effectiveNextDueAt?->toIso8601String(),
             'uses_saved_customer' => $useSavedCustomer,
         ]);
 
