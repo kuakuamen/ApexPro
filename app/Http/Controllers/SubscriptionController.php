@@ -709,10 +709,19 @@ class SubscriptionController extends Controller
     public function paymentResult(string $ref, AsaasService $asaas)
     {
         $transaction = SubscriptionTransaction::where('mp_external_reference', $ref)->firstOrFail();
+        $checkoutState = request()->query('checkout_state');
 
         $this->syncAsaasTransactionStatus($transaction, $asaas);
 
         $transaction->refresh();
+
+        if ($checkoutState === 'success') {
+            if (!Auth::check()) {
+                Auth::login($transaction->subscription->user);
+            }
+
+            return redirect()->route('personal.dashboard');
+        }
 
         if ($transaction->status === 'approved') {
             if (!Auth::check()) {
