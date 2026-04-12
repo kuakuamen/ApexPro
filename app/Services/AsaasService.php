@@ -200,6 +200,25 @@ class AsaasService
         return $subscriptions[0] ?? null;
     }
 
+    public function findLatestPaymentByCheckoutId(string $checkoutId): ?array
+    {
+        $payments = $this->listPayments([
+            'checkoutSession' => $checkoutId,
+            'limit' => 20,
+            'offset' => 0,
+        ]);
+
+        if (empty($payments)) {
+            return null;
+        }
+
+        usort($payments, function (array $a, array $b) {
+            return strcmp((string) ($b['dateCreated'] ?? ''), (string) ($a['dateCreated'] ?? ''));
+        });
+
+        return $payments[0] ?? null;
+    }
+
     /**
      * Busca dados de uma assinatura.
      */
