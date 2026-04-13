@@ -12,6 +12,18 @@ use Illuminate\Support\Str;
 
 class AsaasWebhookController extends Controller
 {
+    protected function resolveNextPendingDueDate(AsaasService $asaas, ?string $asaasSubscriptionId): ?Carbon
+    {
+        if (empty($asaasSubscriptionId)) {
+            return null;
+        }
+
+        return $asaas->getEarliestPendingDueDate(
+            $asaasSubscriptionId,
+            (string) config('app.timezone', 'America/Sao_Paulo')
+        );
+    }
+
     public function handle(Request $request, AsaasService $asaas)
     {
         $payload = $request->all();
@@ -127,12 +139,14 @@ class AsaasWebhookController extends Controller
                 $latestSubscription = $asaas->findLatestSubscriptionByCustomer($customerId);
 
                 if ($latestSubscription) {
-                    $nextBillingAt = !empty($latestSubscription['nextDueDate'])
-                        ? Carbon::parse($latestSubscription['nextDueDate'])
-                        : $subscription->next_billing_at;
+                    $subscriptionId = $latestSubscription['id'] ?? $subscription->asaas_subscription_id;
+                    $nextBillingAt = $this->resolveNextPendingDueDate($asaas, $subscriptionId)
+                        ?? (!empty($latestSubscription['nextDueDate'])
+                            ? Carbon::parse($latestSubscription['nextDueDate'])
+                            : $subscription->next_billing_at);
 
                     $subscription->update([
-                        'asaas_subscription_id' => $latestSubscription['id'] ?? $subscription->asaas_subscription_id,
+                        'asaas_subscription_id' => $subscriptionId,
                         'next_billing_at' => $nextBillingAt,
                     ]);
                 }
@@ -186,9 +200,12 @@ class AsaasWebhookController extends Controller
         $nextBillingAt = null;
         if (!empty($payment['subscription'])) {
             try {
-                $remoteSubscription = $asaas->getSubscription($payment['subscription']);
-                if (!empty($remoteSubscription['nextDueDate'])) {
-                    $nextBillingAt = Carbon::parse($remoteSubscription['nextDueDate']);
+                $nextBillingAt = $this->resolveNextPendingDueDate($asaas, $payment['subscription']);
+                if (!$nextBillingAt) {
+                    $remoteSubscription = $asaas->getSubscription($payment['subscription']);
+                    if (!empty($remoteSubscription['nextDueDate'])) {
+                        $nextBillingAt = Carbon::parse($remoteSubscription['nextDueDate']);
+                    }
                 }
             } catch (\Throwable $e) {
                 Log::warning('Asaas payment confirmed: failed to sync next billing date', [
