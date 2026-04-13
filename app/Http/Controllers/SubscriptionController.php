@@ -52,7 +52,11 @@ class SubscriptionController extends Controller
                     ? $asaas->getSubscription($payment['subscription'])
                     : null;
 
-                $nextBillingAt = $this->parseAsaasBillingAt($remoteSubscription['nextDueDate'] ?? $payment['dueDate'] ?? null);
+                $nextBillingAt = !empty($payment['subscription'])
+                    ? $asaas->getEarliestPendingDueDate($payment['subscription'], $this->billingTimezone())
+                    : null;
+                $nextBillingAt = $nextBillingAt
+                    ?? $this->parseAsaasBillingAt($remoteSubscription['nextDueDate'] ?? $payment['dueDate'] ?? null);
 
                 $subscription->update([
                     'status' => $subscription->status === 'cancelled' ? 'pending' : $subscription->status,
@@ -79,7 +83,11 @@ class SubscriptionController extends Controller
                 ]))->firstWhere('checkoutSession', $transaction->asaas_checkout_id);
 
                 if ($remoteSubscription) {
-                    $nextBillingAt = $this->parseAsaasBillingAt($remoteSubscription['nextDueDate'] ?? null);
+                    $nextBillingAt = !empty($remoteSubscription['id'])
+                        ? $asaas->getEarliestPendingDueDate($remoteSubscription['id'], $this->billingTimezone())
+                        : null;
+                    $nextBillingAt = $nextBillingAt
+                        ?? $this->parseAsaasBillingAt($remoteSubscription['nextDueDate'] ?? null);
 
                     $subscription->update([
                         'status' => $subscription->status === 'cancelled' ? 'pending' : $subscription->status,
@@ -102,7 +110,11 @@ class SubscriptionController extends Controller
             return;
         }
 
-        $nextBillingAt = $this->parseAsaasBillingAt($latestSubscription['nextDueDate'] ?? null);
+        $nextBillingAt = !empty($latestSubscription['id'])
+            ? $asaas->getEarliestPendingDueDate($latestSubscription['id'], $this->billingTimezone())
+            : null;
+        $nextBillingAt = $nextBillingAt
+            ?? $this->parseAsaasBillingAt($latestSubscription['nextDueDate'] ?? null);
 
         $subscription->update([
             'status' => $subscription->status === 'cancelled' ? 'pending' : $subscription->status,
