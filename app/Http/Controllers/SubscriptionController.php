@@ -575,6 +575,8 @@ class SubscriptionController extends Controller
             'address' => $user->address_street ?? '',
             'address_number' => $user->address_number ?? '',
             'province' => $user->address_neighborhood ?? '',
+            'city' => $user->address_city ?? '',
+            'state' => $user->address_state ?? '',
         ]);
         $customerId = $customer['id'] ?? null;
         $useSavedCustomer = $customerId && $asaas->customerSupportsCheckout($customer);
@@ -619,6 +621,8 @@ class SubscriptionController extends Controller
                 'address' => $user->address_street ?? '',
                 'addressNumber' => $user->address_number ?? '',
                 'province' => $user->address_neighborhood ?? '',
+                'city' => $user->address_city ?? '',
+                'state' => $user->address_state ?? '',
             ];
         }
 
