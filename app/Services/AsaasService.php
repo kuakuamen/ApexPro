@@ -76,12 +76,37 @@ class AsaasService
             'address'     => $data['address'] ?? null,
             'addressNumber' => $data['address_number'] ?? null,
             'province'    => $data['province'] ?? null,
+            'city'        => $data['city'] ?? null,
+            'state'       => $data['state'] ?? null,
         ]);
 
         if (!$response->successful()) {
             $err = $response->json()['errors'][0]['description'] ?? 'Erro desconhecido';
             Log::error('Asaas createCustomer failed', ['body' => $response->json()]);
             throw new \RuntimeException("Erro ao criar cliente no Asaas: {$err}");
+        }
+
+        return $response->json();
+    }
+
+    public function updateCustomer(string $customerId, array $data): array
+    {
+        $response = $this->http()->put("/customers/{$customerId}", [
+            'name'        => $data['name'],
+            'email'       => $data['email'],
+            'mobilePhone' => preg_replace('/\D/', '', $data['phone'] ?? ''),
+            'postalCode'  => preg_replace('/\D/', '', $data['postal_code'] ?? ''),
+            'address'     => $data['address'] ?? null,
+            'addressNumber' => $data['address_number'] ?? null,
+            'province'    => $data['province'] ?? null,
+            'city'        => $data['city'] ?? null,
+            'state'       => $data['state'] ?? null,
+        ]);
+
+        if (!$response->successful()) {
+            $err = $response->json()['errors'][0]['description'] ?? 'Erro desconhecido';
+            Log::warning('Asaas updateCustomer failed', ['customer_id' => $customerId, 'body' => $response->json()]);
+            throw new \RuntimeException("Erro ao atualizar cliente no Asaas: {$err}");
         }
 
         return $response->json();
@@ -94,6 +119,16 @@ class AsaasService
     {
         $existing = $this->findCustomerByCpf($data['cpf']);
         if ($existing) {
+            if (!$this->customerSupportsCheckout($existing)) {
+                try {
+                    return $this->updateCustomer($existing['id'], $data);
+                } catch (\Throwable $e) {
+                    Log::warning('Asaas createOrFindCustomer: failed to enrich existing customer', [
+                        'customer_id' => $existing['id'] ?? null,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
             return $existing;
         }
 
@@ -105,7 +140,8 @@ class AsaasService
         return !empty($customer['address'])
             && !empty($customer['addressNumber'])
             && !empty($customer['postalCode'])
-            && !empty($customer['province']);
+            && !empty($customer['province'])
+            && !empty($customer['city']);
     }
 
     // ── Assinaturas ────────────────────────────────────────────────────────────
