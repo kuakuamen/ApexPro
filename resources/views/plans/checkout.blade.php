@@ -113,8 +113,12 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">CEP *</label>
-                                <input type="text" name="address_cep" id="address_cep_input" value="{{ old('address_cep') }}" required maxlength="9" placeholder="00000-000"
-                                    class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('address_cep') border-red-500 @enderror">
+                                <div class="relative">
+                                    <input type="text" name="address_cep" id="address_cep_input" value="{{ old('address_cep') }}" required maxlength="9" placeholder="00000-000"
+                                        class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 pr-10 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('address_cep') border-red-500 @enderror">
+                                    <div id="cep_loading" class="hidden absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 border-2 border-zinc-500/40 border-t-teal-400 rounded-full animate-spin"></div>
+                                </div>
+                                <p id="cep_error" class="hidden mt-1 text-xs text-red-400"></p>
                                 @error('address_cep')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
@@ -127,14 +131,14 @@
 
                             <div class="sm:col-span-2">
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">Cidade *</label>
-                                <input type="text" name="address_city" value="{{ old('address_city') }}" required
+                                <input type="text" name="address_city" id="address_city_input" value="{{ old('address_city') }}" required
                                     class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('address_city') border-red-500 @enderror">
                                 @error('address_city')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="sm:col-span-2">
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">Rua *</label>
-                                <input type="text" name="address_street" value="{{ old('address_street') }}" required
+                                <input type="text" name="address_street" id="address_street_input" value="{{ old('address_street') }}" required
                                     class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('address_street') border-red-500 @enderror">
                                 @error('address_street')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
@@ -148,7 +152,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-zinc-300 mb-1.5">Bairro *</label>
-                                <input type="text" name="address_neighborhood" value="{{ old('address_neighborhood') }}" required
+                                <input type="text" name="address_neighborhood" id="address_neighborhood_input" value="{{ old('address_neighborhood') }}" required
                                     class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition @error('address_neighborhood') border-red-500 @enderror">
                                 @error('address_neighborhood')<p class="mt-1 text-xs text-red-400">{{ $message }}</p>@enderror
                             </div>
@@ -440,6 +444,23 @@
     }
 
     const cepField = document.getElementById('address_cep_input');
+    const cityField = document.getElementById('address_city_input');
+    const streetField = document.getElementById('address_street_input');
+    const neighborhoodField = document.getElementById('address_neighborhood_input');
+    const cepLoading = document.getElementById('cep_loading');
+    const cepError = document.getElementById('cep_error');
+
+    function setCepLoading(loading) {
+        if (!cepLoading) return;
+        cepLoading.classList.toggle('hidden', !loading);
+    }
+
+    function setCepError(message) {
+        if (!cepError) return;
+        cepError.textContent = message || '';
+        cepError.classList.toggle('hidden', !message);
+    }
+
     if (cepField) {
         cepField.addEventListener('input', function () {
             let value = this.value.replace(/\D/g, '').substring(0, 8);
@@ -447,6 +468,36 @@
                 value = `${value.substring(0, 5)}-${value.substring(5)}`;
             }
             this.value = value;
+            setCepError('');
+        });
+
+        cepField.addEventListener('blur', async function () {
+            const digits = this.value.replace(/\D/g, '');
+            if (digits.length !== 8) return;
+
+            setCepLoading(true);
+            setCepError('');
+
+            try {
+                const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`, {
+                    headers: { 'Accept': 'application/json' },
+                });
+                const data = await res.json();
+
+                if (!res.ok || data.erro) {
+                    setCepError('CEP não encontrado.');
+                    return;
+                }
+
+                if (streetField && !streetField.value) streetField.value = data.logradouro || '';
+                if (neighborhoodField && !neighborhoodField.value) neighborhoodField.value = data.bairro || '';
+                if (cityField && !cityField.value) cityField.value = data.localidade || '';
+                if (stateField && !stateField.value) stateField.value = (data.uf || '').toUpperCase();
+            } catch (e) {
+                setCepError('Erro ao consultar CEP. Tente novamente.');
+            } finally {
+                setCepLoading(false);
+            }
         });
     }
 
