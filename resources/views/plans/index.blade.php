@@ -1042,6 +1042,15 @@
   }, { threshold: 0.1 });
 
   document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // Meta Pixel — InitiateCheckout ao clicar no botão de plano
+  document.querySelectorAll('a.btn-plan, a.btn-plan-gradient, a.btn-plan-outline').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (typeof fbq !== 'undefined') {
+        fbq('track', 'InitiateCheckout');
+      }
+    });
+  });
 </script>
 </body>
 </html>

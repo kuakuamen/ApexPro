@@ -814,7 +814,11 @@ class SubscriptionController extends Controller
                 Auth::login($transaction->subscription->user);
             }
 
-            return redirect()->route('personal.dashboard');
+            return redirect()->route('personal.dashboard')
+                ->with('pixel_purchase', [
+                    'value' => (float) ($transaction->amount ?? $transaction->subscription?->price ?? 0),
+                    'plan'  => $transaction->subscription?->plan_name ?? '',
+                ]);
         }
 
         if ($transaction->status === 'approved') {
@@ -822,7 +826,11 @@ class SubscriptionController extends Controller
                 Auth::login($transaction->subscription->user);
             }
             return redirect()->route('personal.dashboard')
-                ->with('success', 'Pagamento confirmado! Bem-vindo ao ApexPro.');
+                ->with('success', 'Pagamento confirmado! Bem-vindo ao ApexPro.')
+                ->with('pixel_purchase', [
+                    'value' => (float) ($transaction->amount ?? $transaction->subscription?->price ?? 0),
+                    'plan'  => $transaction->subscription?->plan_name ?? '',
+                ]);
         }
 
         return view('subscription.payment-result', compact('transaction'));
