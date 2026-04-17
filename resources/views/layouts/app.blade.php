@@ -58,6 +58,24 @@
         .numInputWrapper span { border-color:rgba(100,116,139,.3); }
         .numInputWrapper span svg path { fill:#94a3b8; }
     </style>
+
+    <!-- Meta Pixel -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1464277952144097');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1464277952144097&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel -->
 </head>
 <body class="{{ auth()->check() && auth()->user()->role === 'aluno' ? '' : (auth()->check() ? 'bg-personal-dark' : 'bg-stone-100') }} font-sans antialiased" style="{{ auth()->check() && auth()->user()->role === 'aluno' ? 'background:#0d0f1a;' : '' }}" x-data="{ sidebarOpen: false }">
     <div class="flex h-screen overflow-hidden">
@@ -423,5 +441,6 @@
         observer.observe(document.body, { childList: true, subtree: true });
     });
     </script>
+    @stack('scripts')
 </body>
 </html>

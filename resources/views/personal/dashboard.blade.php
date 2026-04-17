@@ -303,3 +303,17 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+@if(session('pixel_purchase'))
+<script>
+    if (typeof fbq !== 'undefined') {
+        fbq('track', 'Purchase', {
+            value: {{ session('pixel_purchase')['value'] }},
+            currency: 'BRL',
+            content_name: '{{ addslashes(session("pixel_purchase")["plan"]) }}'
+        });
+    }
+</script>
+@endif
+@endpush
