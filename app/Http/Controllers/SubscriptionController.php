@@ -281,6 +281,9 @@ class SubscriptionController extends Controller
             'cref'           => ['required', 'string', 'max:30'],
             'password'       => ['required', 'confirmed', Rules\Password::defaults()],
             'payment_method' => ['required', 'in:pix,credit_card'],
+            'accepted_terms' => ['accepted'],
+        ], [
+            'accepted_terms.accepted' => 'Nao podemos concluir a assinatura sem o aceite dos Termos de Uso ApexPro.',
         ]);
 
         return DB::transaction(function () use ($validated, $plan, $planId, $paymentMethod, $request, $asaas) {

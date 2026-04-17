@@ -1,0 +1,697 @@
+ApexPro
+
+TERMOS DE USO E POLÍTICA DE PRIVACIDADE
+
+Versão 1.0 — 15 de abril de 2026
+
+E L DOS SANTOS RODRIGUES ACADEMIA - ME
+
+CNPJ: 50.096.323/0001-07
+
+Leia com atenção este documento antes de utilizar o ApexPro. Ao criar uma conta ou utilizar qualquer funcionalidade da plataforma, você declara que leu, compreendeu e aceita integralmente estes Termos de Uso e a Política de Privacidade. Caso não concorde com qualquer disposição, não utilize o aplicativo.
+
+ÍNDICE
+
+CLÁUSULA 1 — DAS PARTES E DO OBJETO
+
+CLÁUSULA 2 — DO ACEITE E VINCULAÇÃO AOS TERMOS
+
+CLÁUSULA 3 — DO CADASTRO E TIPOS DE CONTA
+
+CLÁUSULA 4 — DO REGISTRO PROFISSIONAL (CREF) E RESPONSABILIDADES DO PROFISSIONAL
+
+CLÁUSULA 5 — DAS OBRIGAÇÕES DO PROFISSIONAL DE EDUCAÇÃO FÍSICA
+
+CLÁUSULA 6 — DAS OBRIGAÇÕES DO ALUNO/CLIENTE
+
+CLÁUSULA 7 — DAS FUNCIONALIDADES DA PLATAFORMA
+
+CLÁUSULA 8 — DAS RESTRIÇÕES E CONDUTAS PROIBIDAS
+
+CLÁUSULA 9 — DAS RESPONSABILIDADES E LIMITAÇÕES DA PLATAFORMA
+
+CLÁUSULA 10 — DOS PAGAMENTOS, PLANOS E CANCELAMENTOS
+
+CLÁUSULA 11 — DA PROPRIEDADE INTELECTUAL
+
+CLÁUSULA 12 — DA SUSPENSÃO E ENCERRAMENTO DE CONTA
+
+CLÁUSULA 13 — DA PRIVACIDADE E PROTEÇÃO DE DADOS PESSOAIS (LGPD)
+
+CLÁUSULA 14 — DA SEGURANÇA DA INFORMAÇÃO
+
+CLÁUSULA 15 — DAS DISPOSIÇÕES GERAIS
+
+CLÁUSULA 16 — DO FORO E DA LEI APLICÁVEL
+
+CLÁUSULA 1 — DAS PARTES E DO OBJETO
+
+1.1. Identificação das Partes
+
+O presente instrumento é celebrado entre E L DOS SANTOS RODRIGUES ACADEMIA - ME, inscrita no CNPJ sob o nº 50.096.323/0001-07, com sede em Avenida Iguaçu, 494, Capitão Leônidas Marques - PR, doravante denominada simplesmente "PLATAFORMA" ou "NÓS", e o usuário que aceitar os presentes termos, doravante denominado "USUÁRIO" ou "VOCÊ".
+
+1.2. Do Objeto
+
+O ApexPro é uma plataforma digital de intermediação e gestão de serviços de educação física e atividade física, que oferece ferramentas para conexão entre Profissionais de Educação Física registrados e seus respectivos alunos/clientes, incluindo, mas não se limitando a: criação e gerenciamento de planos de treino, acompanhamento de evolução física, comunicação entre profissional e aluno, agendamento de sessões e gestão administrativa.
+
+1.3. Natureza da Plataforma
+
+O ApexPro atua exclusivamente como intermediador tecnológico. A plataforma NÃO É prestadora de serviços de educação física, NÃO prescreve treinos, NÃO avalia condições físicas e NÃO possui vínculo empregatício ou de qualquer natureza com os Profissionais de Educação Física cadastrados. Os serviços de educação física são prestados direta e exclusivamente pelos Profissionais de Educação Física aos seus alunos, sob inteira responsabilidade daqueles.
+
+CLÁUSULA 2 — DO ACEITE E VINCULAÇÃO AOS TERMOS
+
+2.1. Aceitação Obrigatória
+
+A utilização do ApexPro, em qualquer de suas funcionalidades, pressupõe a leitura completa, o entendimento e a aceitação expressa e irrevogável de todos os termos e condições aqui dispostos, bem como da Política de Privacidade (Cláusula 13). O aceite se dá no momento em que o Usuário clica no botão "Aceito os Termos de Uso" durante o cadastro ou primeiro acesso.
+
+2.2. Capacidade Civil
+
+Para utilizar o ApexPro, o Usuário deve ter capacidade civil plena, nos termos dos artigos 3º e 4º do Código Civil Brasileiro (Lei nº 10.406/2002). Menores de 16 (dezesseis) anos não podem utilizar a plataforma. Menores entre 16 e 18 anos somente poderão se cadastrar mediante autorização expressa de seus pais ou responsáveis legais, que assumirão solidariamente as responsabilidades decorrentes do uso.
+
+2.3. Atualizações dos Termos
+
+A Plataforma reserva-se o direito de alterar, a qualquer tempo, estes Termos de Uso, comunicando as alterações relevantes aos usuários por meio do e-mail cadastrado e/ou notificação no aplicativo com antecedência mínima de 15 (quinze) dias. A continuidade do uso após a vigência das alterações constituirá aceite tácito dos novos termos. Caso o Usuário não concorde com as alterações, deverá encerrar sua conta conforme previsto na Cláusula 12.
+
+CLÁUSULA 3 — DO CADASTRO E TIPOS DE CONTA
+
+3.1. Tipos de Conta
+
+A plataforma disponibiliza dois tipos de conta:
+
+Conta Profissional: destinada a Profissionais de Educação Física regularmente registrados no sistema CONFEF/CREF, habilitados para prescrição e orientação de atividades físicas;
+
+Conta Aluno/Cliente: destinada a pessoas físicas que desejam contratar e acompanhar serviços de um Profissional de Educação Física cadastrado na plataforma.
+
+3.2. Dados Exigidos no Cadastro
+
+Para criar uma Conta Profissional, são exigidos obrigatoriamente:
+
+Nome completo;
+
+CPF (validado junto à Receita Federal);
+
+Número de registro no CREF (Conselho Regional de Educação Física);
+
+Região/Estado do CREF de registro;
+
+Endereço de e-mail válido;
+
+Número de telefone celular;
+
+Senha de acesso segura.
+
+Para criar uma Conta Aluno/Cliente, são exigidos:
+
+Nome completo;
+
+Data de nascimento;
+
+Endereço de e-mail válido;
+
+Número de telefone celular;
+
+Senha de acesso segura.
+
+3.3. Veracidade das Informações
+
+O Usuário declara e garante que todas as informações fornecidas no cadastro são verdadeiras, precisas, atuais e completas. O Usuário compromete-se a manter seus dados sempre atualizados. O fornecimento de dados falsos, incorretos ou de terceiros constitui infração aos presentes Termos e pode ensejar responsabilidade civil e criminal, além do encerramento imediato da conta.
+
+3.4. Confidencialidade da Conta
+
+O Usuário é o único responsável pela guarda e confidencialidade de suas credenciais de acesso (login e senha). A Plataforma não se responsabiliza por acessos não autorizados decorrentes do descuido ou negligência do Usuário na custódia de suas credenciais. Qualquer acesso ou uso não autorizado deve ser comunicado imediatamente à Plataforma pelo e-mail apexproia@gmail.com.
+
+3.5. Uma Conta por Pessoa
+
+Cada pessoa física poderá manter apenas uma conta de cada tipo (Profissional ou Aluno). É vedada a criação de múltiplas contas com o mesmo CPF ou com o mesmo número de CREF. Contas duplicadas poderão ser encerradas pela Plataforma sem aviso prévio.
+
+CLÁUSULA 4 — DO REGISTRO PROFISSIONAL (CREF) E RESPONSABILIDADES DO PROFISSIONAL
+
+ATENCAO: Esta cláusula é de extrema importância. Leia com atenção antes de se cadastrar como Profissional de Educação Física.
+
+4.1. Obrigatoriedade do Registro CREF
+
+Nos termos da Lei Federal nº 9.696, de 1º de setembro de 1998, o exercício das atividades de Educação Física e a designação de "Profissional de Educação Física" são prerrogativas exclusivas dos profissionais regularmente registrados nos Conselhos Regionais de Educação Física (CREFs), vinculados ao Conselho Federal de Educação Física (CONFEF). A prescrição de programas de atividades físicas, treinos e exercícios sem o devido registro no CREF configura exercício ilegal da profissão, sujeitando o infrator às sanções previstas na legislação vigente, incluindo contravenção penal com pena de prisão simples de 15 (quinze) dias a 3 (três) meses ou multa.
+
+4.2. Ausência de Verificação Automática do CREF
+
+O ApexPro INFORMA e o Usuário expressamente RECONHECE que, diferentemente do CPF (verificado junto à Receita Federal), NÃO EXISTE sistema de consulta em tempo real unificado, API pública ou serviço oficial disponibilizado pelo sistema CONFEF/CREFs que permita a verificação automática e instantânea da validade e regularidade do registro profissional no momento do cadastro. Em razão disso, a Plataforma NÃO realiza a validação automática do número de CREF informado pelo Usuário.
+
+4.3. Declaração Obrigatória do Profissional
+
+Ao criar uma Conta Profissional, o Usuário declara expressamente, sob as penas da lei, que:
+
+Possui registro ativo, válido e regular junto ao Conselho Regional de Educação Física (CREF) competente;
+
+É titular do número de CREF informado no cadastro e não está utilizando o registro de terceiro;
+
+Seu registro não está suspenso, cancelado, baixado ou em qualquer situação de irregularidade;
+
+Está em dia com suas obrigações perante o sistema CONFEF/CREFs, inclusive quanto ao pagamento de anuidades;
+
+Possui diploma obtido em curso de Educação Física oficialmente autorizado ou reconhecido, conforme exige o artigo 2º da Lei nº 9.696/1998;
+
+Está legalmente habilitado para prestar os serviços que pretende oferecer por meio da plataforma.
+
+4.4. Responsabilidade Exclusiva do Profissional pelo Registro
+
+O Profissional de Educação Física é o ÚNICO e EXCLUSIVO responsável pela veracidade, regularidade e manutenção de seu registro junto ao sistema CONFEF/CREFs. A E L DOS SANTOS RODRIGUES ACADEMIA - ME, operadora do ApexPro, ISENTA-SE INTEGRALMENTE de qualquer responsabilidade civil, criminal, administrativa ou de qualquer outra natureza decorrente de:
+
+Cadastro realizado com número de CREF falso, inválido, de terceiro, suspenso ou cancelado;
+
+Exercício de atividades de Educação Física sem o devido registro ou com registro irregular;
+
+Danos físicos, psicológicos, materiais ou morais causados a alunos ou terceiros por profissional sem habilitação legal;
+
+Violações ao Código de Ética Profissional do sistema CONFEF/CREFs;
+
+Prescrição de treinos, exercícios ou atividades físicas inadequados, contraindicados ou prejudiciais à saúde do aluno;
+
+Quaisquer sanções aplicadas pelo CREF ou CONFEF ao profissional cadastrado.
+
+4.5. Responsabilidade Civil e Criminal do Infrator
+
+O Usuário que se cadastrar como Profissional de Educação Física sem possuir registro válido e regular no CREF, ou que utilizar número de registro falso ou de terceiro, responderá civil e criminalmente por seus atos, podendo estar sujeito, sem limitação, a:
+
+Contravenção penal por exercício ilegal de profissão regulamentada;
+
+Crime de falsidade ideológica (art. 299 do Código Penal), caso declare falsamente possuir habilitação profissional;
+
+Responsabilidade civil pelos danos causados a alunos e terceiros (arts. 186 e 927 do Código Civil);
+
+Responder a processos administrativos perante o CREF e CONFEF;
+
+Ser banido definitivamente da plataforma e ter seus dados informados às autoridades competentes.
+
+4.6. Cooperação com Órgãos Fiscalizadores
+
+A Plataforma cooperará plenamente com o CONFEF, os CREFs, o Ministério Público, a Polícia Civil e Federal, e demais autoridades competentes em investigações e procedimentos fiscalizatórios relacionados ao exercício ilegal da profissão de Educação Física, podendo fornecer dados cadastrais e registros de uso quando legalmente requisitados, independentemente de autorização prévia do Usuário investigado.
+
+4.7. Comprovação Documental
+
+A Plataforma poderá, a qualquer momento e a seu exclusivo critério, mediante denúncia fundamentada ou suspeita razoável de irregularidade, solicitar ao Profissional a apresentação de documentos comprobatórios de sua habilitação, incluindo diploma, Cédula de Identidade Profissional emitida pelo CREF, ou declaração de regularidade cadastral. A recusa em apresentar a documentação dentro do prazo de 5 (cinco) dias úteis acarretará a suspensão imediata da conta até a regularização.
+
+4.8. Como Verificar a Regularidade do CREF
+
+O Profissional pode verificar e comprovar a regularidade de seu registro nos seguintes canais oficiais:
+
+Site do CONFEF: www.confef.org.br/confef/registrados/
+
+Site do CREF de sua região (ex.: CREF4/SP: www.crefsp.gov.br — aba 'Consulta de Inscritos';
+
+Nos demais CREFs estaduais, acessar o site oficial do respectivo conselho e buscar 'Consulta de Profissionais' ou 'Consulta Cadastral'.
+
+NOTA: A consulta nos sites do CREF é gratuita e pode ser realizada por qualquer pessoa, inserindo nome, CPF ou número de CREF.
+
+CLÁUSULA 5 — DAS OBRIGAÇÕES DO PROFISSIONAL DE EDUCAÇÃO FÍSICA
+
+5.1. Obrigações Gerais
+
+O Profissional de Educação Física cadastrado na Plataforma compromete-se a:
+
+Manter seu registro CREF ativo e regular durante toda a vigência de sua conta na plataforma;
+
+Notificar imediatamente a Plataforma, pelo e-mail apexproia@gmail.com, em caso de cancelamento, suspensão ou qualquer irregularidade em seu registro CREF;
+
+Atuar em conformidade com o Código de Ética Profissional emanado pelo sistema CONFEF/CREFs;
+
+Prestar serviços apenas dentro de sua área de competência e habilitação profissional;
+
+Atualizar seus dados cadastrais sempre que houver alteração;
+
+Manter sigilo sobre informações pessoais e de saúde dos alunos, nos termos da legislação aplicável;
+
+Respeitar integralmente a LGPD no tratamento dos dados pessoais dos alunos;
+
+Não subcontratar ou delegar, sem o conhecimento do aluno, os serviços objeto do contrato celebrado por meio da plataforma;
+
+Elaborar planos de treino individualizados, considerando as condições físicas, objetivos e limitações de cada aluno;
+
+Assegurar a correta execução dos exercícios, prevenindo lesões e promovendo a saúde dos alunos;
+
+Respeitar os limites fisiológicos e clínicos dos alunos, encaminhando-os a outros profissionais de saúde quando necessário.
+
+5.2. Conduta Ética
+
+É vedado ao Profissional:
+
+Divulgar e prometer resultados infalíveis ou garantidos sem embasamento científico;
+
+Expor dados, imagens ou informações pessoais de alunos sem consentimento expresso;
+
+Prescrever medicamentos, suplementos com dosagem específica ou qualquer outro produto de competência exclusiva de outros profissionais de saúde;
+
+Utilizar a plataforma para praticar qualquer forma de assédio, discriminação ou abuso contra alunos;
+
+Realizar cobranças ou acordos financeiros com alunos fora da plataforma, quando o sistema de pagamento integrado estiver disponível, salvo acordo prévio e expresso das partes.
+
+CLÁUSULA 6 — DAS OBRIGAÇÕES DO ALUNO/CLIENTE
+
+6.1. Obrigações do Aluno
+
+O Aluno/Cliente cadastrado na Plataforma compromete-se a:
+
+Fornecer informações verídicas sobre seu estado de saúde, histórico médico, limitações físicas e objetivos;
+
+Informar ao Profissional sobre qualquer condição de saúde, lesão ou contraindicação médica que possa influenciar a prática de atividades físicas;
+
+Consultar um médico antes de iniciar qualquer programa de atividades físicas, especialmente em caso de condições de saúde preexistentes;
+
+Seguir as orientações do Profissional de Educação Física contratado de forma responsável, respeitando seus próprios limites;
+
+Verificar, antes de contratar, se o Profissional possui registro válido no CREF, consultando os canais indicados na Cláusula 4.8;
+
+Cumprir com as obrigações financeiras assumidas com o Profissional, nos termos do acordo celebrado;
+
+Não compartilhar seu acesso à plataforma com terceiros.
+
+6.2. Isenção da Plataforma em Relação ao Aluno
+
+A Plataforma não garante os resultados dos serviços prestados pelo Profissional de Educação Física, não sendo responsável por eventuais lesões, danos à saúde, insatisfação com os resultados ou quaisquer prejuízos decorrentes dos serviços prestados pelo Profissional. Eventuais conflitos entre Aluno e Profissional devem ser resolvidos diretamente entre as partes, podendo a Plataforma atuar como facilitadora de comunicação, sem obrigação de mediar ou resolver disputas de natureza contratual, financeira ou indenizatória.
+
+CLÁUSULA 7 — DAS FUNCIONALIDADES DA PLATAFORMA
+
+7.1. Funcionalidades Disponíveis
+
+O ApexPro poderá oferecer, a critério da Plataforma, as seguintes funcionalidades:
+
+Criação e gestão de planos de treino personalizados;
+
+Acompanhamento de evolução física e registro de medidas;
+
+Comunicação direta entre Profissional e Aluno via chat ou notificações;
+
+Agendamento de sessões presenciais ou online;
+
+Biblioteca de exercícios com descrições e vídeos demonstrativos;
+
+Gestão financeira e emissão de cobranças (quando disponível);
+
+Relatórios de progresso e histórico de treinos;
+
+Notificações e lembretes de treino.
+
+7.2. Disponibilidade do Serviço
+
+A Plataforma envidará seus melhores esforços para manter o aplicativo disponível de forma contínua, mas não garante disponibilidade ininterrupta, podendo haver interrupções por manutenção programada, falhas técnicas, casos fortuitos ou de força maior. A Plataforma notificará os usuários sobre manutenções programadas com antecedência mínima de 24 (vinte e quatro) horas, sempre que possível.
+
+7.3. Modificações nas Funcionalidades
+
+A Plataforma reserva-se o direito de modificar, adicionar ou remover funcionalidades a qualquer momento, sem obrigação de aviso prévio para alterações que não prejudiquem substancialmente os direitos dos usuários. Alterações substanciais serão comunicadas com antecedência mínima de 30 (trinta) dias.
+
+CLÁUSULA 8 — DAS RESTRIÇÕES E CONDUTAS PROIBIDAS
+
+8.1. Condutas Vedadas a Todos os Usuários
+
+É estritamente proibido a qualquer Usuário da Plataforma:
+
+Utilizar a plataforma para fins ilícitos ou que violem a legislação brasileira vigente;
+
+Cadastrar-se com dados falsos, de terceiros ou informações inverídicas;
+
+Realizar engenharia reversa, descompilar ou tentar extrair o código-fonte do aplicativo;
+
+Utilizar bots, scripts ou qualquer mecanismo automatizado para acessar ou interagir com a plataforma;
+
+Tentar acessar áreas restritas do sistema ou contas de outros usuários;
+
+Transmitir vírus, malware ou qualquer código malicioso;
+
+Praticar spam, phishing ou qualquer forma de comunicação fraudulenta;
+
+Reproduzir, distribuir, modificar ou explorar comercialmente o conteúdo da plataforma sem autorização prévia e escrita;
+
+Divulgar dados pessoais de outros usuários sem consentimento;
+
+Praticar qualquer forma de assédio, bullying, discriminação por raça, gênero, orientação sexual, religião, deficiência ou qualquer outra condição;
+
+Usar o aplicativo para fins de concorrência desleal, espionagem comercial ou captação indevida de clientes de outros profissionais;
+
+Fazer declarações difamatórias, caluniosas ou injuriosas contra outros usuários ou a Plataforma;
+
+Compartilhar, vender ou transferir sua conta para terceiros.
+
+8.2. Consequências das Violações
+
+O descumprimento de qualquer das proibições previstas nesta cláusula poderá resultar, a exclusivo critério da Plataforma, em: advertência formal, suspensão temporária da conta, exclusão definitiva da conta, comunicação às autoridades competentes, e/ou ajuizamento de ações judiciais para reparação de danos. A Plataforma reserva-se o direito de bloquear o acesso do infrator em novos cadastros, identificando-o por CPF, e-mail, dispositivo ou outros meios tecnológicos disponíveis.
+
+CLÁUSULA 9 — DAS RESPONSABILIDADES E LIMITAÇÕES DA PLATAFORMA
+
+9.1. Responsabilidades da Plataforma
+
+A Plataforma compromete-se a:
+
+Manter a infraestrutura tecnológica necessária para o funcionamento do aplicativo;
+
+Proteger os dados pessoais dos usuários conforme a LGPD e demais normas aplicáveis;
+
+Implementar medidas de segurança adequadas para proteger as informações dos usuários;
+
+Fornecer canais de suporte e atendimento ao usuário;
+
+Atuar com boa-fé e transparência no relacionamento com os usuários;
+
+Cooperar com as autoridades competentes em investigações legais.
+
+9.2. Limitações de Responsabilidade
+
+A Plataforma NÃO se responsabiliza por:
+
+Danos decorrentes do exercício irregular ou ilegal da profissão de Educação Física por usuários cadastrados;
+
+Lesões, danos à saúde ou quaisquer prejuízos físicos, psicológicos ou materiais sofridos por alunos em decorrência de treinos ou orientações prestadas por Profissionais cadastrados;
+
+A qualidade, adequação, segurança ou eficácia dos serviços prestados pelos Profissionais de Educação Física;
+
+Condutas antiéticas, irregulares ou ilegais dos Profissionais de Educação Física cadastrados;
+
+Informações falsas fornecidas por qualquer usuário no momento do cadastro;
+
+Falhas de conexão com a internet ou incompatibilidades de dispositivos;
+
+Danos causados por eventos de força maior ou caso fortuito;
+
+Decisões tomadas por usuários baseadas em informações disponíveis na plataforma;
+
+Conflitos de natureza contratual, financeira ou pessoal entre Profissionais e Alunos;
+
+Atos de terceiros, incluindo ataques de hackers e falhas de provedores de serviços externos.
+
+9.3. Limitação de Indenização
+
+Na máxima extensão permitida pela lei brasileira, em nenhuma hipótese a responsabilidade total da Plataforma perante qualquer usuário, por quaisquer danos decorrentes do uso do aplicativo, excederá o valor total pago pelo Usuário à Plataforma nos últimos 3 (três) meses anteriores ao evento causador do dano. Esta limitação não se aplica em casos de dolo ou culpa grave da Plataforma, nem em situações protegidas pelo Código de Defesa do Consumidor.
+
+9.4. Relação com o Código de Defesa do Consumidor
+
+As relações entre a Plataforma e seus usuários são regidas, no que couber, pelo Código de Defesa do Consumidor (Lei nº 8.078/1990). Os direitos básicos dos consumidores não poderão ser afastados por estes Termos de Uso.
+
+CLÁUSULA 10 — DOS PAGAMENTOS, PLANOS E CANCELAMENTOS
+
+10.1. Planos e Preços
+
+O ApexPro poderá oferecer planos gratuitos e/ou pagos. Os valores, condições de pagamento, funcionalidades inclusas em cada plano e eventuais períodos de teste gratuito estarão descritos na página de planos dentro do aplicativo, que faz parte integrante destes Termos. A Plataforma poderá alterar os planos e preços mediante aviso prévio de 30 (trinta) dias aos usuários.
+
+10.2. Forma de Pagamento
+
+Os pagamentos serão realizados por meio dos métodos disponibilizados no aplicativo, que podem incluir cartão de crédito, débito, PIX ou boleto bancário, conforme disponibilidade. A Plataforma utiliza provedores de pagamento terceirizados certificados e não armazena dados completos de cartões de crédito dos usuários.
+
+10.3. Renovação Automática
+
+Planos de assinatura periódica serão renovados automaticamente ao final de cada período, salvo cancelamento pelo usuário com antecedência mínima de 48 (quarenta e oito) horas antes da data de renovação. O usuário será notificado por e-mail com antecedência de 7 (sete) dias antes de cada renovação.
+
+10.4. Política de Cancelamento e Reembolso
+
+O Usuário poderá cancelar sua assinatura a qualquer momento diretamente no aplicativo. O cancelamento encerrará a cobrança de ciclos futuros, mas não dará direito a reembolso proporcional do período já pago, salvo nas hipóteses previstas no artigo 49 do CDC (direito de arrependimento em compras online no prazo de 7 dias a partir da contratação).
+
+10.5. Pagamentos entre Profissional e Aluno
+
+Quando a plataforma disponibilizar sistema de pagamento integrado, os valores acordados entre Profissional e Aluno serão processados conforme as regras da funcionalidade específica. A Plataforma poderá cobrar taxa de intermediação sobre estes valores, conforme informado na página de planos. A Plataforma não se responsabiliza por acordos financeiros realizados fora do sistema integrado da plataforma.
+
+CLÁUSULA 11 — DA PROPRIEDADE INTELECTUAL
+
+11.1. Titularidade
+
+O ApexPro, incluindo, mas não se limitando a: marca, logo, design, interface, código-fonte, algoritmos, banco de dados, textos, imagens, vídeos e demais elementos que compõem a plataforma, são de titularidade exclusiva da E L DOS SANTOS RODRIGUES ACADEMIA - ME e protegidos pela Lei de Propriedade Industrial (Lei nº 9.279/1996), pela Lei de Direito Autoral (Lei nº 9.610/1998), pelo Marco Civil da Internet (Lei nº 12.965/2014) e demais normas aplicáveis.
+
+11.2. Licença de Uso
+
+A Plataforma concede ao Usuário uma licença pessoal, intransferível, não exclusiva e revogável para utilizar o ApexPro estritamente para as finalidades descritas nestes Termos. Esta licença não implica cessão de qualquer direito de propriedade intelectual ao Usuário.
+
+11.3. Conteúdo do Usuário
+
+O Usuário é o titular dos direitos sobre o conteúdo que criar e inserir na plataforma (planos de treino, fotos, vídeos, etc.). Ao inserir conteúdo na plataforma, o Usuário concede à Plataforma uma licença não exclusiva, gratuita, para armazenar, exibir e processar esse conteúdo exclusivamente para fins de prestação dos serviços contratados. O Usuário garante que possui todos os direitos sobre o conteúdo que inserir, responsabilizando-se integralmente por eventuais violações de direitos de terceiros.
+
+11.4. Proibições
+
+É expressamente proibido ao Usuário:
+
+Reproduzir, copiar, distribuir ou explorar comercialmente qualquer elemento da plataforma sem autorização prévia e escrita;
+
+Registrar marca, nome de domínio ou qualquer sinal distintivo similar ao do ApexPro;
+
+Reivindicar autoria de qualquer elemento criado pela Plataforma.
+
+CLÁUSULA 12 — DA SUSPENSÃO E ENCERRAMENTO DE CONTA
+
+12.1. Encerramento pelo Usuário
+
+O Usuário poderá solicitar o encerramento de sua conta a qualquer momento, diretamente no aplicativo ou pelo e-mail apexproia@gmail.com. O encerramento não implicará reembolso de valores já pagos, salvo nas hipóteses previstas na Cláusula 10.4. Dados necessários ao cumprimento de obrigações legais poderão ser mantidos pela Plataforma após o encerramento, conforme a LGPD.
+
+12.2. Suspensão ou Encerramento pela Plataforma
+
+A Plataforma poderá suspender ou encerrar a conta de qualquer Usuário, a qualquer tempo, nas seguintes hipóteses, sem prejuízo de outras previstas nestes Termos:
+
+Violação de qualquer disposição destes Termos de Uso;
+
+Fornecimento de informações falsas ou fraudulentas no cadastro;
+
+Suspeita ou constatação de exercício ilegal da profissão de Educação Física;
+
+Cadastro com número de CREF inválido, falso, de terceiro, suspenso ou cancelado;
+
+Prática de condutas proibidas previstas na Cláusula 8;
+
+Descumprimento de obrigações financeiras com a Plataforma;
+
+Determinação de autoridade judicial ou administrativa competente;
+
+Inatividade da conta por período superior a 12 (doze) meses consecutivos;
+
+Encerramento das atividades da Plataforma.
+
+12.3. Aviso Prévio
+
+Sempre que possível, a Plataforma comunicará o Usuário sobre a suspensão ou encerramento de sua conta por e-mail, com antecedência mínima de 5 (cinco) dias úteis, salvo em casos urgentes que envolvam segurança, ilegalidade flagrante ou determinação judicial, hipóteses em que o encerramento poderá ser imediato.
+
+12.4. Efeitos do Encerramento
+
+Com o encerramento da conta, o Usuário perderá acesso a todas as funcionalidades, históricos, planos de treino e demais dados armazenados na plataforma. Recomenda-se que o Usuário exporte seus dados antes do encerramento. As obrigações assumidas durante a vigência da conta, bem como as responsabilidades previstas nestes Termos, sobrevivem ao encerramento da conta.
+
+CLÁUSULA 13 — DA PRIVACIDADE E PROTEÇÃO DE DADOS PESSOAIS (LGPD)
+
+13.1. Marco Legal
+
+O tratamento de dados pessoais realizado pela Plataforma observa integralmente a Lei Geral de Proteção de Dados Pessoais — LGPD (Lei nº 13.709/2018) e demais normas aplicáveis, incluindo as orientações da Autoridade Nacional de Proteção de Dados (ANPD). A Plataforma atua como Controladora dos dados pessoais coletados.
+
+13.2. Dados Coletados
+
+A Plataforma poderá coletar os seguintes dados pessoais dos usuários:
+
+a) Dados de cadastro (fornecidos pelo usuário):
+
+Nome completo, CPF, data de nascimento, e-mail, telefone;
+
+Número de registro CREF (para Profissionais);
+
+Foto de perfil (opcional);
+
+Dados de endereço (opcional).
+
+b) Dados de saúde e físicos (fornecidos pelo usuário ou seu profissional):
+
+Medidas corporais (peso, altura, circunferências, percentual de gordura);
+
+Histórico de treinos e atividades físicas;
+
+Informações de saúde relevantes para a prática de atividades físicas (voluntariamente fornecidas);
+
+Fotos de evolução física (quando o usuário optar por inserir).
+
+c) Dados coletados automaticamente:
+
+Endereço IP e informações do dispositivo;
+
+Dados de uso e navegação no aplicativo;
+
+Data e hora de acesso;
+
+Identificadores de dispositivo (IMEI, IDFA, etc.);
+
+Localização geográfica aproximada (quando autorizado pelo usuário).
+
+13.3. Finalidade do Tratamento
+
+Os dados pessoais são coletados e tratados para as seguintes finalidades:
+
+Criação, gestão e autenticação de contas de usuário;
+
+Prestação dos serviços e funcionalidades da plataforma;
+
+Validação de CPF junto à Receita Federal;
+
+Comunicação com o usuário sobre o serviço, atualizações e notificações;
+
+Cumprimento de obrigações legais e regulatórias;
+
+Prevenção de fraudes e garantia de segurança da plataforma;
+
+Melhoria contínua dos serviços, mediante análise de dados de uso;
+
+Envio de comunicações de marketing e ofertas (mediante consentimento específico e revogável);
+
+Cooperação com investigações de autoridades competentes, quando legalmente exigido.
+
+13.4. Base Legal do Tratamento
+
+O tratamento de dados pessoais pela Plataforma está fundamentado nas seguintes bases legais previstas no artigo 7º da LGPD:
+
+Execução de contrato (art. 7º, V) — para dados necessários à prestação dos serviços contratados;
+
+Consentimento (art. 7º, I) — para dados de saúde e comunicações de marketing;
+
+Cumprimento de obrigação legal (art. 7º, II) — para retenção de dados exigida por lei;
+
+Legítimo interesse (art. 7º, IX) — para segurança, prevenção de fraudes e melhoria dos serviços;
+
+Exercício regular de direitos (art. 7º, VI) — em processos judiciais e administrativos.
+
+13.5. Dados Sensíveis
+
+Dados relacionados à saúde dos usuários são considerados dados pessoais sensíveis nos termos do artigo 11 da LGPD. Esses dados serão tratados exclusivamente mediante consentimento específico e destacado do titular, ou nas demais hipóteses legalmente previstas no artigo 11 da LGPD. O tratamento de dados sensíveis será realizado com medidas de segurança reforçadas e acesso restrito.
+
+13.6. Compartilhamento de Dados
+
+A Plataforma poderá compartilhar dados pessoais dos usuários nas seguintes hipóteses:
+
+Com o Profissional de Educação Física contratado pelo Aluno, para fins de prestação do serviço;
+
+Com provedores de serviços tecnológicos contratados (hospedagem, processamento de pagamentos, envio de e-mails), que atuarão como Operadores nos termos da LGPD, mediante cláusulas contratuais de proteção de dados;
+
+Com autoridades judiciais, policiais ou administrativas, mediante requisição legal;
+
+Com o CONFEF, CREFs ou Ministério Público, em caso de investigação de exercício ilegal da profissão;
+
+Em caso de fusão, aquisição ou reestruturação societária da Plataforma, para o adquirente, mantidas as condições de privacidade aqui pactuadas.
+
+A Plataforma NÃO vende dados pessoais de usuários a terceiros para fins de marketing ou publicidade.
+
+13.7. Direitos do Titular dos Dados
+
+Nos termos do artigo 18 da LGPD, o Usuário tem direito a:
+
+Confirmação da existência de tratamento de seus dados pessoais;
+
+Acesso aos dados pessoais que possui na plataforma;
+
+Correção de dados incompletos, inexatos ou desatualizados;
+
+Anonimização, bloqueio ou eliminação de dados desnecessários ou tratados em desconformidade com a LGPD;
+
+Portabilidade dos dados a outro fornecedor de serviço ou produto;
+
+Eliminação dos dados tratados com base no consentimento, ressalvadas as hipóteses do art. 16 da LGPD;
+
+Informação sobre com quem seus dados foram compartilhados;
+
+Revogação do consentimento, a qualquer tempo, para tratamentos baseados nessa base legal;
+
+Oposição ao tratamento realizado com base no legítimo interesse;
+
+Revisão de decisões automatizadas que afetem seus interesses.
+
+Para exercer esses direitos, o Usuário deverá enviar solicitação ao Encarregado de Dados (DPO) pelo e-mail apexproia@gmail.com ou apexproia@gmail.com. A Plataforma responderá às solicitações no prazo de 15 (quinze) dias.
+
+13.8. Retenção e Exclusão de Dados
+
+Os dados pessoais serão mantidos pelo tempo necessário para o cumprimento das finalidades para as quais foram coletados, respeitando os prazos legais aplicáveis. Após o encerramento da conta, os dados serão eliminados ou anonimizados, exceto:
+
+Dados necessários ao cumprimento de obrigações legais ou regulatórias;
+
+Dados necessários ao exercício regular de direitos em processos judiciais, administrativos ou arbitrais;
+
+Dados cuja retenção seja determinada por autoridade competente.
+
+Em geral, os logs de acesso serão mantidos por 6 (seis) meses, conforme exige o artigo 15 do Marco Civil da Internet (Lei nº 12.965/2014).
+
+13.9. Encarregado de Dados (DPO)
+
+A Plataforma indica como Encarregado pelo Tratamento de Dados Pessoais (Data Protection Officer — DPO) o responsável pelo canal: apexproia@gmail.com. O Encarregado atua como canal de comunicação entre a Plataforma, os titulares dos dados e a Autoridade Nacional de Proteção de Dados (ANPD).
+
+13.10. Reclamações à ANPD
+
+Sem prejuízo de qualquer outra via de recurso administrativo ou judicial, o Usuário tem o direito de apresentar reclamação à Autoridade Nacional de Proteção de Dados (ANPD), com base no artigo 18, § 1º da LGPD, caso entenda que alguma disposição destes Termos tenha sido violada. A ANPD pode ser acessada pelo site www.gov.br/anpd.
+
+13.11. Cookies e Tecnologias de Rastreamento
+
+O aplicativo poderá utilizar cookies, pixels e tecnologias similares para: autenticação de sessão, análise de desempenho e melhoria da experiência do usuário. O Usuário poderá gerenciar as preferências de cookies nas configurações do aplicativo ou do dispositivo. A recusa de cookies não essenciais não prejudicará o funcionamento básico da plataforma.
+
+CLÁUSULA 14 — DA SEGURANÇA DA INFORMAÇÃO
+
+14.1. Medidas de Segurança
+
+A Plataforma adota medidas técnicas e organizacionais adequadas para proteger os dados pessoais dos usuários contra acesso não autorizado, perda, destruição, alteração ou divulgação indevida, incluindo:
+
+Criptografia de dados em trânsito (TLS/SSL) e em repouso;
+
+Controles de acesso baseados em funções (RBAC);
+
+Monitoramento de segurança e logs de acesso;
+
+Autenticação segura com senha criptografada (hash);
+
+Backups regulares e planos de recuperação de desastres.
+
+14.2. Incidentes de Segurança
+
+Em caso de incidente de segurança que possa acarretar risco ou dano relevante aos usuários, a Plataforma comunicará os afetados e a ANPD em prazo razoável, conforme o artigo 48 da LGPD, informando a natureza dos dados afetados, os riscos relacionados e as medidas adotadas para remediar a situação.
+
+14.3. Responsabilidade do Usuário pela Segurança
+
+O Usuário é responsável pela segurança de seu dispositivo, pela escolha de uma senha forte e pela não divulgação de suas credenciais a terceiros. A Plataforma não se responsabiliza por danos decorrentes de negligência do Usuário em relação à segurança de suas credenciais de acesso.
+
+CLÁUSULA 15 — DAS DISPOSIÇÕES GERAIS
+
+15.1. Integralidade do Acordo
+
+Estes Termos de Uso, juntamente com a Política de Privacidade e demais políticas publicadas na plataforma, constituem o acordo integral entre as partes em relação ao objeto aqui regulado, substituindo todos os entendimentos anteriores.
+
+15.2. Independência das Cláusulas
+
+Caso qualquer disposição destes Termos seja considerada inválida, ilegal ou inexequível por decisão judicial ou arbitral, as demais disposições permanecerão válidas e eficazes, devendo a cláusula inválida ser interpretada da forma mais próxima possível da intenção original das partes.
+
+15.3. Renúncia
+
+A inércia ou tolerância da Plataforma em exigir o cumprimento de qualquer disposição destes Termos não constituirá novação ou renúncia de direito, não impedindo a Plataforma de exigir seu cumprimento a qualquer momento.
+
+15.4. Cessão
+
+A Plataforma poderá ceder ou transferir seus direitos e obrigações decorrentes destes Termos a terceiros, inclusive em caso de reorganização societária, fusão ou aquisição. O Usuário não poderá ceder sua conta ou qualquer direito decorrente destes Termos sem autorização prévia e escrita da Plataforma.
+
+15.5. Canais de Atendimento e Contato
+
+Para dúvidas, sugestões, solicitações ou reclamações, o Usuário pode entrar em contato por:
+
+E-mail geral: apexproia@gmail.com
+
+E-mail de privacidade/LGPD: apexproia@gmail.com
+
+E-mail do DPO: apexproia@gmail.com
+
+Site: apexproia.com.br
+
+O prazo de resposta é de até 5 (cinco) dias úteis para solicitações gerais e de 15 (quinze) dias para solicitações relativas a direitos do titular de dados.
+
+CLÁUSULA 16 — DO FORO E DA LEI APLICÁVEL
+
+16.1. Lei Aplicável
+
+Estes Termos de Uso são regidos exclusivamente pelas leis da República Federativa do Brasil, em especial pelo Código Civil (Lei nº 10.406/2002), pelo Código de Defesa do Consumidor (Lei nº 8.078/1990), pela Lei Geral de Proteção de Dados (Lei nº 13.709/2018), pelo Marco Civil da Internet (Lei nº 12.965/2014) e pela Lei de Educação Física (Lei nº 9.696/1998).
+
+16.2. Foro Eleito
+
+Para dirimir quaisquer controvérsias oriundas destes Termos de Uso, as partes elegem, com exclusão de qualquer outro, o foro da Comarca de Capitão Leônidas Marques, Estado do Paraná, ressalvada a faculdade do consumidor de demandar no foro de seu domicílio, conforme artigo 101, inciso I, do Código de Defesa do Consumidor.
+
+16.3. Resolução Amigável
+
+Antes de recorrer ao Poder Judiciário, as partes comprometem-se a buscar solução amigável para eventuais conflitos, por meio dos canais de atendimento da Plataforma, podendo também recorrer às plataformas governamentais de resolução de conflitos, como o consumidor.gov.br.
+
+TERMO DE ACEITE
+
+Ao clicar em "Aceito os Termos de Uso e a Política de Privacidade", o Usuário declara ter lido, compreendido e concordado integralmente com todas as disposições deste documento, incluindo as responsabilidades relativas ao registro profissional no CREF (para Profissionais de Educação Física), ao tratamento de dados pessoais conforme a LGPD, e às demais condições de uso da plataforma ApexPro.
+
+E L DOS SANTOS RODRIGUES ACADEMIA - ME — ApexPro
+
+CNPJ: 50.096.323/0001-07  |  Avenida Iguaçu, 494, Capitão Leônidas Marques - PR
+
+apexproia@gmail.com  |  apexproia.com.br
+
+Versão 1.0 — Vigente a partir de 15 de abril de 2026

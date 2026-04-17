@@ -39,6 +39,7 @@
                     @csrf
 
                     <input type="hidden" name="payment_method" id="payment_method_input" value="{{ $defaultMethod === 'credit_card' ? 'credit_card' : 'pix' }}">
+                    <input type="hidden" name="accepted_terms" id="accepted_terms_input" value="{{ old('accepted_terms', '0') }}">
 
                     @if (!$isRenewal)
                     <div class="bg-zinc-900/50 rounded-2xl border border-white/5 p-6 sm:p-8 shadow-xl mb-6">
@@ -191,6 +192,36 @@
                                     class="w-full rounded-lg bg-zinc-800/80 border border-white/10 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition">
                             </div>
                         </div>
+                    </div>
+                    @endif
+
+                    @if (!$isRenewal)
+                    <div class="bg-zinc-900/50 rounded-2xl border border-white/5 p-6 sm:p-8 shadow-xl mb-6">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 class="text-lg font-semibold text-white">Termos de Uso ApexPro</h2>
+                                <p class="mt-1 text-sm text-zinc-400">
+                                    O aceite dos termos e obrigatorio para concluir a assinatura.
+                                </p>
+                            </div>
+                            <span id="terms_status_badge" class="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
+                                Pendente
+                            </span>
+                        </div>
+
+                        <div class="mt-5 flex flex-wrap items-center gap-3">
+                            <button type="button" id="btn_open_terms"
+                                class="inline-flex items-center gap-2 rounded-lg border border-teal-500/40 bg-teal-500/10 px-4 py-2.5 text-sm font-semibold text-teal-300 hover:bg-teal-500/20 transition-colors">
+                                Verificar termos
+                            </button>
+                            <span id="terms_feedback_text" class="text-xs text-zinc-500">
+                                Ainda nao aceito.
+                            </span>
+                        </div>
+
+                        @error('accepted_terms')
+                            <p class="mt-3 text-xs text-red-400">{{ $message }}</p>
+                        @enderror
                     </div>
                     @endif
 
@@ -364,6 +395,44 @@
     </div>
 </div>
 
+@if (!$isRenewal)
+@php
+    $termsFile = resource_path('legal/termos_apexpro.txt');
+    $termsContent = file_exists($termsFile)
+        ? file_get_contents($termsFile)
+        : 'Termos de uso temporariamente indisponiveis. Tente novamente em instantes.';
+@endphp
+<div id="terms_modal_overlay" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm p-4 sm:p-6">
+    <div class="mx-auto mt-8 max-w-4xl rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
+            <div>
+                <h3 class="text-lg font-semibold text-white">Termos de Uso e Politica de Privacidade</h3>
+                <p class="mt-1 text-xs text-zinc-400">Leia atentamente antes de aceitar.</p>
+            </div>
+            <button type="button" id="btn_close_terms" class="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-zinc-300 hover:bg-white/5">
+                Fechar
+            </button>
+        </div>
+
+        <div class="max-h-[62vh] overflow-y-auto px-5 py-4 sm:px-6">
+            <div class="rounded-xl border border-white/10 bg-zinc-950/70 p-4 text-sm leading-relaxed text-zinc-300 whitespace-pre-wrap">{{ $termsContent }}</div>
+        </div>
+
+        <div class="flex flex-col gap-3 border-t border-white/10 px-5 py-4 sm:px-6 sm:flex-row sm:items-center sm:justify-between">
+            <p id="terms_countdown_text" class="text-xs text-zinc-400">Voce pode aceitar em alguns segundos...</p>
+            <div class="flex items-center gap-2">
+                <button type="button" id="btn_decline_terms" class="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-300 hover:bg-red-500/20">
+                    Recusar
+                </button>
+                <button type="button" id="btn_accept_terms" disabled class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 disabled:opacity-40 disabled:cursor-not-allowed">
+                    Aceitar termos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 <style>
 .tab-active {
     background-color: rgb(20 184 166 / 0.15);
@@ -385,10 +454,101 @@
 (function () {
     const form = document.getElementById('checkout-form');
     const pmInput = document.getElementById('payment_method_input');
+    const acceptedTermsInput = document.getElementById('accepted_terms_input');
+    const openTermsBtn = document.getElementById('btn_open_terms');
+    const closeTermsBtn = document.getElementById('btn_close_terms');
+    const acceptTermsBtn = document.getElementById('btn_accept_terms');
+    const declineTermsBtn = document.getElementById('btn_decline_terms');
+    const termsOverlay = document.getElementById('terms_modal_overlay');
+    const termsBadge = document.getElementById('terms_status_badge');
+    const termsFeedbackText = document.getElementById('terms_feedback_text');
+    const termsCountdownText = document.getElementById('terms_countdown_text');
+    let termsCountdownTimer = null;
+    const termsReadSeconds = 8;
     const birthDay = document.getElementById('birth_day');
     const birthMonth = document.getElementById('birth_month');
     const birthYear = document.getElementById('birth_year');
     const birthInput = document.getElementById('birth_date_input');
+
+    const isTermsRequired = !!openTermsBtn;
+
+    function setTermsAcceptedState(accepted) {
+        if (!acceptedTermsInput) return;
+        acceptedTermsInput.value = accepted ? '1' : '0';
+        if (!termsBadge || !termsFeedbackText) return;
+
+        if (accepted) {
+            termsBadge.className = 'inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300';
+            termsBadge.textContent = 'Aceito';
+            termsFeedbackText.className = 'text-xs text-emerald-300';
+            termsFeedbackText.textContent = 'Termos aceitos. Voce pode continuar com a assinatura.';
+        } else {
+            termsBadge.className = 'inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300';
+            termsBadge.textContent = 'Pendente';
+            termsFeedbackText.className = 'text-xs text-zinc-500';
+            termsFeedbackText.textContent = 'Ainda nao aceito.';
+        }
+    }
+
+    function openTermsModal() {
+        if (!termsOverlay) return;
+        termsOverlay.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+
+        if (acceptTermsBtn && termsCountdownText) {
+            let remaining = termsReadSeconds;
+            acceptTermsBtn.disabled = true;
+            termsCountdownText.textContent = `Leia os termos. Liberando aceite em ${remaining}s...`;
+
+            if (termsCountdownTimer) clearInterval(termsCountdownTimer);
+            termsCountdownTimer = setInterval(() => {
+                remaining -= 1;
+                if (remaining <= 0) {
+                    clearInterval(termsCountdownTimer);
+                    termsCountdownTimer = null;
+                    acceptTermsBtn.disabled = false;
+                    termsCountdownText.textContent = 'Leitura minima concluida. Voce ja pode aceitar os termos.';
+                    return;
+                }
+                termsCountdownText.textContent = `Leia os termos. Liberando aceite em ${remaining}s...`;
+            }, 1000);
+        }
+    }
+
+    function closeTermsModal() {
+        if (!termsOverlay) return;
+        termsOverlay.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        if (termsCountdownTimer) {
+            clearInterval(termsCountdownTimer);
+            termsCountdownTimer = null;
+        }
+    }
+
+    if (openTermsBtn) openTermsBtn.addEventListener('click', openTermsModal);
+    if (closeTermsBtn) closeTermsBtn.addEventListener('click', closeTermsModal);
+    if (termsOverlay) {
+        termsOverlay.addEventListener('click', function (e) {
+            if (e.target === termsOverlay) closeTermsModal();
+        });
+    }
+    if (declineTermsBtn) {
+        declineTermsBtn.addEventListener('click', function () {
+            setTermsAcceptedState(false);
+            closeTermsModal();
+            alert('Nao podemos vender o sistema sem o aceite dos Termos de Uso ApexPro.');
+        });
+    }
+    if (acceptTermsBtn) {
+        acceptTermsBtn.addEventListener('click', function () {
+            setTermsAcceptedState(true);
+            closeTermsModal();
+        });
+    }
+
+    if (acceptedTermsInput) {
+        setTermsAcceptedState(acceptedTermsInput.value === '1');
+    }
 
     if (birthDay && birthMonth && birthYear && birthInput) {
         const updateBirthDate = () => {
@@ -420,6 +580,19 @@
             }
         }, true);
     }
+
+    form?.addEventListener('submit', function (event) {
+        if (!isTermsRequired || !acceptedTermsInput) return;
+        if (acceptedTermsInput.value === '1') return;
+
+        event.preventDefault();
+        setTermsAcceptedState(false);
+        if (termsFeedbackText) {
+            termsFeedbackText.className = 'text-xs text-red-400';
+            termsFeedbackText.textContent = 'Nao podemos vender o sistema sem o aceite dos Termos de Uso ApexPro.';
+        }
+        openTermsModal();
+    });
 
     const cpfField = document.getElementById('cpf_input');
     if (cpfField) {
