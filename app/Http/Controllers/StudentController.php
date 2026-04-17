@@ -178,6 +178,24 @@ class StudentController extends Controller
         return view('student.profile', compact('user', 'professional', 'latestMeasurement', 'totalWorkouts'));
     }
 
+    public function updatePhoto(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $request->validate(['profile_photo' => ['required', 'image', 'max:5120']]);
+
+        if (!empty($user->profile_photo_path)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_photo_path);
+        }
+
+        $user->update([
+            'profile_photo_path' => $request->file('profile_photo')->store('profile-photos', 'public'),
+        ]);
+
+        return back()->with('success', 'Foto atualizada com sucesso!');
+    }
+
     /**
      * Tela de Evolução com Gráficos Completos.
      */

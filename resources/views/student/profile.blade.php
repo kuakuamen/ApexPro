@@ -38,6 +38,17 @@
     .mini-val { font-size: 22px; font-weight: 900; color: #fff; }
     .mini-lbl { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; }
 
+    /* Avatar foto */
+    .avatar-wrap { position: relative; display: inline-block; cursor: pointer; }
+    .avatar-wrap .avatar-overlay {
+        position: absolute; inset: 0; border-radius: 50%;
+        background: rgba(0,0,0,0.5);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity 0.2s;
+    }
+    .avatar-wrap:hover .avatar-overlay { opacity: 1; }
+    .avatar-img { width:88px; height:88px; border-radius:50%; object-fit:cover; border:3px solid rgba(99,102,241,0.4); }
+
     /* Danger btn */
     .logout-btn {
         width: 100%; padding: 15px; border-radius: 16px; font-size: 15px; font-weight: 700;
@@ -50,9 +61,23 @@
 
     {{-- Avatar + nome --}}
     <div class="flex flex-col items-center gap-3 pt-2 pb-4">
-        <div class="avatar-ring">
-            {{ strtoupper(substr($user->name, 0, 1)) }}
-        </div>
+        <form method="POST" action="{{ route('student.profile.photo') }}" enctype="multipart/form-data" id="photo-form">
+            @csrf
+            <input type="file" name="profile_photo" id="photo-input" accept="image/*" class="hidden">
+            <div class="avatar-wrap" onclick="document.getElementById('photo-input').click()">
+                @if($user->profile_photo_url)
+                    <img src="{{ $user->profile_photo_url }}" class="avatar-img" alt="Foto de perfil">
+                @else
+                    <div class="avatar-ring">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
+                @endif
+                <div class="avatar-overlay">
+                    <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </form>
         <div class="text-center">
             <h1 class="text-white font-extrabold text-xl">{{ $user->name }}</h1>
             <p class="text-slate-500 text-sm mt-0.5">{{ $user->email }}</p>
@@ -154,6 +179,13 @@
     </div>
     @endif
 
+    {{-- Sucesso foto --}}
+    @if(session('success'))
+    <div style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:12px;padding:12px 16px;text-align:center;font-size:13px;font-weight:600;color:#34d399;">
+        {{ session('success') }}
+    </div>
+    @endif
+
     {{-- Logout --}}
     <form method="POST" action="{{ route('logout') }}">
         @csrf
@@ -166,4 +198,12 @@
     </form>
 
 </div>
+
+<script>
+    document.getElementById('photo-input').addEventListener('change', function() {
+        if (this.files.length > 0) {
+            document.getElementById('photo-form').submit();
+        }
+    });
+</script>
 @endsection
