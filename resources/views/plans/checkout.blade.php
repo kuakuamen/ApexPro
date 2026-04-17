@@ -402,8 +402,8 @@
         ? file_get_contents($termsFile)
         : 'Termos de uso temporariamente indisponiveis. Tente novamente em instantes.';
 @endphp
-<div id="terms_modal_overlay" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/70 backdrop-blur-sm p-4 sm:p-6">
-    <div class="mx-auto mt-2 flex max-h-[calc(100vh-1rem)] max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl sm:mt-6 sm:max-h-[calc(100vh-3rem)]">
+<div id="terms_modal_overlay" class="fixed inset-0 z-50 hidden items-start justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-4 sm:items-center sm:p-6">
+    <div class="mx-auto flex h-[calc(100vh-2rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl sm:h-[calc(100vh-3rem)]">
         <div class="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
             <div>
                 <h3 class="text-lg font-semibold text-white">Termos de Uso e Politica de Privacidade</h3>
@@ -418,7 +418,7 @@
             Arraste para baixo para continuar lendo
         </div>
 
-        <div id="terms_scroll_area" class="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+        <div id="terms_scroll_area" class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6">
             <div class="rounded-xl border border-white/10 bg-zinc-950/70 p-4 text-sm leading-relaxed text-zinc-300 whitespace-pre-wrap">{{ $termsContent }}</div>
         </div>
 
