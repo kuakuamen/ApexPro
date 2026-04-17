@@ -19,7 +19,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/apexproai
-            git pull origin main
+            git pull --no-rebase origin main
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force
             php artisan config:cache
