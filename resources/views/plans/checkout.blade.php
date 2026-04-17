@@ -402,8 +402,8 @@
         ? file_get_contents($termsFile)
         : 'Termos de uso temporariamente indisponiveis. Tente novamente em instantes.';
 @endphp
-<div id="terms_modal_overlay" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm p-4 sm:p-6">
-    <div class="mx-auto mt-8 max-w-4xl rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
+<div id="terms_modal_overlay" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/70 backdrop-blur-sm p-4 sm:p-6">
+    <div class="mx-auto mt-2 flex max-h-[calc(100vh-1rem)] max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl sm:mt-6 sm:max-h-[calc(100vh-3rem)]">
         <div class="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
             <div>
                 <h3 class="text-lg font-semibold text-white">Termos de Uso e Politica de Privacidade</h3>
@@ -414,7 +414,11 @@
             </button>
         </div>
 
-        <div class="max-h-[62vh] overflow-y-auto px-5 py-4 sm:px-6">
+        <div class="border-b border-white/10 px-5 py-2 text-center text-[11px] text-zinc-500 sm:px-6">
+            Arraste para baixo para continuar lendo
+        </div>
+
+        <div id="terms_scroll_area" class="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
             <div class="rounded-xl border border-white/10 bg-zinc-950/70 p-4 text-sm leading-relaxed text-zinc-300 whitespace-pre-wrap">{{ $termsContent }}</div>
         </div>
 
@@ -438,6 +442,28 @@
     background-color: rgb(20 184 166 / 0.15);
     border-color: rgb(20 184 166 / 0.5);
     color: rgb(94 234 212);
+}
+
+#terms_scroll_area {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.7) transparent;
+}
+
+#terms_scroll_area::-webkit-scrollbar {
+    width: 10px;
+}
+
+#terms_scroll_area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#terms_scroll_area::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
 }
 .tab-btn:not(.tab-active) {
     background-color: rgb(39 39 42 / 0.5);
