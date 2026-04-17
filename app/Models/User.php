@@ -150,7 +150,7 @@ class User extends Authenticatable
             return null;
         }
 
-        return '/fitmanager/public/storage/' . $this->profile_photo_path;
+        return asset('storage/' . $this->profile_photo_path);
     }
 
     public function sendPasswordResetNotification($token): void
