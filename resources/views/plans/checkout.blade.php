@@ -423,7 +423,7 @@
         </div>
 
         <div class="flex flex-col gap-3 border-t border-white/10 px-5 py-4 sm:px-6 sm:flex-row sm:items-center sm:justify-between">
-            <p id="terms_countdown_text" class="text-xs text-zinc-400">Voce pode aceitar em alguns segundos...</p>
+            <p id="terms_countdown_text" class="rounded-md border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-300">Voce pode aceitar em alguns segundos...</p>
             <div class="flex items-center gap-2">
                 <button type="button" id="btn_decline_terms" class="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-300 hover:bg-red-500/20">
                     Recusar
