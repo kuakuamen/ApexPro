@@ -113,48 +113,106 @@ class WorkoutPlanController extends Controller
             return null;
         }
 
-        $name = $this->normalizeExerciseText($exerciseName);
-        $url = 'https://api.workoutxapp.com/v1/exercises/name/' . rawurlencode($name);
+        foreach ($this->workoutxSearchCandidates($exerciseName) as $candidateName) {
+            $url = 'https://api.workoutxapp.com/v1/exercises/name/' . rawurlencode($candidateName);
 
-        $response = Http::timeout(8)
-            ->withHeaders([
-                'X-WorkoutX-Key' => $apiKey,
-                'Accept' => 'application/json',
-            ])
-            ->get($url, [
-                'limit' => 10,
-            ]);
+            $response = Http::timeout(8)
+                ->withHeaders([
+                    'X-WorkoutX-Key' => $apiKey,
+                    'Accept' => 'application/json',
+                ])
+                ->get($url, [
+                    'limit' => 10,
+                ]);
 
-        if (!$response->successful()) {
-            throw new \RuntimeException('WorkoutX API returned HTTP ' . $response->status());
+            if (!$response->successful()) {
+                throw new \RuntimeException('WorkoutX API returned HTTP ' . $response->status());
+            }
+
+            $payload = $response->json();
+            $items = collect(is_array($payload) && array_key_exists('data', $payload) ? $payload['data'] : $payload)
+                ->filter(fn ($item) => is_array($item) && isset($item['name']))
+                ->values();
+
+            if ($items->isEmpty()) {
+                continue;
+            }
+
+            $exercise = $items->first(function (array $item) use ($candidateName) {
+                $candidate = $this->normalizeExerciseText((string) ($item['name'] ?? ''));
+                $target = $this->normalizeExerciseText($candidateName);
+                return $candidate !== '' && ($candidate === $target || str_contains($candidate, $target) || str_contains($target, $candidate));
+            }) ?? $items->first();
+
+            $gifUrl = (string) ($exercise['gifUrl'] ?? '');
+            if ($gifUrl === '') {
+                continue;
+            }
+
+            return [
+                'provider' => 'workoutx',
+                'media_type' => 'gif',
+                'embed_url' => $gifUrl,
+                'title' => (string) ($exercise['name'] ?? $exerciseName),
+            ];
         }
 
-        $payload = $response->json();
-        $items = collect(is_array($payload) && array_key_exists('data', $payload) ? $payload['data'] : $payload)
-            ->filter(fn ($item) => is_array($item) && isset($item['name']))
-            ->values();
+        return null;
+    }
 
-        if ($items->isEmpty()) {
-            return null;
-        }
+    private function workoutxSearchCandidates(string $exerciseName): array
+    {
+        $original = $this->normalizeExerciseText($exerciseName);
+        $clean = $this->normalizeExerciseText($this->cleanExerciseName($exerciseName));
 
-        $exercise = $items->first(function (array $item) use ($exerciseName) {
-            $candidate = $this->normalizeExerciseText((string) ($item['name'] ?? ''));
-            $target = $this->normalizeExerciseText($exerciseName);
-            return $candidate !== '' && ($candidate === $target || str_contains($candidate, $target) || str_contains($target, $candidate));
-        }) ?? $items->first();
-
-        $gifUrl = (string) ($exercise['gifUrl'] ?? '');
-        if ($gifUrl === '') {
-            return null;
-        }
-
-        return [
-            'provider' => 'workoutx',
-            'media_type' => 'gif',
-            'embed_url' => $gifUrl,
-            'title' => (string) ($exercise['name'] ?? $exerciseName),
+        $map = [
+            'agachamento sumo' => 'sumo squat',
+            'agachamento' => 'squat',
+            'levantamento terra romeno' => 'romanian deadlift',
+            'levantamento terra' => 'deadlift',
+            'supino reto com barra' => 'barbell bench press',
+            'supino reto' => 'bench press',
+            'supino inclinado' => 'incline bench press',
+            'supino declinado' => 'decline bench press',
+            'remada curvada' => 'bent over row',
+            'remada baixa' => 'seated cable row',
+            'puxada alta' => 'lat pulldown',
+            'desenvolvimento militar' => 'shoulder press',
+            'elevacao lateral' => 'lateral raise',
+            'rosca direta' => 'barbell curl',
+            'rosca alternada' => 'dumbbell curl',
+            'triceps testa' => 'skull crusher',
+            'triceps pulley' => 'triceps pushdown',
+            'afundo' => 'lunge',
+            'cadeira extensora' => 'leg extension',
+            'mesa flexora' => 'leg curl',
+            'panturrilha em pe' => 'standing calf raise',
+            'panturrilha sentado' => 'seated calf raise',
+            'hip thrust' => 'hip thrust',
+            'stiff' => 'romanian deadlift',
+            'passada' => 'walking lunge',
         ];
+
+        $translated = $clean;
+        foreach ($map as $pt => $en) {
+            if (str_contains($translated, $pt)) {
+                $translated = str_replace($pt, $en, $translated);
+            }
+        }
+
+        $candidates = collect([
+            $translated,
+            preg_replace('/\bcom\b/', '', $translated) ?: $translated,
+            preg_replace('/\s+/', ' ', $translated) ?: $translated,
+            $original,
+        ])
+            ->map(fn ($value) => trim((string) $value))
+            ->filter(fn ($value) => $value !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        return $candidates;
     }
 
     private function searchYoutubeExerciseVideo(string $apiKey, string $exerciseName): ?array
