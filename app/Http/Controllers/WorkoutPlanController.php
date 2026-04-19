@@ -81,7 +81,12 @@ class WorkoutPlanController extends Controller
 
         $cacheKey = 'exercise_media_v1_' . md5(mb_strtolower($exerciseName));
 
-        $video = Cache::get($cacheKey);
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && (($cached['status'] ?? null) === 'not_found')) {
+            return response()->json(['message' => 'Nao encontrei uma demonstracao para este exercicio.'], 404);
+        }
+
+        $video = is_array($cached) ? $cached : null;
 
         if (!$video) {
             try {
@@ -89,6 +94,9 @@ class WorkoutPlanController extends Controller
 
                 if ($video) {
                     Cache::put($cacheKey, $video, now()->addYear());
+                } else {
+                    // Evita consumir quota repetidamente em cliques seguidos para exercicios sem match.
+                    Cache::put($cacheKey, ['status' => 'not_found'], now()->addHours(12));
                 }
             } catch (\Throwable $e) {
                 Log::warning('Exercise media lookup failed', [
@@ -157,7 +165,7 @@ class WorkoutPlanController extends Controller
             return null;
         }
 
-        foreach ($this->workoutxSearchCandidates($exerciseName) as $candidateName) {
+        foreach (array_slice($this->workoutxSearchCandidates($exerciseName), 0, 1) as $candidateName) {
             $url = 'https://api.workoutxapp.com/v1/exercises/name/' . rawurlencode($candidateName);
 
             $response = Http::timeout(8)
