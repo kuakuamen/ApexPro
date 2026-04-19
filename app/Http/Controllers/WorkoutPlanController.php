@@ -79,6 +79,11 @@ class WorkoutPlanController extends Controller
             return response()->json(['message' => 'Nome do exercicio nao informado.'], 422);
         }
 
+        $override = $this->exerciseOverride($exerciseName);
+        if ($override) {
+            return response()->json($override);
+        }
+
         $cacheKey = $this->exerciseMediaCacheKey($exerciseName);
 
         $cached = Cache::get($cacheKey);
@@ -132,6 +137,17 @@ class WorkoutPlanController extends Controller
 
         foreach ($names as $name) {
             $lookupName = $this->cleanExerciseName($name);
+
+            $override = $this->exerciseOverride($lookupName);
+            if ($override) {
+                $result[$name] = [
+                    'status' => 'ok',
+                    'media_type' => $override['media_type'] ?? 'gif',
+                    'embed_url' => $override['embed_url'] ?? null,
+                ];
+                continue;
+            }
+
             $cacheKey = $this->exerciseMediaCacheKey($lookupName);
             $cached = Cache::get($cacheKey);
 
@@ -177,6 +193,49 @@ class WorkoutPlanController extends Controller
     private function exerciseMediaCacheKey(string $exerciseName): string
     {
         return 'exercise_media_v2_' . md5(mb_strtolower($exerciseName));
+    }
+
+    private function exerciseOverride(string $exerciseName): ?array
+    {
+        $norm = $this->normalizeExerciseText($exerciseName);
+        if ($norm === '') {
+            return null;
+        }
+
+        $file = storage_path('app/workoutx_overrides.json');
+        if (!File::exists($file)) {
+            return null;
+        }
+
+        $map = json_decode((string) File::get($file), true);
+        if (!is_array($map)) {
+            return null;
+        }
+
+        $entry = $map[$norm] ?? null;
+        if (!is_array($entry)) {
+            return null;
+        }
+
+        if (!empty($entry['embed_url'])) {
+            return [
+                'provider' => 'workoutx',
+                'media_type' => $entry['media_type'] ?? 'gif',
+                'embed_url' => $entry['embed_url'],
+                'title' => $entry['title'] ?? $exerciseName,
+            ];
+        }
+
+        if (!empty($entry['gif_id'])) {
+            return [
+                'provider' => 'workoutx',
+                'media_type' => 'gif',
+                'embed_url' => route('student.exercise.workoutx-gif', ['gifId' => $entry['gif_id']]),
+                'title' => $entry['title'] ?? $exerciseName,
+            ];
+        }
+
+        return null;
     }
 
     public function workoutxGif(string $gifId)
