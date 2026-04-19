@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\File;
 use App\Models\WorkoutLog;
 
 class WorkoutPlanController extends Controller
@@ -79,382 +78,38 @@ class WorkoutPlanController extends Controller
             return response()->json(['message' => 'Nome do exercicio nao informado.'], 422);
         }
 
-        $override = $this->exerciseOverride($exerciseName);
-        if ($override) {
-            return response()->json($override);
+        $apiKey = (string) config('services.youtube.api_key');
+
+        if (!$apiKey) {
+            return response()->json(['message' => 'Busca de videos indisponivel: chave do YouTube nao configurada.'], 503);
         }
 
-        $cacheKey = $this->exerciseMediaCacheKey($exerciseName);
+        $cacheKey = 'youtube_exercise_video_v5_' . md5(mb_strtolower($exerciseName));
 
-        $cached = Cache::get($cacheKey);
-        if (is_array($cached) && (($cached['status'] ?? null) === 'not_found')) {
-            return response()->json(['status' => 'not_found', 'message' => 'Nao encontrei uma demonstracao para este exercicio.']);
-        }
-
-        $video = is_array($cached) ? $cached : null;
+        $video = Cache::get($cacheKey);
 
         if (!$video) {
             try {
-                $video = $this->searchWorkoutxExerciseMedia($exerciseName);
+                $video = $this->searchYoutubeExerciseVideo($apiKey, $exerciseName);
 
                 if ($video) {
                     Cache::put($cacheKey, $video, now()->addYear());
-                } else {
-                    // Evita consumir quota repetidamente em cliques seguidos para exercicios sem match.
-                    Cache::put($cacheKey, ['status' => 'not_found'], now()->addHours(12));
                 }
             } catch (\Throwable $e) {
-                Log::warning('Exercise media lookup failed', [
+                Log::warning('YouTube exercise video lookup failed', [
                     'exercise' => $exerciseName,
                     'error' => $e->getMessage(),
                 ]);
 
-                return response()->json(['message' => 'Nao foi possivel consultar a midia do exercicio agora. Tente novamente em instantes.'], 503);
+                return response()->json(['message' => 'Nao foi possivel consultar o YouTube agora. Tente novamente em instantes.'], 503);
             }
         }
 
         if (!$video) {
-            return response()->json(['status' => 'not_found', 'message' => 'Nao encontrei uma demonstracao para este exercicio.']);
+            return response()->json(['message' => 'Nao encontrei um video para este exercicio.'], 404);
         }
 
         return response()->json($video);
-    }
-
-    public function prefetchExerciseMedia(Request $request)
-    {
-        if (Auth::user()?->role !== 'aluno') {
-            abort(403);
-        }
-
-        $names = collect($request->input('names', []))
-            ->map(fn ($name) => trim((string) $name))
-            ->filter(fn ($name) => $name !== '')
-            ->unique()
-            ->take(24)
-            ->values();
-
-        $result = [];
-
-        foreach ($names as $name) {
-            $lookupName = $this->cleanExerciseName($name);
-
-            $override = $this->exerciseOverride($lookupName);
-            if ($override) {
-                $result[$name] = [
-                    'status' => 'ok',
-                    'media_type' => $override['media_type'] ?? 'gif',
-                    'embed_url' => $override['embed_url'] ?? null,
-                ];
-                continue;
-            }
-
-            $cacheKey = $this->exerciseMediaCacheKey($lookupName);
-            $cached = Cache::get($cacheKey);
-
-            if (is_array($cached) && (($cached['status'] ?? null) === 'not_found')) {
-                $result[$name] = ['status' => 'not_found'];
-                continue;
-            }
-
-            if (is_array($cached) && isset($cached['embed_url'])) {
-                $result[$name] = [
-                    'status' => 'ok',
-                    'media_type' => $cached['media_type'] ?? 'gif',
-                    'embed_url' => $cached['embed_url'] ?? null,
-                ];
-                continue;
-            }
-
-            try {
-                $video = $this->searchWorkoutxExerciseMedia($lookupName);
-                if ($video) {
-                    Cache::put($cacheKey, $video, now()->addYear());
-                    $result[$name] = [
-                        'status' => 'ok',
-                        'media_type' => $video['media_type'] ?? 'gif',
-                        'embed_url' => $video['embed_url'] ?? null,
-                    ];
-                } else {
-                    Cache::put($cacheKey, ['status' => 'not_found'], now()->addHours(12));
-                    $result[$name] = ['status' => 'not_found'];
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Exercise media prefetch failed', [
-                    'exercise' => $name,
-                    'error' => $e->getMessage(),
-                ]);
-                $result[$name] = ['status' => 'error'];
-            }
-        }
-
-        return response()->json(['items' => $result]);
-    }
-
-    private function exerciseMediaCacheKey(string $exerciseName): string
-    {
-        return 'exercise_media_v2_' . md5(mb_strtolower($exerciseName));
-    }
-
-    private function exerciseOverride(string $exerciseName): ?array
-    {
-        $norm = $this->normalizeExerciseText($exerciseName);
-        if ($norm === '') {
-            return null;
-        }
-
-        $file = storage_path('app/workoutx_overrides.json');
-        if (!File::exists($file)) {
-            return null;
-        }
-
-        $map = json_decode((string) File::get($file), true);
-        if (!is_array($map)) {
-            return null;
-        }
-
-        $entry = $map[$norm] ?? null;
-        if (!is_array($entry)) {
-            return null;
-        }
-
-        if (!empty($entry['embed_url'])) {
-            return [
-                'provider' => 'workoutx',
-                'media_type' => $entry['media_type'] ?? 'gif',
-                'embed_url' => $entry['embed_url'],
-                'title' => $entry['title'] ?? $exerciseName,
-            ];
-        }
-
-        if (!empty($entry['gif_id'])) {
-            return [
-                'provider' => 'workoutx',
-                'media_type' => 'gif',
-                'embed_url' => route('student.exercise.workoutx-gif', ['gifId' => $entry['gif_id']]),
-                'title' => $entry['title'] ?? $exerciseName,
-            ];
-        }
-
-        return null;
-    }
-
-    public function workoutxGif(string $gifId)
-    {
-        if (Auth::user()?->role !== 'aluno') {
-            abort(403);
-        }
-
-        if (!preg_match('/^\d+$/', $gifId)) {
-            abort(404);
-        }
-
-        $localPath = storage_path('app/workoutx_gifs/' . $gifId . '.gif');
-        if (File::exists($localPath)) {
-            return response()->file($localPath, [
-                'Content-Type' => 'image/gif',
-                'Cache-Control' => 'public, max-age=2592000',
-            ]);
-        }
-
-        $apiKey = (string) config('services.workoutx.api_key');
-        if ($apiKey === '') {
-            abort(503, 'WORKOUTX_API_KEY nao configurada.');
-        }
-
-        $response = Http::timeout(12)
-            ->withHeaders([
-                'X-WorkoutX-Key' => $apiKey,
-                'Accept' => 'image/gif',
-            ])
-            ->get('https://api.workoutxapp.com/v1/gifs/' . $gifId . '.gif');
-
-        if (!$response->successful()) {
-            abort(404);
-        }
-
-        File::ensureDirectoryExists(dirname($localPath));
-        File::put($localPath, $response->body());
-
-        return response()->file($localPath, [
-            'Content-Type' => 'image/gif',
-            'Cache-Control' => 'public, max-age=2592000',
-        ]);
-    }
-
-    private function searchWorkoutxExerciseMedia(string $exerciseName): ?array
-    {
-        $apiKey = (string) config('services.workoutx.api_key');
-        if ($apiKey === '') {
-            return null;
-        }
-
-        foreach (array_slice($this->workoutxSearchCandidates($exerciseName), 0, 1) as $candidateName) {
-            $url = 'https://api.workoutxapp.com/v1/exercises/name/' . rawurlencode($candidateName);
-
-            $response = Http::timeout(8)
-                ->withHeaders([
-                    'X-WorkoutX-Key' => $apiKey,
-                    'Accept' => 'application/json',
-                ])
-                ->get($url, [
-                    'limit' => 10,
-                ]);
-
-            if (!$response->successful()) {
-                throw new \RuntimeException('WorkoutX API returned HTTP ' . $response->status());
-            }
-
-            $payload = $response->json();
-            $items = collect(is_array($payload) && array_key_exists('data', $payload) ? $payload['data'] : $payload)
-                ->filter(fn ($item) => is_array($item) && isset($item['name']))
-                ->values();
-
-            if ($items->isEmpty()) {
-                continue;
-            }
-
-            $exercise = $this->pickBestWorkoutxExercise($items, $exerciseName, $candidateName);
-            if (!$exercise) {
-                continue;
-            }
-
-            $gifUrl = (string) ($exercise['gifUrl'] ?? '');
-            if ($gifUrl === '') {
-                continue;
-            }
-
-            $gifId = null;
-            if (preg_match('~/gifs/(\d+)\.gif~', $gifUrl, $matches)) {
-                $gifId = $matches[1];
-            }
-
-            return [
-                'provider' => 'workoutx',
-                'media_type' => 'gif',
-                'embed_url' => $gifId ? route('student.exercise.workoutx-gif', ['gifId' => $gifId]) : $gifUrl,
-                'title' => (string) ($exercise['name'] ?? $exerciseName),
-            ];
-        }
-
-        return null;
-    }
-
-    private function pickBestWorkoutxExercise(\Illuminate\Support\Collection $items, string $originalExerciseName, string $candidateName): ?array
-    {
-        $target = $this->normalizeExerciseText($candidateName);
-        $original = $this->normalizeExerciseText($originalExerciseName);
-
-        $mustNotContain = [];
-        if (!str_contains($original, 'smith')) {
-            // Smith costuma gerar demo errada para vários exercícios livres.
-            $mustNotContain[] = 'smith';
-        }
-
-        $scored = $items->map(function (array $item) use ($target, $original, $mustNotContain) {
-            $name = $this->normalizeExerciseText((string) ($item['name'] ?? ''));
-            $equipment = $this->normalizeExerciseText((string) ($item['equipment'] ?? ''));
-            $blob = trim($name . ' ' . $equipment);
-
-            if ($name === '') {
-                return null;
-            }
-
-            foreach ($mustNotContain as $blocked) {
-                if (str_contains($blob, $blocked)) {
-                    return null;
-                }
-            }
-
-            $score = 0;
-            if ($name === $target) $score += 100;
-            if (str_contains($name, $target)) $score += 35;
-            if (str_contains($target, $name)) $score += 20;
-            if (str_contains($name, 'sumo') && str_contains($target, 'sumo')) $score += 25;
-            if (str_contains($name, 'squat') && str_contains($target, 'squat')) $score += 20;
-
-            // Penaliza variações não pedidas
-            if (!str_contains($original, 'com barra') && str_contains($blob, 'barbell')) $score -= 10;
-            if (!str_contains($original, 'halter') && str_contains($blob, 'dumbbell')) $score -= 10;
-
-            return ['item' => $item, 'score' => $score];
-        })
-            ->filter()
-            ->sortByDesc('score')
-            ->values();
-
-        return $scored->first()['item'] ?? null;
-    }
-
-    private function workoutxSearchCandidates(string $exerciseName): array
-    {
-        $original = $this->normalizeExerciseText($exerciseName);
-        $clean = $this->normalizeExerciseText($this->cleanExerciseName($exerciseName));
-
-        $map = [
-            'agachamento sumo' => 'sumo squat',
-            'agachamento' => 'squat',
-            'levantamento terra romeno' => 'romanian deadlift',
-            'levantamento terra' => 'deadlift',
-            'supino reto com barra' => 'barbell bench press',
-            'supino reto' => 'bench press',
-            'supino inclinado' => 'incline bench press',
-            'supino declinado' => 'decline bench press',
-            'crucifixo inclinado com halteres' => 'incline dumbbell fly',
-            'crucifixo inclinado' => 'incline fly',
-            'crucifixo' => 'fly',
-            'remada curvada' => 'bent over row',
-            'remada baixa' => 'seated cable row',
-            'puxada alta' => 'lat pulldown',
-            'desenvolvimento militar' => 'shoulder press',
-            'desenvolvimento com halteres sentado' => 'seated shoulder press',
-            'desenvolvimento sentado com halteres' => 'seated shoulder press',
-            'desenvolvimento com halteres' => 'shoulder press',
-            'elevacao lateral' => 'lateral raise',
-            'rosca direta' => 'barbell curl',
-            'rosca alternada' => 'dumbbell curl',
-            'triceps testa' => 'skull crusher',
-            'triceps pulley' => 'triceps pushdown',
-            'afundo' => 'lunge',
-            'cadeira extensora' => 'leg extension',
-            'extensora' => 'leg extension',
-            'mesa flexora' => 'leg curl',
-            'flexora deitada' => 'lying leg curl',
-            'flexora' => 'leg curl',
-            'panturrilha em pe' => 'standing calf raise',
-            'panturrilha sentado' => 'seated calf raise',
-            'hip thrust' => 'hip thrust',
-            'elevacao pelvica com barra' => 'barbell glute bridge',
-            'elevacao pelvica' => 'glute bridge',
-            'gluteo na maquina' => 'lever hip extension',
-            'gluteo maquina' => 'lever hip extension',
-            'stiff' => 'romanian deadlift',
-            'passada' => 'walking lunge',
-            'com halteres' => 'dumbbell',
-            'halteres' => 'dumbbell',
-            'com barra' => 'barbell',
-            'barra' => 'barbell',
-        ];
-
-        $translated = $clean;
-        foreach ($map as $pt => $en) {
-            if (str_contains($translated, $pt)) {
-                $translated = str_replace($pt, $en, $translated);
-            }
-        }
-
-        $candidates = collect([
-            $translated,
-            preg_replace('/\bcom\b/', '', $translated) ?: $translated,
-            preg_replace('/\s+/', ' ', $translated) ?: $translated,
-            $original,
-        ])
-            ->map(fn ($value) => trim((string) $value))
-            ->filter(fn ($value) => $value !== '')
-            ->unique()
-            ->values()
-            ->all();
-
-        return $candidates;
     }
 
     private function searchYoutubeExerciseVideo(string $apiKey, string $exerciseName): ?array
@@ -495,9 +150,6 @@ class WorkoutPlanController extends Controller
         }
 
         return [
-            'provider' => 'youtube',
-            'media_type' => 'youtube',
-            'embed_url' => 'https://www.youtube.com/embed/' . $videoId,
             'video_id' => $videoId,
             'title' => $item['snippet']['title'] ?? $exerciseName,
             'channel_title' => $item['snippet']['channelTitle'] ?? null,

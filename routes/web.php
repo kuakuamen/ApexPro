@@ -206,8 +206,6 @@ Route::middleware(['auth', 'subscription'])->group(function () {
     // Rota de Toggle de ExercÃƒÂ­cio (Aluno)
     Route::post('/aluno/exercicio/{exerciseId}/toggle', [WorkoutPlanController::class, 'toggleExercise'])->where('exerciseId', '[0-9]+')->name('student.exercise.toggle');
     Route::get('/aluno/exercicio/youtube', [WorkoutPlanController::class, 'exerciseYoutubeVideo'])->name('student.exercise.youtube');
-    Route::post('/aluno/exercicio/prefetch-media', [WorkoutPlanController::class, 'prefetchExerciseMedia'])->name('student.exercise.prefetch-media');
-    Route::get('/aluno/exercicio/workoutx-gif/{gifId}.gif', [WorkoutPlanController::class, 'workoutxGif'])->where('gifId', '[0-9]+')->name('student.exercise.workoutx-gif');
     
     // Debug: Verificar se rota estÃƒÂ¡ acessÃƒÂ­vel
     Route::get('/debug/toggle-route', function () {
@@ -276,5 +274,3 @@ Route::get('/storage/{path}', function ($path) {
 
     return $response;
 })->where('path', '.*');
-
-

@@ -45,10 +45,6 @@ return [
         'api_key' => env('YOUTUBE_API_KEY'),
     ],
 
-    'workoutx' => [
-        'api_key' => env('WORKOUTX_API_KEY'),
-    ],
-
     'mercadopago' => [
         'access_token' => env('MP_ACCESS_TOKEN'),
         'public_key' => env('MP_PUBLIC_KEY'),

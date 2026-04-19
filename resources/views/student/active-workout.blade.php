@@ -47,8 +47,7 @@
     .video-area {
         background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.07);
         border-radius: 14px; overflow: hidden; margin-bottom: 16px;
-        aspect-ratio: 4/3; min-height: 240px;
-        display: flex; align-items: center; justify-content: center;
+        aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;
         position: relative; cursor: pointer;
     }
     .video-play-btn {
@@ -59,13 +58,6 @@
     }
     .video-label { position: absolute; bottom: 10px; left: 12px;
         font-size: 11px; color: #64748b; font-weight: 600; }
-
-    @media (min-width: 768px) {
-        .video-area {
-            aspect-ratio: 16/9;
-            min-height: 0;
-        }
-    }
 
     /* Series card */
     .series-card {
@@ -194,14 +186,11 @@
                     <span class="text-sm text-slate-400">Buscando vídeo...</span>
                 </div>
             </template>
-            <template x-if="showVideo && videoUrl && !videoLoading && videoType === 'youtube'">
+            <template x-if="showVideo && videoUrl && !videoLoading">
                 <iframe class="w-full h-full absolute inset-0"
                         :src="videoUrl"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen></iframe>
-            </template>
-            <template x-if="showVideo && videoUrl && !videoLoading && videoType !== 'youtube'">
-                <img class="w-full h-full absolute inset-0 object-contain bg-black/40 p-1" :src="videoUrl" alt="Demonstracao do exercicio">
             </template>
             <template x-if="showVideo && videoError && !videoLoading">
                 <p class="text-amber-400 text-sm px-4 text-center" x-text="videoError"></p>
@@ -297,7 +286,6 @@ function activeWorkout(exercises, todayLogs) {
         // Video
         showVideo: false,
         videoLoading: false,
-        videoType: '',
         videoUrl: '',
         videoError: '',
         videoCache: {},
@@ -316,7 +304,6 @@ function activeWorkout(exercises, todayLogs) {
             }
             // Inicia stopwatch geral
             this.elapsedInterval = setInterval(() => this.elapsed++, 1000);
-            this.prefetchExerciseMedia();
         },
 
         currentEx() {
@@ -351,7 +338,6 @@ function activeWorkout(exercises, todayLogs) {
             this.currentWeight = '';
             this.currentReps = '';
             this.showVideo = false;
-            this.videoType = '';
             this.videoUrl = '';
             this.videoError = '';
             this.advanceExercise();
@@ -359,7 +345,6 @@ function activeWorkout(exercises, todayLogs) {
 
         advanceExercise() {
             this.showVideo = false;
-            this.videoType = '';
             this.videoUrl = '';
             this.videoError = '';
             this.currentIdx++;
@@ -405,7 +390,6 @@ function activeWorkout(exercises, todayLogs) {
             if (this.showVideo && !this.videoUrl && !this.videoLoading) {
                 const ex = this.currentEx();
                 if (ex.embed_video_url) {
-                    this.videoType = ex.embed_video_url.includes('youtube.com/embed/') ? 'youtube' : 'embed';
                     this.videoUrl = ex.embed_video_url;
                 } else {
                     this.loadVideo(ex.name);
@@ -415,9 +399,7 @@ function activeWorkout(exercises, todayLogs) {
 
         loadVideo(name) {
             if (this.videoCache[name]) {
-                const cached = this.videoCache[name];
-                this.videoType = cached.type;
-                this.videoUrl = cached.url;
+                this.videoUrl = this.videoCache[name];
                 return;
             }
             this.videoLoading = true;
@@ -431,45 +413,11 @@ function activeWorkout(exercises, todayLogs) {
                 return d;
             })
             .then(d => {
-                const type = d.media_type || (d.video_id ? 'youtube' : 'gif');
-                const url = d.embed_url || (d.video_id ? `https://www.youtube.com/embed/${d.video_id}` : '');
-                if (!url) throw new Error('Midia nao disponivel para este exercicio.');
-                this.videoType = type;
-                this.videoUrl = url;
-                this.videoCache[name] = { type, url };
+                this.videoUrl = `https://www.youtube.com/embed/${d.video_id}`;
+                this.videoCache[name] = this.videoUrl;
             })
             .catch(e => { this.videoError = e.message; })
             .finally(() => { this.videoLoading = false; });
-        },
-
-        prefetchExerciseMedia() {
-            const names = [...new Set(this.exercises
-                .map(ex => (ex?.name || '').trim())
-                .filter(Boolean)
-            )];
-
-            if (!names.length) return;
-
-            fetch(`{{ route('student.exercise.prefetch-media') }}`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                },
-                body: JSON.stringify({ names })
-            })
-            .then(async r => {
-                const d = await r.json().catch(() => ({}));
-                if (!r.ok || !d.items) return;
-                Object.entries(d.items).forEach(([name, item]) => {
-                    if (item?.status === 'ok' && item?.embed_url) {
-                        this.videoCache[name] = { type: item.media_type || 'gif', url: item.embed_url };
-                    }
-                });
-            })
-            .catch(() => {});
         },
 
         formatTime(s) {
