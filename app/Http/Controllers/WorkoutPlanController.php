@@ -86,13 +86,6 @@ class WorkoutPlanController extends Controller
             try {
                 $video = $this->searchWorkoutxExerciseMedia($exerciseName);
 
-                if (!$video) {
-                    $youtubeApiKey = (string) config('services.youtube.api_key');
-                    if ($youtubeApiKey !== '') {
-                        $video = $this->searchYoutubeExerciseVideo($youtubeApiKey, $exerciseName);
-                    }
-                }
-
                 if ($video) {
                     Cache::put($cacheKey, $video, now()->addYear());
                 }
