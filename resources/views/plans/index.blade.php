@@ -899,7 +899,7 @@ src="https://www.facebook.com/tr?id=1464277952144097&ev=PageView&noscript=1"
           <div class="plan-name">{{ $plan['name'] }}</div>
           <div class="plan-desc">
             @if($planId === 'plan_elite')
-              Para gerenciar <strong style="color: white;">100+ alunos</strong> de consultoria.
+              Para gerenciar ate <strong style="color: white;">1000 alunos</strong> de consultoria.
             @else
               Para gerenciar até <strong style="color: white;">{{ $plan['max_students'] }} alunos</strong> de consultoria.
             @endif
