@@ -84,7 +84,7 @@ class WorkoutPlanController extends Controller
             return response()->json(['message' => 'Busca de videos indisponivel: chave do YouTube nao configurada.'], 503);
         }
 
-        $cacheKey = 'youtube_exercise_video_v5_' . md5(mb_strtolower($exerciseName));
+        $cacheKey = 'youtube_exercise_video_v6_' . md5(mb_strtolower($exerciseName));
 
         $video = Cache::get($cacheKey);
 
@@ -206,6 +206,11 @@ class WorkoutPlanController extends Controller
             return false;
         }
 
+        if ((str_contains($exercise, 'crucifixo') || str_contains($exercise, 'fly'))
+            && (str_contains($text, 'supino') || str_contains($text, 'press'))) {
+            return false;
+        }
+
         $conflicts = [
             'reto' => ['inclinado', 'declinado'],
             'inclinado' => ['reto', 'declinado'],
@@ -238,7 +243,7 @@ class WorkoutPlanController extends Controller
             'cadeira flexora' => 'mesa flexora',
             'elevacao pelvica com barra' => 'hip thrust com barra',
             'gluteo na maquina' => 'gluteo maquina',
-            'crucifixo inclinado com halteres' => 'supino inclinado crucifixo halteres',
+            'crucifixo inclinado com halteres' => 'crucifixo inclinado halteres',
             'desenvolvimento com halteres sentado' => 'desenvolvimento sentado halteres',
         ];
 
