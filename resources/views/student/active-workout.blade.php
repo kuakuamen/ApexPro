@@ -47,7 +47,8 @@
     .video-area {
         background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.07);
         border-radius: 14px; overflow: hidden; margin-bottom: 16px;
-        aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;
+        aspect-ratio: 4/3; min-height: 240px;
+        display: flex; align-items: center; justify-content: center;
         position: relative; cursor: pointer;
     }
     .video-play-btn {
@@ -58,6 +59,13 @@
     }
     .video-label { position: absolute; bottom: 10px; left: 12px;
         font-size: 11px; color: #64748b; font-weight: 600; }
+
+    @media (min-width: 768px) {
+        .video-area {
+            aspect-ratio: 16/9;
+            min-height: 0;
+        }
+    }
 
     /* Series card */
     .series-card {
@@ -193,7 +201,7 @@
                         allowfullscreen></iframe>
             </template>
             <template x-if="showVideo && videoUrl && !videoLoading && videoType !== 'youtube'">
-                <img class="w-full h-full absolute inset-0 object-cover" :src="videoUrl" alt="Demonstracao do exercicio">
+                <img class="w-full h-full absolute inset-0 object-contain bg-black/40 p-1" :src="videoUrl" alt="Demonstracao do exercicio">
             </template>
             <template x-if="showVideo && videoError && !videoLoading">
                 <p class="text-amber-400 text-sm px-4 text-center" x-text="videoError"></p>
