@@ -83,7 +83,7 @@ class WorkoutPlanController extends Controller
 
         $cached = Cache::get($cacheKey);
         if (is_array($cached) && (($cached['status'] ?? null) === 'not_found')) {
-            return response()->json(['message' => 'Nao encontrei uma demonstracao para este exercicio.'], 404);
+            return response()->json(['status' => 'not_found', 'message' => 'Nao encontrei uma demonstracao para este exercicio.']);
         }
 
         $video = is_array($cached) ? $cached : null;
@@ -109,7 +109,7 @@ class WorkoutPlanController extends Controller
         }
 
         if (!$video) {
-            return response()->json(['message' => 'Nao encontrei uma demonstracao para este exercicio.'], 404);
+            return response()->json(['status' => 'not_found', 'message' => 'Nao encontrei uma demonstracao para este exercicio.']);
         }
 
         return response()->json($video);
@@ -176,7 +176,7 @@ class WorkoutPlanController extends Controller
 
     private function exerciseMediaCacheKey(string $exerciseName): string
     {
-        return 'exercise_media_v1_' . md5(mb_strtolower($exerciseName));
+        return 'exercise_media_v2_' . md5(mb_strtolower($exerciseName));
     }
 
     public function workoutxGif(string $gifId)
@@ -364,6 +364,10 @@ class WorkoutPlanController extends Controller
             'panturrilha em pe' => 'standing calf raise',
             'panturrilha sentado' => 'seated calf raise',
             'hip thrust' => 'hip thrust',
+            'elevacao pelvica com barra' => 'barbell glute bridge',
+            'elevacao pelvica' => 'glute bridge',
+            'gluteo na maquina' => 'lever hip extension',
+            'gluteo maquina' => 'lever hip extension',
             'stiff' => 'romanian deadlift',
             'passada' => 'walking lunge',
             'com halteres' => 'dumbbell',
