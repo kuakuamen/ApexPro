@@ -215,10 +215,8 @@ class WorkoutPlanController extends Controller
 
         $mustNotContain = [];
         if (!str_contains($original, 'smith')) {
+            // Smith costuma gerar demo errada para vários exercícios livres.
             $mustNotContain[] = 'smith';
-        }
-        if (!str_contains($original, 'maquina') && !str_contains($original, 'machine')) {
-            $mustNotContain[] = 'machine';
         }
 
         $scored = $items->map(function (array $item) use ($target, $original, $mustNotContain) {
@@ -270,6 +268,9 @@ class WorkoutPlanController extends Controller
             'supino reto' => 'bench press',
             'supino inclinado' => 'incline bench press',
             'supino declinado' => 'decline bench press',
+            'crucifixo inclinado com halteres' => 'incline dumbbell fly',
+            'crucifixo inclinado' => 'incline fly',
+            'crucifixo' => 'fly',
             'remada curvada' => 'bent over row',
             'remada baixa' => 'seated cable row',
             'puxada alta' => 'lat pulldown',
@@ -281,12 +282,19 @@ class WorkoutPlanController extends Controller
             'triceps pulley' => 'triceps pushdown',
             'afundo' => 'lunge',
             'cadeira extensora' => 'leg extension',
+            'extensora' => 'leg extension',
             'mesa flexora' => 'leg curl',
+            'flexora deitada' => 'lying leg curl',
+            'flexora' => 'leg curl',
             'panturrilha em pe' => 'standing calf raise',
             'panturrilha sentado' => 'seated calf raise',
             'hip thrust' => 'hip thrust',
             'stiff' => 'romanian deadlift',
             'passada' => 'walking lunge',
+            'com halteres' => 'dumbbell',
+            'halteres' => 'dumbbell',
+            'com barra' => 'barbell',
+            'barra' => 'barbell',
         ];
 
         $translated = $clean;
