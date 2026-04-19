@@ -114,10 +114,7 @@ class WorkoutPlanController extends Controller
 
     private function searchYoutubeExerciseVideo(string $apiKey, string $exerciseName): ?array
     {
-        $queries = [
-            $exerciseName . ' gif shorts execução exercício musculação',
-            $exerciseName . ' execução exercício musculação',
-        ];
+        $queries = $this->youtubeQueryCandidates($exerciseName);
 
         $item = null;
 
@@ -197,7 +194,15 @@ class WorkoutPlanController extends Controller
             ->reject(fn ($term) => mb_strlen($term) < 4 || in_array($term, ['para', 'parede', 'porta', 'polia', 'corda', 'com', 'exercicio', 'execucao', 'musculacao'], true))
             ->values();
 
-        if ($tokens->isNotEmpty() && !$tokens->contains(fn ($term) => str_contains($text, $term))) {
+        if ($tokens->isNotEmpty()) {
+            $matched = $tokens->filter(fn ($term) => str_contains($text, $term))->count();
+            $required = $tokens->count() >= 2 ? 2 : 1;
+            if ($matched < $required) {
+                return false;
+            }
+        }
+
+        if (str_contains($exercise, 'deitada') && !str_contains($text, 'deitad')) {
             return false;
         }
 
@@ -221,6 +226,36 @@ class WorkoutPlanController extends Controller
         }
 
         return true;
+    }
+
+    private function youtubeQueryCandidates(string $exerciseName): array
+    {
+        $base = trim($exerciseName);
+        $normalized = $this->normalizeExerciseText($base);
+
+        $aliases = [
+            'flexora deitada' => 'mesa flexora deitada',
+            'cadeira flexora' => 'mesa flexora',
+            'elevacao pelvica com barra' => 'hip thrust com barra',
+            'gluteo na maquina' => 'gluteo maquina',
+            'crucifixo inclinado com halteres' => 'supino inclinado crucifixo halteres',
+            'desenvolvimento com halteres sentado' => 'desenvolvimento sentado halteres',
+        ];
+
+        $preferred = $base;
+        foreach ($aliases as $pt => $replacement) {
+            if (str_contains($normalized, $pt)) {
+                $preferred = $replacement;
+                break;
+            }
+        }
+
+        return [
+            $preferred . ' gif shorts execução exercício musculação',
+            $preferred . ' execução exercício musculação',
+            $base . ' gif shorts',
+            $base . ' execução exercício musculação',
+        ];
     }
 
     private function youtubeVideoDurations(string $apiKey, array $videoIds): array
