@@ -211,6 +211,9 @@
             <template x-if="showVideo && videoUrl && !videoLoading && videoType === 'video'">
                 <video class="w-full h-full absolute inset-0 object-contain bg-black" :src="videoUrl" controls playsinline></video>
             </template>
+            <template x-if="showVideo && mediaAttribution && !videoLoading">
+                <span class="video-credit" x-text="mediaAttribution"></span>
+            </template>
             <template x-if="showVideo && videoError && !videoLoading">
                 <p class="text-amber-400 text-sm px-4 text-center" x-text="videoError"></p>
             </template>
@@ -308,6 +311,7 @@ function activeWorkout(exercises, todayLogs) {
         videoType: 'iframe',
         videoUrl: '',
         videoError: '',
+        mediaAttribution: '',
         videoCache: {},
 
         workoutDone: false,
@@ -361,6 +365,7 @@ function activeWorkout(exercises, todayLogs) {
             this.videoType = 'iframe';
             this.videoUrl = '';
             this.videoError = '';
+            this.mediaAttribution = '';
             this.advanceExercise();
         },
 
@@ -369,6 +374,7 @@ function activeWorkout(exercises, todayLogs) {
             this.videoType = 'iframe';
             this.videoUrl = '';
             this.videoError = '';
+            this.mediaAttribution = '';
             this.currentIdx++;
             if (this.currentIdx >= this.exercises.length) {
                 clearInterval(this.elapsedInterval);
@@ -414,6 +420,7 @@ function activeWorkout(exercises, todayLogs) {
                 if (ex.embed_video_url) {
                     this.videoType = this.detectMediaType(ex.embed_video_url);
                     this.videoUrl = ex.embed_video_url;
+                    this.mediaAttribution = this.detectAttribution(ex.embed_video_url);
                 } else {
                     this.loadVideo(ex.name);
                 }
@@ -424,6 +431,7 @@ function activeWorkout(exercises, todayLogs) {
             if (this.videoCache[name]) {
                 this.videoType = this.detectMediaType(this.videoCache[name]);
                 this.videoUrl = this.videoCache[name];
+                this.mediaAttribution = this.detectAttribution(this.videoCache[name]);
                 return;
             }
             this.videoLoading = true;
@@ -439,6 +447,7 @@ function activeWorkout(exercises, todayLogs) {
             .then(d => {
                 this.videoUrl = `https://www.youtube.com/embed/${d.video_id}`;
                 this.videoType = 'iframe';
+                this.mediaAttribution = this.detectAttribution(this.videoUrl);
                 this.videoCache[name] = this.videoUrl;
             })
             .catch(e => { this.videoError = e.message; })
@@ -451,6 +460,14 @@ function activeWorkout(exercises, todayLogs) {
             if (u.match(/\.(gif|png|jpg|jpeg|webp)(\?|$)/)) return 'image';
             if (u.match(/\.(mp4|webm|ogg)(\?|$)/)) return 'video';
             return 'iframe';
+        },
+
+        detectAttribution(url) {
+            const u = (url || '').toLowerCase();
+            if (u.includes('gifdotreino.com') || u.includes('/media/gifdotreino/')) {
+                return 'Fonte: gifdotreino.com';
+            }
+            return '';
         },
 
         formatTime(s) {
