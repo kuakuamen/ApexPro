@@ -186,11 +186,14 @@
                     <span class="text-sm text-slate-400">Buscando vídeo...</span>
                 </div>
             </template>
-            <template x-if="showVideo && videoUrl && !videoLoading">
+            <template x-if="showVideo && videoUrl && !videoLoading && videoType === 'youtube'">
                 <iframe class="w-full h-full absolute inset-0"
                         :src="videoUrl"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen></iframe>
+            </template>
+            <template x-if="showVideo && videoUrl && !videoLoading && videoType !== 'youtube'">
+                <img class="w-full h-full absolute inset-0 object-cover" :src="videoUrl" alt="Demonstracao do exercicio">
             </template>
             <template x-if="showVideo && videoError && !videoLoading">
                 <p class="text-amber-400 text-sm px-4 text-center" x-text="videoError"></p>
@@ -286,6 +289,7 @@ function activeWorkout(exercises, todayLogs) {
         // Video
         showVideo: false,
         videoLoading: false,
+        videoType: '',
         videoUrl: '',
         videoError: '',
         videoCache: {},
@@ -338,6 +342,7 @@ function activeWorkout(exercises, todayLogs) {
             this.currentWeight = '';
             this.currentReps = '';
             this.showVideo = false;
+            this.videoType = '';
             this.videoUrl = '';
             this.videoError = '';
             this.advanceExercise();
@@ -345,6 +350,7 @@ function activeWorkout(exercises, todayLogs) {
 
         advanceExercise() {
             this.showVideo = false;
+            this.videoType = '';
             this.videoUrl = '';
             this.videoError = '';
             this.currentIdx++;
@@ -390,6 +396,7 @@ function activeWorkout(exercises, todayLogs) {
             if (this.showVideo && !this.videoUrl && !this.videoLoading) {
                 const ex = this.currentEx();
                 if (ex.embed_video_url) {
+                    this.videoType = ex.embed_video_url.includes('youtube.com/embed/') ? 'youtube' : 'embed';
                     this.videoUrl = ex.embed_video_url;
                 } else {
                     this.loadVideo(ex.name);
@@ -399,7 +406,9 @@ function activeWorkout(exercises, todayLogs) {
 
         loadVideo(name) {
             if (this.videoCache[name]) {
-                this.videoUrl = this.videoCache[name];
+                const cached = this.videoCache[name];
+                this.videoType = cached.type;
+                this.videoUrl = cached.url;
                 return;
             }
             this.videoLoading = true;
@@ -413,8 +422,12 @@ function activeWorkout(exercises, todayLogs) {
                 return d;
             })
             .then(d => {
-                this.videoUrl = `https://www.youtube.com/embed/${d.video_id}`;
-                this.videoCache[name] = this.videoUrl;
+                const type = d.media_type || (d.video_id ? 'youtube' : 'gif');
+                const url = d.embed_url || (d.video_id ? `https://www.youtube.com/embed/${d.video_id}` : '');
+                if (!url) throw new Error('Midia nao disponivel para este exercicio.');
+                this.videoType = type;
+                this.videoUrl = url;
+                this.videoCache[name] = { type, url };
             })
             .catch(e => { this.videoError = e.message; })
             .finally(() => { this.videoLoading = false; });

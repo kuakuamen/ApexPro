@@ -78,38 +78,90 @@ class WorkoutPlanController extends Controller
             return response()->json(['message' => 'Nome do exercicio nao informado.'], 422);
         }
 
-        $apiKey = (string) config('services.youtube.api_key');
-
-        if (!$apiKey) {
-            return response()->json(['message' => 'Busca de videos indisponivel: chave do YouTube nao configurada.'], 503);
-        }
-
-        $cacheKey = 'youtube_exercise_video_v5_' . md5(mb_strtolower($exerciseName));
+        $cacheKey = 'exercise_media_v1_' . md5(mb_strtolower($exerciseName));
 
         $video = Cache::get($cacheKey);
 
         if (!$video) {
             try {
-                $video = $this->searchYoutubeExerciseVideo($apiKey, $exerciseName);
+                $video = $this->searchWorkoutxExerciseMedia($exerciseName);
+
+                if (!$video) {
+                    $youtubeApiKey = (string) config('services.youtube.api_key');
+                    if ($youtubeApiKey !== '') {
+                        $video = $this->searchYoutubeExerciseVideo($youtubeApiKey, $exerciseName);
+                    }
+                }
 
                 if ($video) {
                     Cache::put($cacheKey, $video, now()->addYear());
                 }
             } catch (\Throwable $e) {
-                Log::warning('YouTube exercise video lookup failed', [
+                Log::warning('Exercise media lookup failed', [
                     'exercise' => $exerciseName,
                     'error' => $e->getMessage(),
                 ]);
 
-                return response()->json(['message' => 'Nao foi possivel consultar o YouTube agora. Tente novamente em instantes.'], 503);
+                return response()->json(['message' => 'Nao foi possivel consultar a midia do exercicio agora. Tente novamente em instantes.'], 503);
             }
         }
 
         if (!$video) {
-            return response()->json(['message' => 'Nao encontrei um video para este exercicio.'], 404);
+            return response()->json(['message' => 'Nao encontrei uma demonstracao para este exercicio.'], 404);
         }
 
         return response()->json($video);
+    }
+
+    private function searchWorkoutxExerciseMedia(string $exerciseName): ?array
+    {
+        $apiKey = (string) config('services.workoutx.api_key');
+        if ($apiKey === '') {
+            return null;
+        }
+
+        $name = $this->normalizeExerciseText($exerciseName);
+        $url = 'https://api.workoutxapp.com/v1/exercises/name/' . rawurlencode($name);
+
+        $response = Http::timeout(8)
+            ->withHeaders([
+                'X-WorkoutX-Key' => $apiKey,
+                'Accept' => 'application/json',
+            ])
+            ->get($url, [
+                'limit' => 10,
+            ]);
+
+        if (!$response->successful()) {
+            throw new \RuntimeException('WorkoutX API returned HTTP ' . $response->status());
+        }
+
+        $payload = $response->json();
+        $items = collect(is_array($payload) && array_key_exists('data', $payload) ? $payload['data'] : $payload)
+            ->filter(fn ($item) => is_array($item) && isset($item['name']))
+            ->values();
+
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        $exercise = $items->first(function (array $item) use ($exerciseName) {
+            $candidate = $this->normalizeExerciseText((string) ($item['name'] ?? ''));
+            $target = $this->normalizeExerciseText($exerciseName);
+            return $candidate !== '' && ($candidate === $target || str_contains($candidate, $target) || str_contains($target, $candidate));
+        }) ?? $items->first();
+
+        $gifUrl = (string) ($exercise['gifUrl'] ?? '');
+        if ($gifUrl === '') {
+            return null;
+        }
+
+        return [
+            'provider' => 'workoutx',
+            'media_type' => 'gif',
+            'embed_url' => $gifUrl,
+            'title' => (string) ($exercise['name'] ?? $exerciseName),
+        ];
     }
 
     private function searchYoutubeExerciseVideo(string $apiKey, string $exerciseName): ?array
@@ -150,6 +202,9 @@ class WorkoutPlanController extends Controller
         }
 
         return [
+            'provider' => 'youtube',
+            'media_type' => 'youtube',
+            'embed_url' => 'https://www.youtube.com/embed/' . $videoId,
             'video_id' => $videoId,
             'title' => $item['snippet']['title'] ?? $exerciseName,
             'channel_title' => $item['snippet']['channelTitle'] ?? null,
