@@ -58,6 +58,17 @@
     }
     .video-label { position: absolute; bottom: 10px; left: 12px;
         font-size: 11px; color: #64748b; font-weight: 600; }
+    .video-credit {
+        position: absolute;
+        bottom: 8px;
+        right: 10px;
+        font-size: 10px;
+        color: #94a3b8;
+        background: rgba(2, 6, 23, 0.65);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        border-radius: 999px;
+        padding: 2px 8px;
+    }
 
     /* Series card */
     .series-card {
@@ -187,10 +198,18 @@
                 </div>
             </template>
             <template x-if="showVideo && videoUrl && !videoLoading">
-                <iframe class="w-full h-full absolute inset-0"
-                        :src="videoUrl"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen></iframe>
+                <template x-if="videoType === 'iframe'">
+                    <iframe class="w-full h-full absolute inset-0"
+                            :src="videoUrl"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen></iframe>
+                </template>
+            </template>
+            <template x-if="showVideo && videoUrl && !videoLoading && videoType === 'image'">
+                <img class="w-full h-full absolute inset-0 object-contain bg-black" :src="videoUrl" alt="Demonstracao do exercicio">
+            </template>
+            <template x-if="showVideo && videoUrl && !videoLoading && videoType === 'video'">
+                <video class="w-full h-full absolute inset-0 object-contain bg-black" :src="videoUrl" controls playsinline></video>
             </template>
             <template x-if="showVideo && videoError && !videoLoading">
                 <p class="text-amber-400 text-sm px-4 text-center" x-text="videoError"></p>
@@ -286,6 +305,7 @@ function activeWorkout(exercises, todayLogs) {
         // Video
         showVideo: false,
         videoLoading: false,
+        videoType: 'iframe',
         videoUrl: '',
         videoError: '',
         videoCache: {},
@@ -338,6 +358,7 @@ function activeWorkout(exercises, todayLogs) {
             this.currentWeight = '';
             this.currentReps = '';
             this.showVideo = false;
+            this.videoType = 'iframe';
             this.videoUrl = '';
             this.videoError = '';
             this.advanceExercise();
@@ -345,6 +366,7 @@ function activeWorkout(exercises, todayLogs) {
 
         advanceExercise() {
             this.showVideo = false;
+            this.videoType = 'iframe';
             this.videoUrl = '';
             this.videoError = '';
             this.currentIdx++;
@@ -390,6 +412,7 @@ function activeWorkout(exercises, todayLogs) {
             if (this.showVideo && !this.videoUrl && !this.videoLoading) {
                 const ex = this.currentEx();
                 if (ex.embed_video_url) {
+                    this.videoType = this.detectMediaType(ex.embed_video_url);
                     this.videoUrl = ex.embed_video_url;
                 } else {
                     this.loadVideo(ex.name);
@@ -399,6 +422,7 @@ function activeWorkout(exercises, todayLogs) {
 
         loadVideo(name) {
             if (this.videoCache[name]) {
+                this.videoType = this.detectMediaType(this.videoCache[name]);
                 this.videoUrl = this.videoCache[name];
                 return;
             }
@@ -414,10 +438,19 @@ function activeWorkout(exercises, todayLogs) {
             })
             .then(d => {
                 this.videoUrl = `https://www.youtube.com/embed/${d.video_id}`;
+                this.videoType = 'iframe';
                 this.videoCache[name] = this.videoUrl;
             })
             .catch(e => { this.videoError = e.message; })
             .finally(() => { this.videoLoading = false; });
+        },
+
+        detectMediaType(url) {
+            const u = (url || '').toLowerCase();
+            if (u.includes('youtube.com/embed') || u.includes('player.vimeo.com/video')) return 'iframe';
+            if (u.match(/\.(gif|png|jpg|jpeg|webp)(\?|$)/)) return 'image';
+            if (u.match(/\.(mp4|webm|ogg)(\?|$)/)) return 'video';
+            return 'iframe';
         },
 
         formatTime(s) {

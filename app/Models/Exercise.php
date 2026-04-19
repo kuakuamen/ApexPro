@@ -43,6 +43,10 @@ class Exercise extends Model
             return 'https://player.vimeo.com/video/' . $matches[1];
         }
 
+        if (preg_match('~\.(gif|png|jpe?g|webp|mp4)(\?.*)?$~i', $url)) {
+            return $url;
+        }
+
         return null;
     }
 }
