@@ -114,34 +114,66 @@ class WorkoutPlanController extends Controller
 
     private function searchYoutubeExerciseVideo(string $apiKey, string $exerciseName): ?array
     {
-        $query = $exerciseName . ' execução exercício musculação';
+        $queries = [
+            $exerciseName . ' gif shorts execução exercício musculação',
+            $exerciseName . ' execução exercício musculação',
+        ];
 
-        $response = Http::timeout(8)->get('https://www.googleapis.com/youtube/v3/search', [
-            'part' => 'snippet',
-            'q' => $query,
-            'key' => $apiKey,
-            'type' => 'video',
-            'videoEmbeddable' => 'true',
-            'videoDuration' => 'short',
-            'safeSearch' => 'strict',
-            'maxResults' => 15,
-            'relevanceLanguage' => 'pt',
-        ]);
+        $item = null;
 
-        if (!$response->successful()) {
-            throw new \RuntimeException('YouTube search API returned HTTP ' . $response->status());
+        foreach ($queries as $query) {
+            $response = Http::timeout(8)->get('https://www.googleapis.com/youtube/v3/search', [
+                'part' => 'snippet',
+                'q' => $query,
+                'key' => $apiKey,
+                'type' => 'video',
+                'videoEmbeddable' => 'true',
+                'videoDuration' => 'short',
+                'safeSearch' => 'strict',
+                'maxResults' => 20,
+                'relevanceLanguage' => 'pt',
+            ]);
+
+            if (!$response->successful()) {
+                throw new \RuntimeException('YouTube search API returned HTTP ' . $response->status());
+            }
+
+            $items = collect($response->json('items', []))
+                ->filter(fn ($video) => $this->youtubeResultMatchesExercise($exerciseName, $video))
+                ->values();
+
+            if ($items->isEmpty()) {
+                continue;
+            }
+
+            $durations = $this->youtubeVideoDurations($apiKey, $items->pluck('id.videoId')->filter()->values()->all());
+
+            $items = $items->map(function ($video) {
+                $text = mb_strtolower(
+                    ($video['snippet']['title'] ?? '') . ' ' . ($video['snippet']['description'] ?? '')
+                );
+
+                $bonus = 0;
+                if (str_contains($text, 'gif') || str_contains($text, 'animacao') || str_contains($text, 'animação')) {
+                    $bonus += 2;
+                }
+                if (str_contains($text, '#shorts') || str_contains($text, 'shorts')) {
+                    $bonus += 1;
+                }
+
+                $video['_bonus_score'] = $bonus;
+                return $video;
+            })->sortByDesc('_bonus_score')->values();
+
+            $item = $items->first(function ($video) use ($durations) {
+                $videoId = $video['id']['videoId'] ?? null;
+                return $videoId && isset($durations[$videoId]) && $durations[$videoId] <= 30;
+            });
+
+            if ($item) {
+                break;
+            }
         }
-
-        $items = collect($response->json('items', []))
-            ->filter(fn ($item) => $this->youtubeResultMatchesExercise($exerciseName, $item));
-
-        $durations = $this->youtubeVideoDurations($apiKey, $items->pluck('id.videoId')->filter()->values()->all());
-
-        $item = $items->first(function ($item) use ($durations) {
-            $videoId = $item['id']['videoId'] ?? null;
-
-            return $videoId && isset($durations[$videoId]) && $durations[$videoId] <= 30;
-        });
 
         $videoId = $item['id']['videoId'] ?? null;
 
