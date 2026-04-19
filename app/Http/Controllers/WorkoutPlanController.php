@@ -182,11 +182,10 @@ class WorkoutPlanController extends Controller
                 continue;
             }
 
-            $exercise = $items->first(function (array $item) use ($candidateName) {
-                $candidate = $this->normalizeExerciseText((string) ($item['name'] ?? ''));
-                $target = $this->normalizeExerciseText($candidateName);
-                return $candidate !== '' && ($candidate === $target || str_contains($candidate, $target) || str_contains($target, $candidate));
-            }) ?? $items->first();
+            $exercise = $this->pickBestWorkoutxExercise($items, $exerciseName, $candidateName);
+            if (!$exercise) {
+                continue;
+            }
 
             $gifUrl = (string) ($exercise['gifUrl'] ?? '');
             if ($gifUrl === '') {
@@ -207,6 +206,54 @@ class WorkoutPlanController extends Controller
         }
 
         return null;
+    }
+
+    private function pickBestWorkoutxExercise(\Illuminate\Support\Collection $items, string $originalExerciseName, string $candidateName): ?array
+    {
+        $target = $this->normalizeExerciseText($candidateName);
+        $original = $this->normalizeExerciseText($originalExerciseName);
+
+        $mustNotContain = [];
+        if (!str_contains($original, 'smith')) {
+            $mustNotContain[] = 'smith';
+        }
+        if (!str_contains($original, 'maquina') && !str_contains($original, 'machine')) {
+            $mustNotContain[] = 'machine';
+        }
+
+        $scored = $items->map(function (array $item) use ($target, $original, $mustNotContain) {
+            $name = $this->normalizeExerciseText((string) ($item['name'] ?? ''));
+            $equipment = $this->normalizeExerciseText((string) ($item['equipment'] ?? ''));
+            $blob = trim($name . ' ' . $equipment);
+
+            if ($name === '') {
+                return null;
+            }
+
+            foreach ($mustNotContain as $blocked) {
+                if (str_contains($blob, $blocked)) {
+                    return null;
+                }
+            }
+
+            $score = 0;
+            if ($name === $target) $score += 100;
+            if (str_contains($name, $target)) $score += 35;
+            if (str_contains($target, $name)) $score += 20;
+            if (str_contains($name, 'sumo') && str_contains($target, 'sumo')) $score += 25;
+            if (str_contains($name, 'squat') && str_contains($target, 'squat')) $score += 20;
+
+            // Penaliza variações não pedidas
+            if (!str_contains($original, 'com barra') && str_contains($blob, 'barbell')) $score -= 10;
+            if (!str_contains($original, 'halter') && str_contains($blob, 'dumbbell')) $score -= 10;
+
+            return ['item' => $item, 'score' => $score];
+        })
+            ->filter()
+            ->sortByDesc('score')
+            ->values();
+
+        return $scored->first()['item'] ?? null;
     }
 
     private function workoutxSearchCandidates(string $exerciseName): array
