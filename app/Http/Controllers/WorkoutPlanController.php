@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 use App\Models\WorkoutLog;
 
 class WorkoutPlanController extends Controller
@@ -106,6 +107,49 @@ class WorkoutPlanController extends Controller
         return response()->json($video);
     }
 
+    public function workoutxGif(string $gifId)
+    {
+        if (Auth::user()?->role !== 'aluno') {
+            abort(403);
+        }
+
+        if (!preg_match('/^\d+$/', $gifId)) {
+            abort(404);
+        }
+
+        $localPath = storage_path('app/workoutx_gifs/' . $gifId . '.gif');
+        if (File::exists($localPath)) {
+            return response()->file($localPath, [
+                'Content-Type' => 'image/gif',
+                'Cache-Control' => 'public, max-age=2592000',
+            ]);
+        }
+
+        $apiKey = (string) config('services.workoutx.api_key');
+        if ($apiKey === '') {
+            abort(503, 'WORKOUTX_API_KEY nao configurada.');
+        }
+
+        $response = Http::timeout(12)
+            ->withHeaders([
+                'X-WorkoutX-Key' => $apiKey,
+                'Accept' => 'image/gif',
+            ])
+            ->get('https://api.workoutxapp.com/v1/gifs/' . $gifId . '.gif');
+
+        if (!$response->successful()) {
+            abort(404);
+        }
+
+        File::ensureDirectoryExists(dirname($localPath));
+        File::put($localPath, $response->body());
+
+        return response()->file($localPath, [
+            'Content-Type' => 'image/gif',
+            'Cache-Control' => 'public, max-age=2592000',
+        ]);
+    }
+
     private function searchWorkoutxExerciseMedia(string $exerciseName): ?array
     {
         $apiKey = (string) config('services.workoutx.api_key');
@@ -149,10 +193,15 @@ class WorkoutPlanController extends Controller
                 continue;
             }
 
+            $gifId = null;
+            if (preg_match('~/gifs/(\d+)\.gif~', $gifUrl, $matches)) {
+                $gifId = $matches[1];
+            }
+
             return [
                 'provider' => 'workoutx',
                 'media_type' => 'gif',
-                'embed_url' => $gifUrl,
+                'embed_url' => $gifId ? route('student.exercise.workoutx-gif', ['gifId' => $gifId]) : $gifUrl,
                 'title' => (string) ($exercise['name'] ?? $exerciseName),
             ];
         }
