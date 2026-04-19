@@ -316,6 +316,7 @@ function activeWorkout(exercises, todayLogs) {
             }
             // Inicia stopwatch geral
             this.elapsedInterval = setInterval(() => this.elapsed++, 1000);
+            this.prefetchExerciseMedia();
         },
 
         currentEx() {
@@ -439,6 +440,36 @@ function activeWorkout(exercises, todayLogs) {
             })
             .catch(e => { this.videoError = e.message; })
             .finally(() => { this.videoLoading = false; });
+        },
+
+        prefetchExerciseMedia() {
+            const names = [...new Set(this.exercises
+                .map(ex => (ex?.name || '').trim())
+                .filter(Boolean)
+            )];
+
+            if (!names.length) return;
+
+            fetch(`{{ route('student.exercise.prefetch-media') }}`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                },
+                body: JSON.stringify({ names })
+            })
+            .then(async r => {
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok || !d.items) return;
+                Object.entries(d.items).forEach(([name, item]) => {
+                    if (item?.status === 'ok' && item?.embed_url) {
+                        this.videoCache[name] = { type: item.media_type || 'gif', url: item.embed_url };
+                    }
+                });
+            })
+            .catch(() => {});
         },
 
         formatTime(s) {

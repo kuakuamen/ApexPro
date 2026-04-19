@@ -79,7 +79,7 @@ class WorkoutPlanController extends Controller
             return response()->json(['message' => 'Nome do exercicio nao informado.'], 422);
         }
 
-        $cacheKey = 'exercise_media_v1_' . md5(mb_strtolower($exerciseName));
+        $cacheKey = $this->exerciseMediaCacheKey($exerciseName);
 
         $cached = Cache::get($cacheKey);
         if (is_array($cached) && (($cached['status'] ?? null) === 'not_found')) {
@@ -113,6 +113,70 @@ class WorkoutPlanController extends Controller
         }
 
         return response()->json($video);
+    }
+
+    public function prefetchExerciseMedia(Request $request)
+    {
+        if (Auth::user()?->role !== 'aluno') {
+            abort(403);
+        }
+
+        $names = collect($request->input('names', []))
+            ->map(fn ($name) => trim((string) $name))
+            ->filter(fn ($name) => $name !== '')
+            ->unique()
+            ->take(24)
+            ->values();
+
+        $result = [];
+
+        foreach ($names as $name) {
+            $lookupName = $this->cleanExerciseName($name);
+            $cacheKey = $this->exerciseMediaCacheKey($lookupName);
+            $cached = Cache::get($cacheKey);
+
+            if (is_array($cached) && (($cached['status'] ?? null) === 'not_found')) {
+                $result[$name] = ['status' => 'not_found'];
+                continue;
+            }
+
+            if (is_array($cached) && isset($cached['embed_url'])) {
+                $result[$name] = [
+                    'status' => 'ok',
+                    'media_type' => $cached['media_type'] ?? 'gif',
+                    'embed_url' => $cached['embed_url'] ?? null,
+                ];
+                continue;
+            }
+
+            try {
+                $video = $this->searchWorkoutxExerciseMedia($lookupName);
+                if ($video) {
+                    Cache::put($cacheKey, $video, now()->addYear());
+                    $result[$name] = [
+                        'status' => 'ok',
+                        'media_type' => $video['media_type'] ?? 'gif',
+                        'embed_url' => $video['embed_url'] ?? null,
+                    ];
+                } else {
+                    Cache::put($cacheKey, ['status' => 'not_found'], now()->addHours(12));
+                    $result[$name] = ['status' => 'not_found'];
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Exercise media prefetch failed', [
+                    'exercise' => $name,
+                    'error' => $e->getMessage(),
+                ]);
+                $result[$name] = ['status' => 'error'];
+            }
+        }
+
+        return response()->json(['items' => $result]);
+    }
+
+    private function exerciseMediaCacheKey(string $exerciseName): string
+    {
+        return 'exercise_media_v1_' . md5(mb_strtolower($exerciseName));
     }
 
     public function workoutxGif(string $gifId)
