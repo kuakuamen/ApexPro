@@ -417,10 +417,11 @@ function activeWorkout(exercises, todayLogs) {
             this.showVideo = !this.showVideo;
             if (this.showVideo && !this.videoUrl && !this.videoLoading) {
                 const ex = this.currentEx();
-                if (ex.embed_video_url) {
-                    this.videoType = this.detectMediaType(ex.embed_video_url);
-                    this.videoUrl = ex.embed_video_url;
-                    this.mediaAttribution = this.detectAttribution(ex.embed_video_url);
+                const manualUrl = this.normalizeMediaUrl(ex.embed_video_url || ex.video_url || '');
+                if (manualUrl) {
+                    this.videoType = this.detectMediaType(manualUrl);
+                    this.videoUrl = manualUrl;
+                    this.mediaAttribution = this.detectAttribution(manualUrl);
                 } else {
                     this.loadVideo(ex.name);
                 }
@@ -460,6 +461,19 @@ function activeWorkout(exercises, todayLogs) {
             if (u.match(/\.(gif|png|jpg|jpeg|webp)(\?|$)/)) return 'image';
             if (u.match(/\.(mp4|webm|ogg)(\?|$)/)) return 'video';
             return 'iframe';
+        },
+
+        normalizeMediaUrl(url) {
+            const u = (url || '').trim();
+            if (!u) return '';
+
+            const yt = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([^&?/]+)/i);
+            if (yt && yt[1]) return `https://www.youtube.com/embed/${yt[1]}`;
+
+            const vimeo = u.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+            if (vimeo && vimeo[1]) return `https://player.vimeo.com/video/${vimeo[1]}`;
+
+            return u;
         },
 
         detectAttribution(url) {
