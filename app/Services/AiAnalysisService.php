@@ -8,14 +8,17 @@ use Gemini\Data\Blob;
 use Gemini\Enums\MimeType;
 use Gemini\Resources\GenerativeModel;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ExerciseCatalogService;
 
 class AiAnalysisService
 {
     protected $client;
     protected array $apiKeys = [];
+    protected ExerciseCatalogService $exerciseCatalog;
 
-    public function __construct()
+    public function __construct(ExerciseCatalogService $exerciseCatalog)
     {
+        $this->exerciseCatalog = $exerciseCatalog;
         // Suporte a múltiplas keys para fallback em caso de cota esgotada
         $keys = array_filter([
             config('services.gemini.api_key'),
@@ -151,6 +154,7 @@ class AiAnalysisService
                 "1. Respeite as lesões e dores informadas na anamnese (ex: se tiver lesão no joelho, adapte). " .
                 "2. Inclua exercícios corretivos específicos para os desvios encontrados nas fotos. " .
                 "3. MUITO IMPORTANTE: Use SOMENTE nomes de exercícios em português. NUNCA coloque nomes em inglês entre parênteses ou qualquer termo em inglês no nome dos exercícios. Exemplo CORRETO: 'Puxada Alta com Barra'. Exemplo ERRADO: 'Puxada Alta (Lat Pulldown) com Barra'. " .
+                "4. " . $this->exerciseCatalog->buildPromptRestriction() . " " .
                 
                 "Retorne APENAS um JSON válido com esta estrutura exata: " .
                 "{
@@ -241,6 +245,7 @@ class AiAnalysisService
                     $jsonResult = json_decode($textResult, true);
 
                     if (json_last_error() === JSON_ERROR_NONE) {
+                        $jsonResult = $this->exerciseCatalog->enforceWorkoutCatalog($jsonResult);
                         Log::info('Análise Gemini processada com sucesso');
                         return $jsonResult;
                     }
@@ -307,6 +312,7 @@ class AiAnalysisService
                 "1. Reavalie a postura e o treino com base no feedback. Se o personal disse que não tem lordose, remova essa informação. " .
                 "2. Regenere o treino completo (Microciclo Semanal) aplicando as correções pedidas. " .
                 "3. Mantenha a estrutura JSON exata da resposta anterior. " .
+                "4. " . $this->exerciseCatalog->buildPromptRestriction() . " " .
                 
                 "Retorne APENAS o JSON válido atualizado.";
 
@@ -340,6 +346,7 @@ class AiAnalysisService
             $jsonResult = json_decode($textResult, true);
 
             if (json_last_error() === JSON_ERROR_NONE) {
+                $jsonResult = $this->exerciseCatalog->enforceWorkoutCatalog($jsonResult);
                 Log::info('Análise refinada com sucesso');
                 return $jsonResult;
             } else {
@@ -434,6 +441,7 @@ Analisando APENAS os dados fornecidos (sem imagens), gere um treino estruturado 
 3. Focalize no objetivo especificado
 4. Inclua recomendações de postura e técnica
 5. MUITO IMPORTANTE: Use SOMENTE nomes de exercícios em português. NUNCA coloque nomes em inglês entre parênteses ou qualquer termo em inglês no nome dos exercícios. Exemplo CORRETO: Puxada Alta com Barra. Exemplo ERRADO: Puxada Alta (Lat Pulldown) com Barra.
+6. {$this->exerciseCatalog->buildPromptRestriction()}
 
 RETORNE UM JSON ESTRUTURADO com:
 {
@@ -480,6 +488,7 @@ Retorne SOMENTE o JSON, sem markdown ou explicações adicionais.";
             $jsonResult = json_decode($textResult, true);
 
             if (json_last_error() === JSON_ERROR_NONE) {
+                $jsonResult = $this->exerciseCatalog->enforceWorkoutCatalog($jsonResult);
                 Log::info('Treino gerado com sucesso pela IA');
                 // Normalizar campos que devem ser arrays mas podem vir como string
                 foreach (['strengthen', 'stretch'] as $field) {
@@ -511,3 +520,5 @@ Retorne SOMENTE o JSON, sem markdown ou explicações adicionais.";
         }
     }
 }
+
+

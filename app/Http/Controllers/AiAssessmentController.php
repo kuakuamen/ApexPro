@@ -8,6 +8,7 @@ use App\Models\Assessment;
 use App\Models\BodyMeasurement;
 use App\Models\ProfessionalStudent;
 use App\Services\AiAnalysisService;
+use App\Services\ExerciseCatalogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -16,10 +17,12 @@ use Illuminate\Support\Facades\Storage;
 class AiAssessmentController extends Controller
 {
     protected $aiService;
+    protected $exerciseCatalog;
 
-    public function __construct(AiAnalysisService $aiService)
+    public function __construct(AiAnalysisService $aiService, ExerciseCatalogService $exerciseCatalog)
     {
         $this->aiService = $aiService;
+        $this->exerciseCatalog = $exerciseCatalog;
     }
 
     /**
@@ -536,9 +539,10 @@ class AiAssessmentController extends Controller
                     if (isset($dayData['exercises'])) {
                         foreach ($dayData['exercises'] as $exIndex => $exData) {
                             if (empty($exData['name'])) continue;
+                            $canonicalName = $this->exerciseCatalog->canonicalizeOrFail((string) $exData['name']);
 
                             $workoutDay->exercises()->create([
-                                'name' => $exData['name'],
+                                'name' => $canonicalName,
                                 'sets' => $exData['sets'] ?? 3,
                                 'reps' => $exData['reps'] ?? '10-12',
                                 'observation' => $exData['notes'] ?? null,
