@@ -206,7 +206,12 @@
                 </div>
                 <div class="mt-3 flex items-center justify-between">
                     <p class="text-xs text-amber-300">Opcao personalizado nao tem video demonstrativo.</p>
-                    <button type="button" @click="applyCustomExercise()" class="px-3 py-1.5 rounded border border-amber-400 bg-amber-300 text-zinc-900 text-sm font-semibold hover:bg-amber-200">Usar Personalizado</button>
+                    <button type="button"
+                            @click.prevent.stop="applyCustomExercise()"
+                            class="px-3 py-1.5 rounded border border-amber-300 bg-amber-300 text-zinc-900 text-sm font-bold hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                            style="opacity:1; pointer-events:auto;">
+                        Usar Personalizado
+                    </button>
                 </div>
             </div>
         </div>
@@ -321,7 +326,7 @@
                 const ex = this.days[this.pickerDayIndex].exercises[this.pickerExerciseIndex];
                 ex.custom_exercise = 1;
                 ex.video_url = '';
-                if (!ex.name) ex.name = 'Exercicio Personalizado';
+                ex.name = 'Personalizado (sem video)';
                 this.closeExercisePicker();
             },
             addDay() {
