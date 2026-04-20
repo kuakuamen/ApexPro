@@ -325,6 +325,7 @@ class AiAssessmentController extends Controller
         // Retornar a view de revisão com os dados preenchidos
         // Buscamos todos os exercícios para o select de edição
         $allExercises = Exercise::orderBy('name')->get();
+        $catalogExercises = $this->exerciseCatalog->getCatalogItems();
 
         // SALVAR NA SESSÃO PARA O PDF E PARA O STORE FINAL
         session([
@@ -341,6 +342,7 @@ class AiAssessmentController extends Controller
             'student', 
             'analysisResult', 
             'allExercises',
+            'catalogExercises',
             'frontPath', 'backPath',
             'request' // Passar dados do request original (goal, etc)
         ) + ['sidePath' => $sideRightPath]);
@@ -453,11 +455,13 @@ class AiAssessmentController extends Controller
 
         // Retornar a view de revisão com os novos dados
         $allExercises = Exercise::orderBy('name')->get();
+        $catalogExercises = $this->exerciseCatalog->getCatalogItems();
 
         return view('personal.ai-assessment.review', compact(
             'student', 
             'analysisResult', 
             'allExercises',
+            'catalogExercises',
             'frontPath', 'sidePath', 'backPath',
             'request'
         ));
@@ -539,7 +543,19 @@ class AiAssessmentController extends Controller
                     if (isset($dayData['exercises'])) {
                         foreach ($dayData['exercises'] as $exIndex => $exData) {
                             if (empty($exData['name'])) continue;
-                            $resolvedExercise = $this->exerciseCatalog->resolveCatalogExerciseOrFail((string) $exData['name']);
+                            $isCustomExercise = !empty($exData['custom_exercise']);
+                            if ($isCustomExercise) {
+                                $customName = trim((string) ($exData['name'] ?? ''));
+                                if ($customName === '') {
+                                    throw new \RuntimeException('Exercicio personalizado sem nome.');
+                                }
+                                $resolvedExercise = [
+                                    'name' => $customName,
+                                    'media_url' => null,
+                                ];
+                            } else {
+                                $resolvedExercise = $this->exerciseCatalog->resolveCatalogExerciseOrFail((string) $exData['name']);
+                            }
 
                             $workoutDay->exercises()->create([
                                 'name' => $resolvedExercise['name'],
@@ -648,6 +664,7 @@ class AiAssessmentController extends Controller
 
         // Buscamos todos os exercícios para o select de edição
         $allExercises = Exercise::orderBy('name')->get();
+        $catalogExercises = $this->exerciseCatalog->getCatalogItems();
 
         // Salvar na sessão
         session([
@@ -660,7 +677,7 @@ class AiAssessmentController extends Controller
         ]);
 
         return view('personal.ai-assessment.review', array_merge(
-            compact('student', 'allExercises', 'analysisResult'),
+            compact('student', 'allExercises', 'catalogExercises', 'analysisResult'),
             [
                 'frontPath'    => null,
                 'sidePath'     => null,

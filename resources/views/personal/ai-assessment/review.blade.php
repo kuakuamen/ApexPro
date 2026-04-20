@@ -1,21 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="space-y-8" x-data="{ 
-    days: {{ json_encode($analysisResult['workout_recommendation']['days'] ?? []) }},
-    addDay() {
-        this.days.push({ name: 'Novo Treino', exercises: [] });
-    },
-    removeDay(index) {
-        this.days.splice(index, 1);
-    },
-    addExercise(dayIndex) {
-        this.days[dayIndex].exercises.push({ name: '', sets: 3, reps: '10-12', notes: '' });
-    },
-    removeExercise(dayIndex, exIndex) {
-        this.days[dayIndex].exercises.splice(exIndex, 1);
-    }
-}">
+<div class="space-y-8" x-data="aiReviewForm({{ json_encode($analysisResult['workout_recommendation']['days'] ?? []) }}, {{ json_encode($catalogExercises ?? []) }})">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -126,7 +112,7 @@
         </div>
     </div>
 
-    <!-- Sugestão de Treino (Editável) -->
+    <!-- Sugestao de Treino (Editavel) -->
     <form action="{{ route('personal.ai-assessment.store') }}" method="POST" id="workoutForm">
         @csrf
         <input type="hidden" name="student_id"       value="{{ $student->id }}">
@@ -137,18 +123,17 @@
         <input type="hidden" name="back_path"        value="{{ $backPath }}">
         <input type="hidden" name="ai_analysis_data" value="{{ htmlspecialchars(json_encode($analysisResult), ENT_QUOTES, 'UTF-8') }}">
 
-        <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden">
-            <div class="p-6 border-b border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="ai-workout-editor bg-zinc-900/60 border border-teal-900/40 rounded-xl overflow-hidden shadow-lg">
+            <div class="p-6 border-b border-teal-900/40 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-zinc-900/60">
                 <div>
                     <h3 class="text-xl font-bold text-white">Treino Sugerido pela IA</h3>
-                    <p class="text-sm text-gray-400 mt-1">Revise e edite antes de aprovar.</p>
+                    <p class="text-sm text-gray-400 mt-1">Revise e ajuste os exercicios antes de aprovar.</p>
                 </div>
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full md:w-auto">
-                    <div class="w-full sm:w-64">
-                        <label class="block text-xs font-medium text-gray-500 mb-1">Nome do Plano</label>
-                        <input type="text" name="workout_name" value="Treino IA: {{ $analysisResult['workout_recommendation']['type'] ?? $request->goal }}" class="block w-full bg-gray-900/50 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors">
+                    <div class="w-full sm:w-72">
+                        <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Nome do Plano</label>
+                        <input type="text" name="workout_name" value="Treino IA: {{ $analysisResult['workout_recommendation']['type'] ?? $request->goal }}" class="block w-full bg-zinc-950/80 border border-teal-900/40 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                     </div>
-                    <!-- Botão Gerar PDF -->
                     <button type="button" onclick="generatePDF()" class="inline-flex items-center justify-center px-4 py-2 border border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-300 bg-gray-800 hover:bg-gray-700 hover:text-white focus:outline-none transition-colors">
                         <svg class="h-4 w-4 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                         Exportar PDF
@@ -156,79 +141,121 @@
                 </div>
             </div>
 
-            <div class="p-6 space-y-8">
-                <!-- Loop Days (Alpine.js) -->
-                <template x-for="(day, dayIndex) in days" :key="dayIndex">
-                    <div class="border border-gray-700 rounded-xl p-5 bg-gray-900/30 relative hover:border-gray-600 transition-colors">
-                        <!-- Remove Day Button -->
-                        <button type="button" @click="removeDay(dayIndex)" class="absolute top-4 right-4 text-gray-500 hover:text-red-400 transition-colors p-1 rounded-md hover:bg-gray-800">
+            <div class="p-6 space-y-6">
+                <template x-for="(day, dayIndex) in days" :key="day.id">
+                    <div class="ai-day-card relative border border-teal-900/30 rounded-xl p-5 bg-zinc-900/60">
+                        <button type="button" @click="removeDay(dayIndex)" class="ai-day-remove absolute top-4 right-4" x-show="days.length > 1">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
 
-                        <div class="mb-6 max-w-md">
-                            <label class="block text-xs font-medium text-indigo-400 mb-1 uppercase tracking-wide">Dia do Treino</label>
-                            <input type="text" :name="'days[' + dayIndex + '][name]'" x-model="day.name" class="block w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors">
+                        <div class="mb-4 max-w-2xl">
+                            <label class="block text-xs font-medium text-teal-300 mb-1 uppercase tracking-wide">Dia do Treino</label>
+                            <input type="text" :name="'days[' + dayIndex + '][name]'" x-model="day.name" class="block w-full bg-zinc-950/80 border border-teal-900/40 rounded-lg px-4 py-2 text-white font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                         </div>
 
-                        <!-- Exercises Table -->
-                        <div class="overflow-x-auto rounded-lg border border-gray-700">
-                            <table class="min-w-full divide-y divide-gray-700">
-                                <thead class="bg-gray-800">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Exercício</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-24">Séries</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-28">Reps</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Notas</th>
-                                        <th class="px-4 py-3 w-10"></th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-gray-900/50 divide-y divide-gray-700">
-                                    <template x-for="(exercise, exIndex) in day.exercises" :key="exIndex">
-                                        <tr class="hover:bg-gray-800/50 transition-colors">
-                                            <td class="px-4 py-3">
-                                                <input type="text" :name="'days[' + dayIndex + '][exercises][' + exIndex + '][name]'" x-model="exercise.name" class="block w-full bg-transparent border-0 text-white placeholder-gray-600 focus:ring-0 sm:text-sm p-0" placeholder="Nome do exercício">
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                <input type="number" :name="'days[' + dayIndex + '][exercises][' + exIndex + '][sets]'" x-model="exercise.sets" class="block w-full bg-gray-800 border border-gray-600 rounded text-white text-center focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm py-1">
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                <input type="text" :name="'days[' + dayIndex + '][exercises][' + exIndex + '][reps]'" x-model="exercise.reps" class="block w-full bg-gray-800 border border-gray-600 rounded text-white text-center focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm py-1">
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                <input type="text" :name="'days[' + dayIndex + '][exercises][' + exIndex + '][notes]'" x-model="exercise.notes" class="block w-full bg-transparent border-0 text-gray-400 placeholder-gray-700 focus:ring-0 sm:text-sm p-0" placeholder="Observações...">
-                                            </td>
-                                            <td class="px-4 py-3 text-center">
-                                                <button type="button" @click="removeExercise(dayIndex, exIndex)" class="text-gray-600 hover:text-red-400 transition-colors">
-                                                    &times;
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
+                        <div class="ai-exercise-list space-y-3">
+                            <template x-for="(exercise, exIndex) in day.exercises" :key="exercise.id">
+                                <div class="ai-ex-card border border-teal-900/25 rounded-xl p-4 bg-zinc-950/55">
+                                    <div class="ai-ex-main">
+                                        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wide">Exercicio</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" x-model="exercise.name" class="block w-full bg-zinc-950/80 border border-teal-900/40 rounded-md px-3 py-2 text-sm text-white" readonly>
+                                            <button type="button" @click="openExercisePicker(dayIndex, exIndex)" class="ai-edit-btn">Editar</button>
+                                        </div>
+                                        <input type="hidden" :name="'days[' + dayIndex + '][exercises][' + exIndex + '][name]'" x-model="exercise.name">
+                                        <input type="hidden" :name="'days[' + dayIndex + '][exercises][' + exIndex + '][video_url]'" x-model="exercise.video_url">
+                                        <input type="hidden" :name="'days[' + dayIndex + '][exercises][' + exIndex + '][custom_exercise]'" x-model="exercise.custom_exercise">
+                                    </div>
+
+                                    <div class="ai-metrics-grid">
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wide">Series</label>
+                                            <select :name="'days[' + dayIndex + '][exercises][' + exIndex + '][sets]'" x-model="exercise.sets" class="block w-full bg-zinc-950/80 border border-teal-900/40 rounded-md px-2 py-2 text-sm text-white">
+                                                <option value="">...</option>
+                                                <option value="1">1</option>
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                                <option value="4">4</option>
+                                                <option value="5">5</option>
+                                                <option value="6">6</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wide">Reps</label>
+                                            <input type="text" :name="'days[' + dayIndex + '][exercises][' + exIndex + '][reps]'" x-model="exercise.reps" class="block w-full bg-zinc-950/80 border border-teal-900/40 rounded-md px-3 py-2 text-sm text-white">
+                                        </div>
+                                        <div class="ai-notes-field">
+                                            <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wide">Notas</label>
+                                            <input type="text" :name="'days[' + dayIndex + '][exercises][' + exIndex + '][notes]'" x-model="exercise.notes" class="block w-full bg-zinc-950/80 border border-teal-900/40 rounded-md px-3 py-2 text-sm text-white" placeholder="Observacoes...">
+                                        </div>
+                                        <div class="ai-remove-wrap">
+                                            <button type="button" @click="removeExercise(dayIndex, exIndex)" class="ai-remove-btn">Remover</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="ai-preview-block">
+                                        <label class="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-wide">Previa da execucao</label>
+                                        <template x-if="exercise.video_url">
+                                            <img :src="exercise.video_url" alt="preview" class="ai-preview-image w-32 h-24 object-cover rounded border border-teal-900/40 bg-zinc-950/70">
+                                        </template>
+                                        <template x-if="!exercise.video_url">
+                                            <div class="text-xs text-amber-300">Exercicio personalizado sem video demonstrativo.</div>
+                                        </template>
+                                    </div>
+
+                                    <div class="ai-tag-wrap">
+                                        <span class="inline-flex px-2 py-1 text-xs rounded border font-semibold" :class="exercise.custom_exercise ? 'text-amber-200 bg-amber-700/20 border-amber-600/30' : 'text-teal-200 bg-teal-700/20 border-teal-600/30'">
+                                            <span x-text="exercise.custom_exercise ? 'Personalizado' : 'Catalogo'"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <button type="button" @click="addExercise(dayIndex)" class="ai-add-ex-btn mt-1 inline-flex items-center text-xs font-medium">
+                                + Adicionar Exercicio
+                            </button>
                         </div>
-                        <button type="button" @click="addExercise(dayIndex)" class="mt-3 inline-flex items-center text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                            Adicionar Exercício
-                        </button>
                     </div>
                 </template>
 
-                <button type="button" @click="addDay()" class="w-full py-4 border-2 border-dashed border-indigo-500/30 rounded-xl text-sm font-bold text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 hover:border-indigo-500/50 hover:text-indigo-300 hover:shadow-lg transition-all duration-300">
+                <button type="button" @click="addDay()" class="w-full py-4 border border-dashed border-teal-500/40 rounded-xl text-sm font-bold text-teal-300 bg-teal-500/10 hover:bg-teal-500/15 hover:border-teal-500/60 transition-colors">
                     + Adicionar Dia de Treino
                 </button>
             </div>
 
-            <div class="px-6 py-5 bg-gray-800 border-t border-gray-700 flex justify-end">
-                <button type="submit" class="inline-flex justify-center items-center py-3 px-8 border border-transparent shadow-lg text-base font-medium rounded-lg text-white bg-teal-500 hover:bg-teal-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-teal-500 transition-all duration-300 transform hover:scale-[1.02]">
+            <div class="px-6 py-5 bg-zinc-900 border-t border-teal-900/40 flex justify-end">
+                <button type="submit" class="inline-flex justify-center items-center py-3 px-8 border border-transparent shadow-lg text-base font-medium rounded-lg text-zinc-900 bg-teal-400 hover:bg-teal-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-teal-500 transition-all">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     Aprovar e Enviar para Aluno
                 </button>
             </div>
         </div>
+
+        <div x-show="pickerOpen" x-transition style="display:none" class="catalog-modal-backdrop fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-3 overflow-hidden" @click.self="closeExercisePicker()">
+            <div class="catalog-modal w-full overflow-hidden p-3 flex flex-col shadow-2xl mt-8" style="max-width: 560px; max-height: 72vh;">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-stone-100 font-semibold">Selecionar exercicio do catalogo</h4>
+                    <button type="button" @click="closeExercisePicker()" class="text-stone-400 hover:text-stone-200">Fechar</button>
+                </div>
+                <input type="text" x-model="pickerQuery" placeholder="Buscar exercicio..." class="catalog-search w-full mb-3 rounded border bg-zinc-950/70 text-stone-100 px-3 py-2">
+                <div class="catalog-scroll flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-2 pr-1 touch-pan-y" style="max-height: 42vh;" @wheel.stop>
+                    <template x-for="item in filteredCatalogExercises()" :key="item.name">
+                        <button type="button" @click="applyCatalogExercise(item)" class="catalog-item-btn w-full text-left rounded border p-2">
+                            <div class="text-stone-100 text-sm font-medium" x-text="item.name"></div>
+                        </button>
+                    </template>
+                </div>
+                <div class="mt-3 space-y-2">
+                    <p class="catalog-custom-note text-xs">Opcao personalizada nao tem video demonstrativo.</p>
+                    <div class="flex items-center gap-2">
+                        <input type="text" x-model="pickerCustomName" placeholder="Nome do exercicio personalizado" class="catalog-custom-input flex-1 rounded border bg-zinc-950/80 text-stone-100 px-3 py-2 text-sm">
+                        <button type="button" @click.prevent.stop="applyCustomExercise()" class="catalog-custom-btn px-3 py-2 rounded border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-yellow-300">Usar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </form>
 </div>
-
 <script>
     function generatePDF() {
         const form = document.getElementById('workoutForm');
@@ -240,6 +267,114 @@
         form.submit();
         form.action = originalAction;
         form.target = originalTarget;
+    }
+
+    function aiReviewForm(initialDays, catalogExercises) {
+        const seed = Date.now();
+        const fallbackDay = [{ name: 'Treino A', exercises: [] }];
+        const sourceDays = (Array.isArray(initialDays) && initialDays.length > 0) ? initialDays : fallbackDay;
+
+        const buildExercise = (exercise, dayIndex, exIndex) => {
+            const mediaUrl = (exercise && (exercise.video_url || exercise.media_url)) ? (exercise.video_url || exercise.media_url) : '';
+
+            return {
+                id: `${seed}-${dayIndex}-${exIndex}-${Math.random().toString(36).slice(2, 7)}`,
+                name: (exercise && exercise.name) ? exercise.name : '',
+                sets: (exercise && exercise.sets !== undefined && exercise.sets !== null) ? String(exercise.sets) : '3',
+                reps: (exercise && exercise.reps) ? exercise.reps : '10-12',
+                notes: (exercise && (exercise.notes || exercise.observation)) ? (exercise.notes || exercise.observation) : '',
+                video_url: mediaUrl,
+                custom_exercise: mediaUrl ? 0 : 1,
+            };
+        };
+
+        return {
+            days: sourceDays.map((day, dayIndex) => {
+                const exercises = Array.isArray(day.exercises) ? day.exercises : [];
+                const mappedExercises = exercises.map((exercise, exIndex) => buildExercise(exercise, dayIndex, exIndex));
+
+                return {
+                    id: `${seed}-d-${dayIndex}-${Math.random().toString(36).slice(2, 7)}`,
+                    name: day.name || `Treino ${dayIndex + 1}`,
+                    exercises: mappedExercises.length ? mappedExercises : [buildExercise({}, dayIndex, 0)],
+                };
+            }),
+            catalogExercises: Array.isArray(catalogExercises) ? catalogExercises : [],
+            pickerOpen: false,
+            pickerQuery: '',
+            pickerCustomName: '',
+            pickerDayIndex: null,
+            pickerExerciseIndex: null,
+
+            newExercise(dayIndex) {
+                return buildExercise({}, dayIndex, Date.now());
+            },
+            addDay() {
+                const dayIndex = this.days.length;
+                this.days.push({
+                    id: `${Date.now()}-day-${dayIndex}`,
+                    name: `Treino ${dayIndex + 1}`,
+                    exercises: [this.newExercise(dayIndex)],
+                });
+            },
+            removeDay(index) {
+                this.days.splice(index, 1);
+            },
+            addExercise(dayIndex) {
+                this.days[dayIndex].exercises.push(this.newExercise(dayIndex));
+            },
+            removeExercise(dayIndex, exIndex) {
+                this.days[dayIndex].exercises.splice(exIndex, 1);
+            },
+            openExercisePicker(dayIndex, exIndex) {
+                this.pickerDayIndex = dayIndex;
+                this.pickerExerciseIndex = exIndex;
+                this.pickerQuery = '';
+                this.pickerCustomName = '';
+                this.pickerOpen = true;
+                document.body.style.overflow = 'hidden';
+                document.documentElement.style.overflow = 'hidden';
+            },
+            closeExercisePicker() {
+                this.pickerOpen = false;
+                this.pickerQuery = '';
+                this.pickerCustomName = '';
+                this.pickerDayIndex = null;
+                this.pickerExerciseIndex = null;
+                document.body.style.overflow = '';
+                document.documentElement.style.overflow = '';
+            },
+            filteredCatalogExercises() {
+                const q = (this.pickerQuery || '').toLowerCase().trim();
+                if (!q) {
+                    return this.catalogExercises.slice(0, 200);
+                }
+                return this.catalogExercises
+                    .filter((item) => (item.name || '').toLowerCase().includes(q))
+                    .slice(0, 200);
+            },
+            applyCatalogExercise(item) {
+                if (this.pickerDayIndex === null || this.pickerExerciseIndex === null) return;
+                const ex = this.days[this.pickerDayIndex].exercises[this.pickerExerciseIndex];
+                ex.name = item.name;
+                ex.video_url = item.media_url;
+                ex.custom_exercise = 0;
+                this.closeExercisePicker();
+            },
+            applyCustomExercise() {
+                if (this.pickerDayIndex === null || this.pickerExerciseIndex === null) return;
+                const customName = (this.pickerCustomName || '').trim();
+                if (!customName) {
+                    alert('Digite o nome do exercicio personalizado.');
+                    return;
+                }
+                const ex = this.days[this.pickerDayIndex].exercises[this.pickerExerciseIndex];
+                ex.name = customName;
+                ex.video_url = '';
+                ex.custom_exercise = 1;
+                this.closeExercisePicker();
+            },
+        };
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -308,6 +443,194 @@
 </div>
 
 <style>
+    .ai-workout-editor {
+        background:
+            radial-gradient(120% 140% at 0% 0%, rgba(45, 212, 191, 0.1), rgba(2, 6, 23, 0.92) 58%),
+            linear-gradient(180deg, rgba(2, 6, 23, 0.94), rgba(2, 6, 23, 0.98));
+    }
+    .ai-day-card {
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.84), rgba(15, 23, 42, 0.72));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 14px 24px rgba(2, 6, 23, 0.28);
+    }
+    .ai-day-remove {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        color: #fda4af;
+        border: 1px solid rgba(248, 113, 113, 0.35);
+        background: rgba(127, 29, 29, 0.22);
+    }
+    .ai-day-remove:hover {
+        color: #fecdd3;
+        border-color: rgba(248, 113, 113, 0.6);
+    }
+    .ai-exercise-list {
+        border: 1px solid rgba(45, 212, 191, 0.22);
+        border-radius: 12px;
+        background: rgba(2, 6, 23, 0.35);
+        padding: 12px;
+    }
+    .ai-ex-card {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 10px;
+    }
+    .ai-ex-main {
+        flex: 1 1 320px;
+        min-width: 260px;
+    }
+    .ai-edit-btn {
+        border-radius: 10px;
+        padding: 8px 11px;
+        border: 1px solid rgba(99, 102, 241, 0.45);
+        background: rgba(79, 70, 229, 0.2);
+        color: #c4b5fd;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .ai-edit-btn:hover {
+        background: rgba(79, 70, 229, 0.32);
+    }
+    .ai-metrics-grid {
+        flex: 2 1 430px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+    }
+    .ai-notes-field {
+        min-width: 200px;
+    }
+    .ai-remove-wrap {
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+    }
+    .ai-remove-btn {
+        border: 1px solid rgba(248, 113, 113, 0.36);
+        background: rgba(127, 29, 29, 0.16);
+        color: #fda4af;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .ai-remove-btn:hover {
+        background: rgba(153, 27, 27, 0.24);
+        color: #fecdd3;
+    }
+    .ai-preview-block {
+        flex: 0 1 165px;
+        min-width: 145px;
+    }
+    .ai-preview-image {
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(2, 6, 23, 0.35);
+    }
+    .ai-tag-wrap {
+        margin-left: auto;
+    }
+    .ai-add-ex-btn {
+        border: 1px dashed rgba(45, 212, 191, 0.46);
+        color: #99f6e4;
+        background: rgba(20, 184, 166, 0.12);
+        border-radius: 10px;
+        padding: 9px 12px;
+        font-weight: 800;
+    }
+    .ai-add-ex-btn:hover {
+        background: rgba(20, 184, 166, 0.2);
+    }
+    .catalog-modal-backdrop {
+        backdrop-filter: blur(2px);
+    }
+    .catalog-modal {
+        border-radius: 16px;
+        border: 1px solid rgba(45, 212, 191, 0.35);
+        background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(2, 6, 23, 0.98));
+    }
+    .catalog-search {
+        border-color: rgba(45, 212, 191, 0.34) !important;
+    }
+    .catalog-item-btn {
+        border-color: rgba(45, 212, 191, 0.26);
+        background: rgba(2, 6, 23, 0.6);
+    }
+    .catalog-item-btn:hover {
+        background: rgba(15, 23, 42, 0.88);
+    }
+    .catalog-custom-note {
+        color: #fbbf24;
+        font-weight: 600;
+    }
+    .catalog-custom-input {
+        border-color: rgba(251, 191, 36, 0.42) !important;
+    }
+    .catalog-custom-btn {
+        border-color: rgba(251, 191, 36, 0.75);
+        background: linear-gradient(135deg, #facc15, #f59e0b);
+        color: #111827;
+        font-weight: 800;
+    }
+    .catalog-custom-btn:hover {
+        background: linear-gradient(135deg, #fde047, #fbbf24);
+    }
+    .catalog-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: #14b8a6 #0b1220;
+    }
+    .catalog-scroll::-webkit-scrollbar {
+        width: 10px;
+    }
+    .catalog-scroll::-webkit-scrollbar-track {
+        background: #0b1220;
+        border-radius: 999px;
+    }
+    .catalog-scroll::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #22d3ee 0%, #0d9488 100%);
+        border-radius: 999px;
+        border: 2px solid #0b1220;
+    }
+    .catalog-scroll::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #67e8f9 0%, #14b8a6 100%);
+    }
+    @media (max-width: 1024px) {
+        .ai-ex-main {
+            min-width: 100%;
+        }
+        .ai-metrics-grid {
+            flex-basis: 100%;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .ai-preview-block {
+            flex-basis: 100%;
+        }
+    }
+    @media (max-width: 768px) {
+        .ai-day-card {
+            padding: 14px;
+        }
+        .ai-ex-card {
+            padding: 10px;
+        }
+        .ai-metrics-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .ai-remove-wrap {
+            justify-content: flex-start;
+            grid-column: span 2;
+        }
+        .ai-preview-image {
+            width: 100%;
+            height: 140px;
+        }
+        .ai-tag-wrap {
+            margin-left: 0;
+        }
+    }
     @keyframes spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
 </style>
 
