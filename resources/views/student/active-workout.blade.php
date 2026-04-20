@@ -312,7 +312,6 @@ function activeWorkout(exercises, todayLogs) {
         videoUrl: '',
         videoError: '',
         mediaAttribution: '',
-        videoCache: {},
 
         workoutDone: false,
 
@@ -418,46 +417,24 @@ function activeWorkout(exercises, todayLogs) {
             if (this.showVideo && !this.videoUrl && !this.videoLoading) {
                 const ex = this.currentEx();
                 const manualUrl = this.normalizeMediaUrl(ex.embed_video_url || ex.video_url || '');
-                if (manualUrl) {
-                    this.videoType = this.detectMediaType(manualUrl);
-                    this.videoUrl = manualUrl;
-                    this.mediaAttribution = this.detectAttribution(manualUrl);
-                } else {
-                    this.loadVideo(ex.name);
+                if (!manualUrl) {
+                    this.videoError = 'Nao encontrei uma demonstracao para este exercicio.';
+                    return;
                 }
-            }
-        },
 
-        loadVideo(name) {
-            if (this.videoCache[name]) {
-                this.videoType = this.detectMediaType(this.videoCache[name]);
-                this.videoUrl = this.videoCache[name];
-                this.mediaAttribution = this.detectAttribution(this.videoCache[name]);
-                return;
+                if (this.isBlockedProvider(manualUrl)) {
+                    this.videoError = 'Demonstracao em YouTube/Vimeo desativada para este treino.';
+                    return;
+                }
+
+                this.videoType = this.detectMediaType(manualUrl);
+                this.videoUrl = manualUrl;
+                this.mediaAttribution = this.detectAttribution(manualUrl);
             }
-            this.videoLoading = true;
-            this.videoError = '';
-            fetch(`{{ route('student.exercise.youtube') }}?name=${encodeURIComponent(name)}`, {
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(async r => {
-                const d = await r.json().catch(() => ({}));
-                if (!r.ok) throw new Error(d.message || 'Vídeo não encontrado.');
-                return d;
-            })
-            .then(d => {
-                this.videoUrl = `https://www.youtube.com/embed/${d.video_id}`;
-                this.videoType = 'iframe';
-                this.mediaAttribution = this.detectAttribution(this.videoUrl);
-                this.videoCache[name] = this.videoUrl;
-            })
-            .catch(e => { this.videoError = e.message; })
-            .finally(() => { this.videoLoading = false; });
         },
 
         detectMediaType(url) {
             const u = (url || '').toLowerCase();
-            if (u.includes('youtube.com/embed') || u.includes('player.vimeo.com/video')) return 'iframe';
             if (u.match(/\.(gif|png|jpg|jpeg|webp)(\?|$)/)) return 'image';
             if (u.match(/\.(mp4|webm|ogg)(\?|$)/)) return 'video';
             return 'iframe';
@@ -466,16 +443,16 @@ function activeWorkout(exercises, todayLogs) {
         normalizeMediaUrl(url) {
             const u = (url || '').trim();
             if (!u) return '';
-
-            const yt = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([^&?/]+)/i);
-            if (yt && yt[1]) return `https://www.youtube.com/embed/${yt[1]}`;
-
-            const vimeo = u.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
-            if (vimeo && vimeo[1]) return `https://player.vimeo.com/video/${vimeo[1]}`;
-
             return u;
         },
 
+        isBlockedProvider(url) {
+            const u = (url || '').toLowerCase();
+            return u.includes('youtube.com')
+                || u.includes('youtu.be')
+                || u.includes('vimeo.com')
+                || u.includes('player.vimeo.com');
+        },
         detectAttribution(url) {
             const u = (url || '').toLowerCase();
             if (u.includes('gifdotreino.com') || u.includes('/media/gifdotreino/')) {
