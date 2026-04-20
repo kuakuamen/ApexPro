@@ -204,14 +204,20 @@
                         </button>
                     </template>
                 </div>
-                <div class="mt-3 flex items-center justify-between">
+                <div class="mt-3 space-y-2">
                     <p class="text-xs text-amber-300">Opcao personalizado nao tem video demonstrativo.</p>
-                    <button type="button"
-                            @click.prevent.stop="applyCustomExercise()"
-                            class="px-3 py-1.5 rounded border border-amber-300 bg-amber-300 text-zinc-900 text-sm font-bold hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300"
-                            style="opacity:1; pointer-events:auto;">
-                        Usar Personalizado
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <input type="text"
+                               x-model="pickerCustomName"
+                               placeholder="Nome do exercicio personalizado"
+                               class="flex-1 rounded border border-amber-600/50 bg-zinc-950/80 text-stone-100 px-3 py-2 text-sm">
+                        <button type="button"
+                                @click.prevent.stop="applyCustomExercise()"
+                                class="px-3 py-2 rounded border border-amber-300 bg-yellow-400 text-black text-sm font-bold hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                                style="opacity:1; pointer-events:auto;">
+                            Usar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -241,6 +247,7 @@
             catalogExercises: Array.isArray(catalogExercises) ? catalogExercises : [],
             pickerOpen: false,
             pickerQuery: '',
+            pickerCustomName: '',
             pickerDayIndex: null,
             pickerExerciseIndex: null,
             days: workout.days.map(day => {
@@ -296,6 +303,7 @@
                 this.pickerDayIndex = dayIndex;
                 this.pickerExerciseIndex = exerciseIndex;
                 this.pickerQuery = '';
+                this.pickerCustomName = '';
                 this.pickerOpen = true;
                 document.body.style.overflow = 'hidden';
                 document.documentElement.style.overflow = 'hidden';
@@ -303,6 +311,7 @@
             closeExercisePicker() {
                 this.pickerOpen = false;
                 this.pickerQuery = '';
+                this.pickerCustomName = '';
                 this.pickerDayIndex = null;
                 this.pickerExerciseIndex = null;
                 document.body.style.overflow = '';
@@ -324,9 +333,14 @@
             applyCustomExercise() {
                 if (this.pickerDayIndex === null || this.pickerExerciseIndex === null) return;
                 const ex = this.days[this.pickerDayIndex].exercises[this.pickerExerciseIndex];
+                const customName = (this.pickerCustomName || '').trim();
+                if (!customName) {
+                    alert('Digite o nome do exercicio personalizado.');
+                    return;
+                }
                 ex.custom_exercise = 1;
                 ex.video_url = '';
-                ex.name = 'Personalizado (sem video)';
+                ex.name = customName;
                 this.closeExercisePicker();
             },
             addDay() {
