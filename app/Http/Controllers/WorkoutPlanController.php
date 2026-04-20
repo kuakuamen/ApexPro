@@ -11,9 +11,17 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\WorkoutLog;
+use App\Services\ExerciseCatalogService;
 
 class WorkoutPlanController extends Controller
 {
+    protected ExerciseCatalogService $exerciseCatalog;
+
+    public function __construct(ExerciseCatalogService $exerciseCatalog)
+    {
+        $this->exerciseCatalog = $exerciseCatalog;
+    }
+
     /**
      * Alterna o status de conclusão de um exercício (AJAX).
      */
@@ -423,38 +431,44 @@ class WorkoutPlanController extends Controller
             'days.*.exercises.*.video_url' => 'nullable|url|max:500',
         ]);
 
-        // Inativar treinos anteriores do aluno
-        WorkoutPlan::where('student_id', $validated['student_id'])
-            ->where('is_active', true)
-            ->update(['is_active' => false]);
+        try {
+            // Inativar treinos anteriores do aluno
+            WorkoutPlan::where('student_id', $validated['student_id'])
+                ->where('is_active', true)
+                ->update(['is_active' => false]);
 
-        // Criar o Plano
-        $plan = WorkoutPlan::create([
-            'student_id' => $validated['student_id'],
-            'personal_id' => Auth::id(),
-            'name' => $validated['name'],
-            'goal' => $validated['goal'],
-            'start_date' => now(),
-            'is_active' => true,
-        ]);
-
-        // Criar Dias e Exercícios
-        foreach ($validated['days'] as $dayIndex => $dayData) {
-            $day = $plan->days()->create([
-                'name' => $dayData['name'],
-                'order' => $dayIndex,
+            // Criar o Plano
+            $plan = WorkoutPlan::create([
+                'student_id' => $validated['student_id'],
+                'personal_id' => Auth::id(),
+                'name' => $validated['name'],
+                'goal' => $validated['goal'],
+                'start_date' => now(),
+                'is_active' => true,
             ]);
 
-            foreach ($dayData['exercises'] as $exerciseIndex => $exerciseData) {
-                $day->exercises()->create([
-                    'name' => $exerciseData['name'],
-                    'sets' => $exerciseData['sets'] ?? null,
-                    'reps' => $exerciseData['reps'] ?? null,
-                    'rest_time' => $exerciseData['rest_time'] ?? null,
-                    'video_url' => $exerciseData['video_url'] ?? null,
-                    'order' => $exerciseIndex,
+            // Criar Dias e Exercícios (somente catálogo com mídia)
+            foreach ($validated['days'] as $dayIndex => $dayData) {
+                $day = $plan->days()->create([
+                    'name' => $dayData['name'],
+                    'order' => $dayIndex,
                 ]);
+
+                foreach ($dayData['exercises'] as $exerciseIndex => $exerciseData) {
+                    $resolvedExercise = $this->exerciseCatalog->resolveCatalogExerciseOrFail((string) $exerciseData['name']);
+
+                    $day->exercises()->create([
+                        'name' => $resolvedExercise['name'],
+                        'sets' => $exerciseData['sets'] ?? null,
+                        'reps' => $exerciseData['reps'] ?? null,
+                        'rest_time' => $exerciseData['rest_time'] ?? null,
+                        'video_url' => $resolvedExercise['media_url'],
+                        'order' => $exerciseIndex,
+                    ]);
+                }
             }
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['days' => $e->getMessage()]);
         }
 
         return redirect()->route('workouts.index')->with('success', 'Treino criado com sucesso!');
@@ -503,39 +517,37 @@ class WorkoutPlanController extends Controller
             'days.*.exercises.*.video_url' => 'nullable|url|max:500',
         ]);
 
-        // Atualizar dados básicos
-        $workout->update([
-            'name' => $validated['name'],
-            'goal' => $validated['goal'],
-        ]);
-
-        // A estratégia mais simples para edição complexa (nested) é apagar os dias antigos e recriar
-        // CUIDADO: Isso apaga logs históricos vinculados aos IDs antigos dos exercícios.
-        // Solução ideal: Comparar e atualizar.
-        // Solução rápida (MVP): Apagar e recriar, mas isso reseta o progresso.
-        
-        // Vamos tentar manter os IDs se possível, mas para MVP vamos recriar para garantir estrutura
-        // Para não quebrar logs, o ideal seria soft delete ou update inteligente.
-        // Dado o pedido "adicionar, editar ou remover", recriar é o mais robusto agora.
-        
-        $workout->days()->delete(); // Cascade deve apagar exercises
-
-        foreach ($validated['days'] as $dayIndex => $dayData) {
-            $day = $workout->days()->create([
-                'name' => $dayData['name'],
-                'order' => $dayIndex,
+        try {
+            // Atualizar dados básicos
+            $workout->update([
+                'name' => $validated['name'],
+                'goal' => $validated['goal'],
             ]);
 
-            foreach ($dayData['exercises'] as $exerciseIndex => $exerciseData) {
-                $day->exercises()->create([
-                    'name' => $exerciseData['name'],
-                    'sets' => $exerciseData['sets'] ?? null,
-                    'reps' => $exerciseData['reps'] ?? null,
-                    'rest_time' => $exerciseData['rest_time'] ?? null,
-                    'video_url' => $exerciseData['video_url'] ?? null,
-                    'order' => $exerciseIndex,
+            // Recria estrutura de dias/exercícios
+            $workout->days()->delete(); // Cascade deve apagar exercises
+
+            foreach ($validated['days'] as $dayIndex => $dayData) {
+                $day = $workout->days()->create([
+                    'name' => $dayData['name'],
+                    'order' => $dayIndex,
                 ]);
+
+                foreach ($dayData['exercises'] as $exerciseIndex => $exerciseData) {
+                    $resolvedExercise = $this->exerciseCatalog->resolveCatalogExerciseOrFail((string) $exerciseData['name']);
+
+                    $day->exercises()->create([
+                        'name' => $resolvedExercise['name'],
+                        'sets' => $exerciseData['sets'] ?? null,
+                        'reps' => $exerciseData['reps'] ?? null,
+                        'rest_time' => $exerciseData['rest_time'] ?? null,
+                        'video_url' => $resolvedExercise['media_url'],
+                        'order' => $exerciseIndex,
+                    ]);
+                }
             }
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['days' => $e->getMessage()]);
         }
 
         return redirect()->route('workouts.show', $workout)->with('success', 'Treino atualizado com sucesso!');
