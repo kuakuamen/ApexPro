@@ -119,8 +119,8 @@
                         <!-- Lista de Exercícios -->
                         <div class="space-y-4 pl-4 border-l-2 border-teal-900/40">
                             <template x-for="(exercise, exerciseIndex) in day.exercises" :key="exercise.id">
-                                <div class="grid grid-cols-12 gap-4 items-end bg-zinc-900/70 p-3 rounded border border-teal-900/30">
-                                    <div class="col-span-4">
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 items-end bg-zinc-900/70 p-3 rounded border border-teal-900/30">
+                                    <div class="md:col-span-4">
                                         <label class="block text-xs font-medium text-stone-400">Exercicio</label>
                                         <div class="flex items-center gap-2">
                                             <input type="text" x-model="exercise.name" class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md" readonly>
@@ -130,7 +130,8 @@
                                         <input type="hidden" x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][video_url]'" x-model="exercise.video_url">
                                         <input type="hidden" x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][custom_exercise]'" x-model="exercise.custom_exercise">
                                     </div>
-                                    <div class="col-span-2">
+                                    <div class="grid grid-cols-3 gap-2 md:contents">
+                                    <div class="md:col-span-2">
                                         <label class="block text-xs font-medium text-stone-400">Séries</label>
                                         <select x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][sets]'" x-model="exercise.sets" class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-2">
                                             <option value="">...</option>
@@ -142,7 +143,7 @@
                                             <option value="6">6</option>
                                         </select>
                                     </div>
-                                    <div class="col-span-2">
+                                    <div class="md:col-span-2">
                                         <label class="block text-xs font-medium text-stone-400">Reps</label>
                                         <select x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][reps]'" x-model="exercise.reps" class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-2">
                                             <option value="">...</option>
@@ -154,7 +155,7 @@
                                             <option value="Falha">Falha</option>
                                         </select>
                                     </div>
-                                    <div class="col-span-2">
+                                    <div class="md:col-span-2">
                                         <label class="block text-xs font-medium text-stone-400">Descanso (s)</label>
                                         <select x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][rest_time]'" x-model="exercise.rest_time" class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-2">
                                             <option value="">...</option>
@@ -165,21 +166,22 @@
                                             <option value="180s">180s</option>
                                         </select>
                                     </div>
-                                    <div class="col-span-2 flex justify-end">
-                                        <button type="button" @click="removeExercise(dayIndex, exerciseIndex)" class="text-red-400 hover:text-red-300 text-sm">
+                                    <div class="md:col-span-2 flex justify-end md:justify-end">
+                                        <button type="button" @click="removeExercise(dayIndex, exerciseIndex)" class="text-red-400 hover:text-red-300 text-sm border border-red-500/30 rounded px-2 py-1 md:border-0 md:p-0">
                                             Remover
                                         </button>
                                     </div>
-                                    <div class="col-span-10">
+                                    </div>
+                                    <div class="md:col-span-10">
                                         <label class="block text-xs font-medium text-stone-400">Previa da execucao</label>
                                         <template x-if="exercise.video_url">
-                                            <img :src="exercise.video_url" alt="preview" class="w-28 h-20 object-cover rounded border border-teal-900/40 bg-zinc-950/60">
+                                            <img :src="exercise.video_url" alt="preview" class="w-36 h-24 md:w-28 md:h-20 object-cover rounded border border-teal-900/40 bg-zinc-950/60">
                                         </template>
                                         <template x-if="!exercise.video_url">
                                             <div class="text-xs text-amber-400">Exercicio personalizado sem video demonstrativo.</div>
                                         </template>
                                     </div>
-                                    <div class="col-span-2 text-right">
+                                    <div class="md:col-span-2 text-left md:text-right">
                                         <span class="inline-flex px-2 py-1 text-xs rounded border" :class="exercise.custom_exercise ? 'text-amber-200 bg-amber-700/20 border-amber-600/30' : 'text-teal-200 bg-teal-700/20 border-teal-600/30'">
                                             <span x-text="exercise.custom_exercise ? 'Personalizado' : 'Catalogo'"></span>
                                         </span>
