@@ -455,7 +455,19 @@ class WorkoutPlanController extends Controller
                 ]);
 
                 foreach ($dayData['exercises'] as $exerciseIndex => $exerciseData) {
-                    $resolvedExercise = $this->exerciseCatalog->resolveCatalogExerciseOrFail((string) $exerciseData['name']);
+                    $isCustomExercise = !empty($exerciseData['custom_exercise']);
+                    if ($isCustomExercise) {
+                        $customName = trim((string) ($exerciseData['name'] ?? ''));
+                        if ($customName === '') {
+                            throw new \RuntimeException('Exercicio personalizado sem nome.');
+                        }
+                        $resolvedExercise = [
+                            'name' => $customName,
+                            'media_url' => null,
+                        ];
+                    } else {
+                        $resolvedExercise = $this->exerciseCatalog->resolveCatalogExerciseOrFail((string) $exerciseData['name']);
+                    }
 
                     $day->exercises()->create([
                         'name' => $resolvedExercise['name'],
@@ -488,8 +500,9 @@ class WorkoutPlanController extends Controller
 
         $workout->load('days.exercises');
         $students = $user->students()->get();
+        $catalogExercises = $this->exerciseCatalog->getCatalogItems();
 
-        return view('workouts.edit', compact('workout', 'students'));
+        return view('workouts.edit', compact('workout', 'students', 'catalogExercises'));
     }
 
     /**
@@ -534,7 +547,19 @@ class WorkoutPlanController extends Controller
                 ]);
 
                 foreach ($dayData['exercises'] as $exerciseIndex => $exerciseData) {
-                    $resolvedExercise = $this->exerciseCatalog->resolveCatalogExerciseOrFail((string) $exerciseData['name']);
+                    $isCustomExercise = !empty($exerciseData['custom_exercise']);
+                    if ($isCustomExercise) {
+                        $customName = trim((string) ($exerciseData['name'] ?? ''));
+                        if ($customName === '') {
+                            throw new \RuntimeException('Exercicio personalizado sem nome.');
+                        }
+                        $resolvedExercise = [
+                            'name' => $customName,
+                            'media_url' => null,
+                        ];
+                    } else {
+                        $resolvedExercise = $this->exerciseCatalog->resolveCatalogExerciseOrFail((string) $exerciseData['name']);
+                    }
 
                     $day->exercises()->create([
                         'name' => $resolvedExercise['name'],

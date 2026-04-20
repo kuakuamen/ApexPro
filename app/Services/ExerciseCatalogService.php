@@ -192,6 +192,23 @@ class ExerciseCatalogService
         return count($this->getCatalogNames());
     }
 
+    public function getCatalogItems(): array
+    {
+        $items = [];
+        foreach ($this->getCatalogNames() as $name) {
+            $mediaUrl = $this->getMediaUrlForName($name);
+            if (!$mediaUrl) {
+                continue;
+            }
+            $items[] = [
+                'name' => $name,
+                'media_url' => $mediaUrl,
+            ];
+        }
+
+        return $items;
+    }
+
     private function getNormalizedMap(): array
     {
         if ($this->normalizedMap !== null) {

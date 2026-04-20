@@ -11,7 +11,7 @@
         <a href="{{ route('workouts.show', $workout) }}" class="text-teal-300 hover:text-teal-200">Cancelar</a>
     </div>
 
-    <div class="p-6 sm:px-20 bg-zinc-950/40" x-data="workoutForm({{ json_encode($workout) }})">
+    <div class="p-6 sm:px-20 bg-zinc-950/40" x-data="workoutForm({{ json_encode($workout) }}, {{ json_encode($catalogExercises ?? []) }})">
         <form action="{{ route('workouts.update', $workout) }}" method="POST">
             @csrf
             @method('PUT')
@@ -100,19 +100,14 @@
                             <template x-for="(exercise, exerciseIndex) in day.exercises" :key="exercise.id">
                                 <div class="grid grid-cols-12 gap-4 items-end bg-zinc-900/70 p-3 rounded border border-teal-900/30">
                                     <div class="col-span-4">
-                                        <label class="block text-xs font-medium text-stone-400">Exercício</label>
-                                        <input type="text" 
-                                               x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][name]'" 
-                                               x-model="exercise.name" 
-                                               x-bind:list="'suggestions-edit-' + day.id"
-                                               class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md" 
-                                               placeholder="Nome" required>
-                                               
-                                        <datalist x-bind:id="'suggestions-edit-' + day.id">
-                                            <template x-for="option in getExercisesForType(day.workoutType)">
-                                                <option x-bind:value="option"></option>
-                                            </template>
-                                        </datalist>
+                                        <label class="block text-xs font-medium text-stone-400">Exercicio</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" x-model="exercise.name" class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md" readonly>
+                                            <button type="button" @click="openExercisePicker(dayIndex, exerciseIndex)" class="px-2 py-1 text-xs rounded bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-600/30">Editar</button>
+                                        </div>
+                                        <input type="hidden" x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][name]'" x-model="exercise.name">
+                                        <input type="hidden" x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][video_url]'" x-model="exercise.video_url">
+                                        <input type="hidden" x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][custom_exercise]'" x-model="exercise.custom_exercise">
                                     </div>
                                     <div class="col-span-2">
                                         <label class="block text-xs font-medium text-stone-400">Séries</label>
@@ -155,16 +150,17 @@
                                         </button>
                                     </div>
                                     <div class="col-span-10">
-                                        <label class="block text-xs font-medium text-stone-400">Video da execucao</label>
-                                        <input type="url"
-                                               x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][video_url]'"
-                                               x-model="exercise.video_url"
-                                               class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-3"
-                                               placeholder="https://youtube.com/watch?v=... ou Vimeo">
+                                        <label class="block text-xs font-medium text-stone-400">Previa da execucao</label>
+                                        <template x-if="exercise.video_url">
+                                            <img :src="exercise.video_url" alt="preview" class="w-28 h-20 object-cover rounded border border-teal-900/40 bg-zinc-950/60">
+                                        </template>
+                                        <template x-if="!exercise.video_url">
+                                            <div class="text-xs text-amber-400">Exercicio personalizado sem video demonstrativo.</div>
+                                        </template>
                                     </div>
                                     <div class="col-span-2 text-right">
-                                        <span class="inline-flex px-2 py-1 text-xs rounded text-teal-200 bg-teal-700/20 border border-teal-600/30">
-                                            Opcional
+                                        <span class="inline-flex px-2 py-1 text-xs rounded border" :class="exercise.custom_exercise ? 'text-amber-200 bg-amber-700/20 border-amber-600/30' : 'text-teal-200 bg-teal-700/20 border-teal-600/30'">
+                                            <span x-text="exercise.custom_exercise ? 'Personalizado' : 'Catalogo'"></span>
                                         </span>
                                     </div>
                                 </div>
@@ -189,6 +185,29 @@
                     Salvar Alterações
                 </button>
             </div>
+
+
+        <div x-show="pickerOpen" x-transition style="display:none" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+            <div class="w-full max-w-2xl rounded-lg border border-teal-900/40 bg-zinc-900 p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-stone-100 font-semibold">Selecionar exercicio do catalogo</h4>
+                    <button type="button" @click="closeExercisePicker()" class="text-stone-400 hover:text-stone-200">Fechar</button>
+                </div>
+                <input type="text" x-model="pickerQuery" placeholder="Buscar exercicio..." class="w-full mb-3 rounded border border-teal-900/40 bg-zinc-950/70 text-stone-100 px-3 py-2">
+                <div class="max-h-80 overflow-y-auto space-y-2 pr-1">
+                    <template x-for="item in filteredCatalogExercises()" :key="item.name">
+                        <button type="button" @click="applyCatalogExercise(item)" class="w-full text-left rounded border border-teal-900/30 bg-zinc-950/50 p-2 hover:bg-zinc-800/70">
+                            <div class="text-stone-100 text-sm font-medium" x-text="item.name"></div>
+                        </button>
+                    </template>
+                </div>
+                <div class="mt-3 flex items-center justify-between">
+                    <p class="text-xs text-amber-300">Opcao personalizado nao tem video demonstrativo.</p>
+                    <button type="button" @click="applyCustomExercise()" class="px-3 py-1.5 rounded border border-amber-600/40 bg-amber-700/20 text-amber-200 text-sm">Usar Personalizado</button>
+                </div>
+            </div>
+        </div>
+
         </form>
     </div>
 </div>
@@ -207,10 +226,15 @@
         'Glúteo': ['Elevação Pélvica', 'Glúteo 4 Apoios', 'Abdução de Quadril']
     };
 
-    function workoutForm(workout) {
+    function workoutForm(workout, catalogExercises) {
         return {
             name: workout.name,
             goal: workout.goal,
+            catalogExercises: Array.isArray(catalogExercises) ? catalogExercises : [],
+            pickerOpen: false,
+            pickerQuery: '',
+            pickerDayIndex: null,
+            pickerExerciseIndex: null,
             days: workout.days.map(day => {
                 // Tentar extrair "Segunda-feira" e "Peito" da string "Segunda-feira - Peito"
                 let parts = day.name.split(' - ');
@@ -239,7 +263,8 @@
                         sets: ex.sets,
                         reps: ex.reps,
                         rest_time: ex.rest_time,
-                        video_url: ex.video_url ?? ''
+                        video_url: ex.video_url ?? '',
+                        custom_exercise: ex.video_url ? 0 : 1
                     }))
                 };
             }),
@@ -259,13 +284,46 @@
                 return [...new Set(suggestions)];
             },
 
+            openExercisePicker(dayIndex, exerciseIndex) {
+                this.pickerDayIndex = dayIndex;
+                this.pickerExerciseIndex = exerciseIndex;
+                this.pickerQuery = '';
+                this.pickerOpen = true;
+            },
+            closeExercisePicker() {
+                this.pickerOpen = false;
+                this.pickerQuery = '';
+                this.pickerDayIndex = null;
+                this.pickerExerciseIndex = null;
+            },
+            filteredCatalogExercises() {
+                const q = (this.pickerQuery || '').toLowerCase().trim();
+                if (!q) return this.catalogExercises.slice(0, 200);
+                return this.catalogExercises.filter(item => (item.name || '').toLowerCase().includes(q)).slice(0, 200);
+            },
+            applyCatalogExercise(item) {
+                if (this.pickerDayIndex === null || this.pickerExerciseIndex === null) return;
+                const ex = this.days[this.pickerDayIndex].exercises[this.pickerExerciseIndex];
+                ex.name = item.name;
+                ex.video_url = item.media_url;
+                ex.custom_exercise = 0;
+                this.closeExercisePicker();
+            },
+            applyCustomExercise() {
+                if (this.pickerDayIndex === null || this.pickerExerciseIndex === null) return;
+                const ex = this.days[this.pickerDayIndex].exercises[this.pickerExerciseIndex];
+                ex.custom_exercise = 1;
+                ex.video_url = '';
+                if (!ex.name) ex.name = 'Exercicio Personalizado';
+                this.closeExercisePicker();
+            },
             addDay() {
                 this.days.push({
                     id: Date.now(),
                     weekDay: '',
                     workoutType: '',
                     customName: '',
-                    exercises: [{ id: Date.now() + 1, name: '', sets: '', reps: '', rest_time: '', video_url: '' }]
+                    exercises: [{ id: Date.now() + 1, name: '', sets: '', reps: '', rest_time: '', video_url: '', custom_exercise: 0 }]
                 });
             },
             removeDay(index) {
@@ -278,7 +336,8 @@
                     sets: '',
                     reps: '',
                     rest_time: '',
-                    video_url: ''
+                    video_url: '',
+                    custom_exercise: 0
                 });
             },
             removeExercise(dayIndex, exerciseIndex) {
