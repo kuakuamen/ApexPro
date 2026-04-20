@@ -21,6 +21,16 @@ jobs:
             cd /var/www/apexproai
             git pull --no-rebase origin main
             composer install --no-dev --optimize-autoloader
+            if command -v npm >/dev/null 2>&1; then
+              if [ -f package-lock.json ]; then
+                npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+              else
+                npm install --no-audit --no-fund
+              fi
+              npm run build
+            else
+              echo "npm não encontrado na VPS; pulando build frontend."
+            fi
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
