@@ -10,6 +10,7 @@ class ExerciseCatalogService
 {
     private ?array $catalogNames = null;
     private ?array $normalizedMap = null;
+    private ?array $mediaMap = null;
 
     public function getCatalogNames(): array
     {
@@ -123,6 +124,33 @@ class ExerciseCatalogService
         return $canonical;
     }
 
+    public function getMediaUrlForName(string $name): ?string
+    {
+        $canonical = $this->canonicalize($name);
+        if ($canonical === null) {
+            return null;
+        }
+
+        $mediaMap = $this->getMediaMap();
+        $key = $this->normalize($canonical);
+        if (!empty($mediaMap[$key])) {
+            return $mediaMap[$key];
+        }
+
+        // Fallback: tenta buscar mídia já salva para este exercício no banco.
+        $dbUrl = Exercise::query()
+            ->whereNotNull('video_url')
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($canonical)])
+            ->where(function ($q) {
+                $q->where('video_url', 'like', '%/media/gifdotreino/%')
+                    ->orWhere('video_url', 'like', '%gifdotreino.com%');
+            })
+            ->orderByDesc('id')
+            ->value('video_url');
+
+        return $dbUrl ?: null;
+    }
+
     public function enforceWorkoutCatalog(array $analysis): array
     {
         if (!$this->hasCatalog()) {
@@ -176,6 +204,89 @@ class ExerciseCatalogService
 
         $this->normalizedMap = $map;
         return $this->normalizedMap;
+    }
+
+    private function getMediaMap(): array
+    {
+        if ($this->mediaMap !== null) {
+            return $this->mediaMap;
+        }
+
+        $map = [];
+        $jsonPath = storage_path('app/gifdotreino_catalog.json');
+        if (is_file($jsonPath)) {
+            $raw = @file_get_contents($jsonPath);
+            if ($raw !== false) {
+                $decoded = json_decode($raw, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $this->extractMediaMapFromArray($decoded, $map);
+                }
+            }
+        }
+
+        $this->mediaMap = $map;
+        return $this->mediaMap;
+    }
+
+    private function extractMediaMapFromArray(array $data, array &$map): void
+    {
+        $walker = function ($value) use (&$walker, &$map) {
+            if (!is_array($value)) {
+                return;
+            }
+
+            $possibleNameKeys = ['name', 'nome', 'title', 'exercise', 'exercise_name'];
+            $possibleUrlKeys = ['gif_url', 'gifUrl', 'gif', 'url', 'media_url', 'video_url', 'path', 'file'];
+
+            $candidateName = null;
+            foreach ($possibleNameKeys as $key) {
+                if (isset($value[$key]) && is_string($value[$key]) && trim($value[$key]) !== '') {
+                    $candidateName = trim($value[$key]);
+                    break;
+                }
+            }
+
+            $candidateUrl = null;
+            foreach ($possibleUrlKeys as $key) {
+                if (isset($value[$key]) && is_string($value[$key]) && trim($value[$key]) !== '') {
+                    $candidateUrl = trim($value[$key]);
+                    break;
+                }
+            }
+
+            if ($candidateName && $candidateUrl) {
+                $normalizedName = $this->normalize($candidateName);
+                $normalizedUrl = $this->normalizeMediaUrl($candidateUrl);
+                if ($normalizedName !== '' && $normalizedUrl !== '') {
+                    $map[$normalizedName] = $normalizedUrl;
+                }
+            }
+
+            foreach ($value as $item) {
+                $walker($item);
+            }
+        };
+
+        $walker($data);
+    }
+
+    private function normalizeMediaUrl(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return '';
+        }
+
+        if (str_starts_with($url, '//')) {
+            return 'https:' . $url;
+        }
+
+        if (str_starts_with($url, '/')) {
+            $appUrl = rtrim((string) config('app.url'), '/');
+            return $appUrl !== '' ? $appUrl . $url : $url;
+        }
+
+        return $url;
     }
 
     private function normalize(string $text): string
