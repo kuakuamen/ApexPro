@@ -539,15 +539,14 @@ class AiAssessmentController extends Controller
                     if (isset($dayData['exercises'])) {
                         foreach ($dayData['exercises'] as $exIndex => $exData) {
                             if (empty($exData['name'])) continue;
-                            $canonicalName = $this->exerciseCatalog->canonicalizeOrFail((string) $exData['name']);
-                            $mediaUrl = $this->exerciseCatalog->getMediaUrlForName($canonicalName);
+                            $resolvedExercise = $this->exerciseCatalog->resolveCatalogExerciseOrFail((string) $exData['name']);
 
                             $workoutDay->exercises()->create([
-                                'name' => $canonicalName,
+                                'name' => $resolvedExercise['name'],
                                 'sets' => $exData['sets'] ?? 3,
                                 'reps' => $exData['reps'] ?? '10-12',
                                 'observation' => $exData['notes'] ?? null,
-                                'video_url' => $mediaUrl,
+                                'video_url' => $resolvedExercise['media_url'],
                                 'rest_time' => 60,
                                 'order' => $exIndex
                             ]);
