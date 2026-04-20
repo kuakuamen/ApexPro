@@ -2,6 +2,27 @@
 
 @section('content')
 <script src="//unpkg.com/alpinejs" defer></script>
+<style>
+    .catalog-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: #14b8a6 #111827;
+    }
+    .catalog-scroll::-webkit-scrollbar {
+        width: 10px;
+    }
+    .catalog-scroll::-webkit-scrollbar-track {
+        background: #111827;
+        border-radius: 999px;
+    }
+    .catalog-scroll::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #2dd4bf 0%, #0d9488 100%);
+        border-radius: 999px;
+        border: 2px solid #111827;
+    }
+    .catalog-scroll::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #5eead4 0%, #14b8a6 100%);
+    }
+</style>
 
 <div class="bg-zinc-900/55 shadow-xl sm:rounded-lg border border-teal-900/30">
     <div class="p-6 sm:px-20 bg-zinc-900/70 border-b border-teal-900/40 flex justify-between items-center">
@@ -195,7 +216,7 @@
                     <button type="button" @click="closeExercisePicker()" class="text-stone-400 hover:text-stone-200">Fechar</button>
                 </div>
                 <input type="text" x-model="pickerQuery" placeholder="Buscar exercicio..." class="w-full mb-3 rounded border border-teal-900/40 bg-zinc-950/70 text-stone-100 px-3 py-2">
-                <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-2 pr-1 touch-pan-y"
+                <div class="catalog-scroll flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-2 pr-1 touch-pan-y"
                      style="max-height: 42vh;"
                      @wheel.stop>
                     <template x-for="item in filteredCatalogExercises()" :key="item.name">
