@@ -187,14 +187,14 @@
             </div>
 
 
-        <div x-show="pickerOpen" x-transition style="display:none" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3" @click.self="closeExercisePicker()">
-            <div class="w-full max-w-2xl max-h-[92vh] overflow-hidden rounded-lg border border-teal-900/40 bg-zinc-900 p-4 flex flex-col">
+        <div x-show="pickerOpen" x-transition style="display:none" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 overflow-hidden" @click.self="closeExercisePicker()">
+            <div class="w-full max-w-xl max-h-[76vh] overflow-hidden rounded-lg border border-teal-900/40 bg-zinc-900 p-3 flex flex-col shadow-2xl">
                 <div class="flex items-center justify-between mb-3">
                     <h4 class="text-stone-100 font-semibold">Selecionar exercicio do catalogo</h4>
                     <button type="button" @click="closeExercisePicker()" class="text-stone-400 hover:text-stone-200">Fechar</button>
                 </div>
                 <input type="text" x-model="pickerQuery" placeholder="Buscar exercicio..." class="w-full mb-3 rounded border border-teal-900/40 bg-zinc-950/70 text-stone-100 px-3 py-2">
-                <div class="flex-1 min-h-0 max-h-[60vh] overflow-y-auto space-y-2 pr-1 touch-pan-y">
+                <div class="flex-1 min-h-0 max-h-[48vh] overflow-y-auto overscroll-contain space-y-2 pr-1 touch-pan-y">
                     <template x-for="item in filteredCatalogExercises()" :key="item.name">
                         <button type="button" @click="applyCatalogExercise(item)" class="w-full text-left rounded border border-teal-900/30 bg-zinc-950/50 p-2 hover:bg-zinc-800/70">
                             <div class="text-stone-100 text-sm font-medium" x-text="item.name"></div>
@@ -289,12 +289,14 @@
                 this.pickerExerciseIndex = exerciseIndex;
                 this.pickerQuery = '';
                 this.pickerOpen = true;
+                document.body.style.overflow = 'hidden';
             },
             closeExercisePicker() {
                 this.pickerOpen = false;
                 this.pickerQuery = '';
                 this.pickerDayIndex = null;
                 this.pickerExerciseIndex = null;
+                document.body.style.overflow = '';
             },
             filteredCatalogExercises() {
                 const q = (this.pickerQuery || '').toLowerCase().trim();
