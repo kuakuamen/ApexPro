@@ -3,7 +3,7 @@
 @section('content')
 <script src="//unpkg.com/alpinejs" defer></script>
 
-<div class="bg-zinc-900/55 overflow-hidden shadow-xl sm:rounded-lg border border-teal-900/30">
+<div class="bg-zinc-900/55 shadow-xl sm:rounded-lg border border-teal-900/30">
     <div class="p-6 sm:px-20 bg-zinc-900/70 border-b border-teal-900/40 flex justify-between items-center">
         <div class="mt-8 text-2xl font-bold text-stone-100">
             Editar Plano de Treino
@@ -187,14 +187,14 @@
             </div>
 
 
-        <div x-show="pickerOpen" x-transition style="display:none" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-            <div class="w-full max-w-2xl rounded-lg border border-teal-900/40 bg-zinc-900 p-4">
+        <div x-show="pickerOpen" x-transition style="display:none" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3" @click.self="closeExercisePicker()">
+            <div class="w-full max-w-2xl max-h-[92vh] overflow-hidden rounded-lg border border-teal-900/40 bg-zinc-900 p-4 flex flex-col">
                 <div class="flex items-center justify-between mb-3">
                     <h4 class="text-stone-100 font-semibold">Selecionar exercicio do catalogo</h4>
                     <button type="button" @click="closeExercisePicker()" class="text-stone-400 hover:text-stone-200">Fechar</button>
                 </div>
                 <input type="text" x-model="pickerQuery" placeholder="Buscar exercicio..." class="w-full mb-3 rounded border border-teal-900/40 bg-zinc-950/70 text-stone-100 px-3 py-2">
-                <div class="max-h-80 overflow-y-auto space-y-2 pr-1">
+                <div class="flex-1 min-h-0 max-h-[60vh] overflow-y-auto space-y-2 pr-1 touch-pan-y">
                     <template x-for="item in filteredCatalogExercises()" :key="item.name">
                         <button type="button" @click="applyCatalogExercise(item)" class="w-full text-left rounded border border-teal-900/30 bg-zinc-950/50 p-2 hover:bg-zinc-800/70">
                             <div class="text-stone-100 text-sm font-medium" x-text="item.name"></div>
@@ -203,7 +203,7 @@
                 </div>
                 <div class="mt-3 flex items-center justify-between">
                     <p class="text-xs text-amber-300">Opcao personalizado nao tem video demonstrativo.</p>
-                    <button type="button" @click="applyCustomExercise()" class="px-3 py-1.5 rounded border border-amber-600/40 bg-amber-700/20 text-amber-200 text-sm">Usar Personalizado</button>
+                    <button type="button" @click="applyCustomExercise()" class="px-3 py-1.5 rounded border border-amber-400 bg-amber-300 text-zinc-900 text-sm font-semibold hover:bg-amber-200">Usar Personalizado</button>
                 </div>
             </div>
         </div>
