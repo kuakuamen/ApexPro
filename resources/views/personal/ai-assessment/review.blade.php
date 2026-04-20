@@ -496,18 +496,22 @@
         background: rgba(79, 70, 229, 0.32);
     }
     .ai-metrics-grid {
-        flex: 2 1 430px;
+        flex: 2 1 520px;
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: minmax(90px, 120px) minmax(90px, 120px) minmax(180px, 1fr) auto;
         gap: 10px;
+        align-items: end;
+    }
+    .ai-metrics-grid > div {
+        min-width: 0;
     }
     .ai-notes-field {
-        min-width: 200px;
+        min-width: 0;
     }
     .ai-remove-wrap {
         display: flex;
         align-items: flex-end;
-        justify-content: flex-end;
+        justify-content: flex-start;
     }
     .ai-remove-btn {
         border: 1px solid rgba(248, 113, 113, 0.36);
@@ -517,6 +521,7 @@
         padding: 8px 12px;
         font-size: 13px;
         font-weight: 700;
+        white-space: nowrap;
     }
     .ai-remove-btn:hover {
         background: rgba(153, 27, 27, 0.24);
