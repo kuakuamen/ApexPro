@@ -3,42 +3,485 @@
 @section('content')
 <script src="//unpkg.com/alpinejs" defer></script>
 <style>
-    .catalog-scroll {
-        scrollbar-width: thin;
-        scrollbar-color: #14b8a6 #111827;
+.workout-editor {
+    max-width: 1240px;
+    margin: 20px auto;
+    border-radius: 24px;
+    border: 1px solid rgba(45, 212, 191, 0.25);
+    background:
+        radial-gradient(130% 140% at 0% 0%, rgba(45, 212, 191, 0.17), rgba(2, 6, 23, 0.9) 55%),
+        linear-gradient(180deg, rgba(2, 6, 23, 0.95), rgba(2, 6, 23, 0.98));
+    box-shadow: 0 26px 68px rgba(2, 6, 23, 0.62);
+    overflow: hidden;
+    position: relative;
+}
+
+.workout-editor::before {
+    content: "";
+    position: absolute;
+    right: -120px;
+    top: -120px;
+    width: 260px;
+    height: 260px;
+    border-radius: 999px;
+    background: radial-gradient(circle at center, rgba(129, 140, 248, 0.34), rgba(129, 140, 248, 0));
+    pointer-events: none;
+}
+
+.editor-header {
+    background: linear-gradient(90deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.9));
+    border-bottom: 1px solid rgba(45, 212, 191, 0.2);
+    padding-top: 22px;
+    padding-bottom: 22px;
+    position: relative;
+    z-index: 1;
+}
+
+.editor-title {
+    margin: 0;
+    font-size: clamp(30px, 4vw, 42px);
+    line-height: 1;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #f8fafc;
+}
+
+.editor-cancel-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #67e8f9;
+    font-weight: 700;
+    text-decoration: none;
+    border: 1px solid rgba(34, 211, 238, 0.25);
+    background: rgba(15, 23, 42, 0.55);
+    border-radius: 10px;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+}
+
+.editor-cancel-link:hover {
+    color: #a5f3fc;
+    border-color: rgba(34, 211, 238, 0.5);
+    background: rgba(15, 23, 42, 0.8);
+}
+
+.editor-content {
+    background: rgba(2, 6, 23, 0.66);
+    padding-top: 28px;
+    position: relative;
+    z-index: 1;
+}
+
+.editor-basics {
+    background: rgba(15, 23, 42, 0.42);
+    border: 1px solid rgba(45, 212, 191, 0.18);
+    border-radius: 16px;
+    padding: 18px;
+}
+
+.editor-divider {
+    border-color: rgba(45, 212, 191, 0.2);
+}
+
+.editor-content label.block.text-sm,
+.editor-content label.block.text-xs {
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-size: 11px;
+    font-weight: 800;
+    color: #94a3b8;
+}
+
+.editor-content input[type="text"],
+.editor-content select {
+    border-color: rgba(45, 212, 191, 0.3) !important;
+    background: rgba(2, 6, 23, 0.72) !important;
+    border-radius: 11px !important;
+    color: #e2e8f0 !important;
+}
+
+.editor-content input[type="text"]:focus,
+.editor-content select:focus {
+    outline: none;
+    border-color: rgba(45, 212, 191, 0.68) !important;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
+}
+
+.editor-day-card {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.83), rgba(15, 23, 42, 0.74));
+    border: 1px solid rgba(45, 212, 191, 0.26);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 20px 36px rgba(2, 6, 23, 0.34);
+}
+
+.day-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    background: rgba(127, 29, 29, 0.22);
+    color: #fda4af;
+    transition: all 0.2s ease;
+}
+
+.day-delete-btn:hover {
+    color: #fecdd3;
+    border-color: rgba(248, 113, 113, 0.55);
+}
+
+.day-title {
+    font-size: 30px;
+    font-weight: 900;
+    color: #f8fafc;
+    letter-spacing: -0.03em;
+}
+
+.day-meta-grid {
+    margin-bottom: 16px;
+}
+
+.exercise-list {
+    border: 1px solid rgba(45, 212, 191, 0.22);
+    border-radius: 14px;
+    padding: 12px;
+    background: rgba(2, 6, 23, 0.36);
+    display: grid;
+    gap: 12px;
+}
+
+.editor-ex-card {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.74));
+    border: 1px solid rgba(45, 212, 191, 0.22);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.editor-ex-main {
+    flex: 1 1 280px;
+    min-width: 260px;
+}
+
+.editor-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.editor-name {
+    font-weight: 800;
+    color: #f8fafc;
+}
+
+.editor-edit-btn {
+    border-radius: 10px;
+    padding: 8px 11px;
+    border: 1px solid rgba(99, 102, 241, 0.45);
+    background: rgba(79, 70, 229, 0.2);
+    color: #c4b5fd;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.editor-edit-btn:hover {
+    background: rgba(79, 70, 229, 0.32);
+}
+
+.editor-metrics-grid {
+    flex: 2 1 420px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.editor-metric-field {
+    min-width: 0;
+}
+
+.editor-select {
+    border-radius: 10px;
+    color: #e2e8f0;
+}
+
+.editor-remove-wrap {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+
+.editor-remove-btn {
+    border: 1px solid rgba(248, 113, 113, 0.36) !important;
+    background: rgba(127, 29, 29, 0.16);
+    color: #fda4af !important;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+}
+
+.editor-remove-btn:hover {
+    background: rgba(153, 27, 27, 0.24);
+    color: #fecdd3 !important;
+}
+
+.editor-preview-block {
+    flex: 0 1 170px;
+    min-width: 150px;
+}
+
+.editor-preview-label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+}
+
+.editor-preview {
+    border-radius: 12px;
+    border: 1px solid rgba(45, 212, 191, 0.34) !important;
+    box-shadow: 0 8px 20px rgba(2, 6, 23, 0.35);
+}
+
+.editor-preview-empty {
+    font-size: 12px;
+    color: #fbbf24;
+}
+
+.editor-tag-wrap {
+    margin-left: auto;
+}
+
+.editor-tag {
+    border-radius: 999px;
+    padding: 7px 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.editor-add-ex-btn {
+    border-style: dashed;
+    border-width: 1px;
+    border-color: rgba(45, 212, 191, 0.44);
+    color: #99f6e4;
+    background: rgba(20, 184, 166, 0.11);
+    font-weight: 800;
+    border-radius: 10px;
+    padding: 9px 12px;
+    transition: all 0.2s ease;
+}
+
+.editor-add-ex-btn:hover {
+    background: rgba(20, 184, 166, 0.2);
+}
+
+.editor-add-day-btn {
+    border-style: dashed !important;
+    border-width: 1px !important;
+    border-color: rgba(45, 212, 191, 0.5) !important;
+    color: #99f6e4 !important;
+    background: rgba(20, 184, 166, 0.15) !important;
+    font-weight: 800;
+    border-radius: 11px;
+    padding: 10px 14px;
+}
+
+.editor-actions {
+    margin-top: 30px;
+}
+
+.editor-save-btn {
+    background: linear-gradient(135deg, #2dd4bf, #14b8a6) !important;
+    color: #042f2e !important;
+    font-weight: 900;
+    border-radius: 12px;
+    padding: 11px 18px;
+    box-shadow: 0 14px 28px rgba(20, 184, 166, 0.3);
+}
+
+.catalog-modal-backdrop {
+    backdrop-filter: blur(2px);
+}
+
+.catalog-modal {
+    max-width: 620px;
+    max-height: 72vh;
+    border-radius: 16px;
+    border: 1px solid rgba(45, 212, 191, 0.35);
+    background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(2, 6, 23, 0.98));
+}
+
+.catalog-search {
+    border-color: rgba(45, 212, 191, 0.34) !important;
+}
+
+.catalog-item-btn {
+    border-color: rgba(45, 212, 191, 0.26);
+    background: rgba(2, 6, 23, 0.6);
+}
+
+.catalog-item-btn:hover {
+    background: rgba(15, 23, 42, 0.88);
+}
+
+.catalog-custom-note {
+    color: #fbbf24;
+    font-weight: 600;
+}
+
+.catalog-custom-input {
+    border-color: rgba(251, 191, 36, 0.42) !important;
+}
+
+.catalog-custom-btn {
+    border-color: rgba(251, 191, 36, 0.75);
+    background: linear-gradient(135deg, #facc15, #f59e0b);
+    color: #111827;
+    font-weight: 800;
+}
+
+.catalog-custom-btn:hover {
+    background: linear-gradient(135deg, #fde047, #fbbf24);
+}
+
+@media (max-width: 1024px) {
+    .editor-content {
+        padding-left: 18px !important;
+        padding-right: 18px !important;
     }
-    .catalog-scroll::-webkit-scrollbar {
-        width: 10px;
+
+    .editor-ex-main {
+        min-width: 100%;
     }
-    .catalog-scroll::-webkit-scrollbar-track {
-        background: #111827;
-        border-radius: 999px;
+
+    .editor-metrics-grid {
+        flex-basis: 100%;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .catalog-scroll::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, #2dd4bf 0%, #0d9488 100%);
-        border-radius: 999px;
-        border: 2px solid #111827;
+
+    .editor-preview-block {
+        flex-basis: 100%;
     }
-    .catalog-scroll::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(180deg, #5eead4 0%, #14b8a6 100%);
+}
+
+@media (max-width: 768px) {
+    .workout-editor {
+        margin: 10px 8px 18px;
+        border-radius: 16px;
     }
+
+    .editor-header {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+
+    .editor-title {
+        font-size: 28px;
+    }
+
+    .editor-cancel-link {
+        padding: 7px 10px;
+        font-size: 13px;
+    }
+
+    .editor-content {
+        padding: 14px !important;
+    }
+
+    .editor-basics {
+        padding: 13px;
+    }
+
+    .editor-day-card {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .day-title {
+        font-size: 24px;
+    }
+
+    .editor-ex-card {
+        padding: 12px;
+    }
+
+    .editor-metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .editor-remove-wrap {
+        justify-content: flex-start;
+        grid-column: span 2;
+    }
+
+    .editor-preview {
+        width: 100%;
+        height: 140px;
+    }
+
+    .editor-tag-wrap {
+        margin-left: 0;
+    }
+
+    .catalog-modal-backdrop {
+        padding: 10px;
+    }
+
+    .catalog-modal {
+        max-height: 84vh;
+    }
+}
+
+.catalog-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #14b8a6 #0b1220;
+}
+
+.catalog-scroll::-webkit-scrollbar {
+    width: 10px;
+}
+
+.catalog-scroll::-webkit-scrollbar-track {
+    background: #0b1220;
+    border-radius: 999px;
+}
+
+.catalog-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #22d3ee 0%, #0d9488 100%);
+    border-radius: 999px;
+    border: 2px solid #0b1220;
+}
+
+.catalog-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #67e8f9 0%, #14b8a6 100%);
+}
 </style>
 
-<div class="bg-zinc-900/55 shadow-xl sm:rounded-lg border border-teal-900/30">
-    <div class="p-6 sm:px-20 bg-zinc-900/70 border-b border-teal-900/40 flex justify-between items-center">
-        <div class="mt-8 text-2xl font-bold text-stone-100">
+<div class="workout-editor">
+    <div class="editor-header p-6 sm:px-20 flex justify-between items-center">
+        <div class="editor-title">
             Editar Plano de Treino
         </div>
-        <a href="{{ route('workouts.show', $workout) }}" class="text-teal-300 hover:text-teal-200">Cancelar</a>
+        <a href="{{ route('workouts.show', $workout) }}" class="editor-cancel-link">Cancelar</a>
     </div>
 
-    <div class="p-6 sm:px-20 bg-zinc-950/40" x-data="workoutForm({{ json_encode($workout) }}, {{ json_encode($catalogExercises ?? []) }})">
+    <div class="editor-content p-6 sm:px-20" x-data="workoutForm({{ json_encode($workout) }}, {{ json_encode($catalogExercises ?? []) }})">
         <form action="{{ route('workouts.update', $workout) }}" method="POST">
             @csrf
             @method('PUT')
 
             <!-- Dados Básicos -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="editor-basics grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div>
                     <label class="block text-sm font-medium text-stone-300">Aluno</label>
                     <input type="text" class="mt-1 block w-full py-2 px-3 border border-teal-900/30 bg-zinc-900/70 rounded-md shadow-sm text-stone-300 sm:text-sm" value="{{ $workout->student->name }}" disabled>
@@ -55,20 +498,20 @@
                 </div>
             </div>
 
-            <hr class="my-8 border-teal-900/30">
+            <hr class="editor-divider my-8">
 
             <!-- Dias de Treino -->
             <div class="space-y-8">
                 <template x-for="(day, dayIndex) in days" :key="day.id">
-                    <div class="bg-zinc-900/65 p-6 rounded-lg shadow border border-teal-900/30 relative">
-                        <button type="button" @click="removeDay(dayIndex)" class="absolute top-4 right-4 text-red-400 hover:text-red-300" x-show="days.length > 1">
+                    <div class="editor-day-card relative">
+                        <button type="button" @click="removeDay(dayIndex)" class="day-delete-btn absolute top-4 right-4" x-show="days.length > 1">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
 
-                        <h4 class="text-lg font-medium text-stone-100 mb-4">Dia <span x-text="dayIndex + 1"></span></h4>
+                        <h4 class="day-title mb-4">Dia <span x-text="dayIndex + 1"></span></h4>
 
                         <!-- Seleção de Dia e Tipo -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="day-meta-grid grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-sm font-medium text-stone-300">Dia da Semana</label>
                                 <select x-model="day.weekDay" class="mt-1 block w-full py-2 px-3 border border-teal-900/40 bg-zinc-900/70 text-stone-100 rounded-md shadow-sm focus:outline-none focus:ring-teal-600 focus:border-teal-600 sm:text-sm">
@@ -117,23 +560,23 @@
                         </div>
 
                         <!-- Lista de Exercícios -->
-                        <div class="space-y-4 pl-4 border-l-2 border-teal-900/40">
+                        <div class="exercise-list">
                             <template x-for="(exercise, exerciseIndex) in day.exercises" :key="exercise.id">
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 items-end bg-zinc-900/70 p-3 rounded border border-teal-900/30">
-                                    <div class="md:col-span-4">
+                                <div class="editor-ex-card">
+                                    <div class="editor-ex-main">
                                         <label class="block text-xs font-medium text-stone-400">Exercicio</label>
-                                        <div class="flex items-center gap-2">
-                                            <input type="text" x-model="exercise.name" class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md" readonly>
-                                            <button type="button" @click="openExercisePicker(dayIndex, exerciseIndex)" class="px-2 py-1 text-xs rounded bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-600/30">Editar</button>
+                                        <div class="editor-name-row">
+                                            <input type="text" x-model="exercise.name" class="editor-name block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md" readonly>
+                                            <button type="button" @click="openExercisePicker(dayIndex, exerciseIndex)" class="editor-edit-btn">Editar</button>
                                         </div>
                                         <input type="hidden" x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][name]'" x-model="exercise.name">
                                         <input type="hidden" x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][video_url]'" x-model="exercise.video_url">
                                         <input type="hidden" x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][custom_exercise]'" x-model="exercise.custom_exercise">
                                     </div>
-                                    <div class="grid grid-cols-3 gap-2 md:contents">
-                                    <div class="md:col-span-2">
+                                    <div class="editor-metrics-grid">
+                                    <div class="editor-metric-field">
                                         <label class="block text-xs font-medium text-stone-400">Séries</label>
-                                        <select x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][sets]'" x-model="exercise.sets" class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-2">
+                                        <select x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][sets]'" x-model="exercise.sets" class="editor-select block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-2">
                                             <option value="">...</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
@@ -143,9 +586,9 @@
                                             <option value="6">6</option>
                                         </select>
                                     </div>
-                                    <div class="md:col-span-2">
+                                    <div class="editor-metric-field">
                                         <label class="block text-xs font-medium text-stone-400">Reps</label>
-                                        <select x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][reps]'" x-model="exercise.reps" class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-2">
+                                        <select x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][reps]'" x-model="exercise.reps" class="editor-select block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-2">
                                             <option value="">...</option>
                                             <option value="6">6</option>
                                             <option value="8">8</option>
@@ -155,9 +598,9 @@
                                             <option value="Falha">Falha</option>
                                         </select>
                                     </div>
-                                    <div class="md:col-span-2">
+                                    <div class="editor-metric-field">
                                         <label class="block text-xs font-medium text-stone-400">Descanso (s)</label>
-                                        <select x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][rest_time]'" x-model="exercise.rest_time" class="block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-2">
+                                        <select x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][rest_time]'" x-model="exercise.rest_time" class="editor-select block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-2">
                                             <option value="">...</option>
                                             <option value="30s">30s</option>
                                             <option value="60s">60s</option>
@@ -166,30 +609,30 @@
                                             <option value="180s">180s</option>
                                         </select>
                                     </div>
-                                    <div class="md:col-span-2 flex justify-end md:justify-end">
-                                        <button type="button" @click="removeExercise(dayIndex, exerciseIndex)" class="text-red-400 hover:text-red-300 text-sm border border-red-500/30 rounded px-2 py-1 md:border-0 md:p-0">
+                                    <div class="editor-remove-wrap">
+                                        <button type="button" @click="removeExercise(dayIndex, exerciseIndex)" class="editor-remove-btn">
                                             Remover
                                         </button>
                                     </div>
                                     </div>
-                                    <div class="md:col-span-10">
-                                        <label class="block text-xs font-medium text-stone-400">Previa da execucao</label>
+                                    <div class="editor-preview-block">
+                                        <label class="editor-preview-label">Previa da execucao</label>
                                         <template x-if="exercise.video_url">
-                                            <img :src="exercise.video_url" alt="preview" class="w-36 h-24 md:w-28 md:h-20 object-cover rounded border border-teal-900/40 bg-zinc-950/60">
+                                            <img :src="exercise.video_url" alt="preview" class="editor-preview w-36 h-24 md:w-28 md:h-20 object-cover rounded border border-teal-900/40 bg-zinc-950/60">
                                         </template>
                                         <template x-if="!exercise.video_url">
-                                            <div class="text-xs text-amber-400">Exercicio personalizado sem video demonstrativo.</div>
+                                            <div class="editor-preview-empty">Exercicio personalizado sem video demonstrativo.</div>
                                         </template>
                                     </div>
-                                    <div class="md:col-span-2 text-left md:text-right">
-                                        <span class="inline-flex px-2 py-1 text-xs rounded border" :class="exercise.custom_exercise ? 'text-amber-200 bg-amber-700/20 border-amber-600/30' : 'text-teal-200 bg-teal-700/20 border-teal-600/30'">
+                                    <div class="editor-tag-wrap">
+                                        <span class="editor-tag inline-flex rounded border" :class="exercise.custom_exercise ? 'text-amber-200 bg-amber-700/20 border-amber-600/30' : 'text-teal-200 bg-teal-700/20 border-teal-600/30'">
                                             <span x-text="exercise.custom_exercise ? 'Personalizado' : 'Catalogo'"></span>
                                         </span>
                                     </div>
                                 </div>
                             </template>
 
-                            <button type="button" @click="addExercise(dayIndex)" class="mt-2 inline-flex items-center px-3 py-1 border border-teal-900/40 shadow-sm text-xs font-medium rounded text-stone-200 bg-zinc-900/70 hover:bg-zinc-800/70 focus:outline-none">
+                            <button type="button" @click="addExercise(dayIndex)" class="editor-add-ex-btn mt-2 inline-flex items-center text-xs font-medium focus:outline-none">
                                 + Adicionar Exercício
                             </button>
                         </div>
@@ -198,45 +641,45 @@
             </div>
 
             <div class="mt-6">
-                <button type="button" @click="addDay()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-stone-100 bg-teal-700 hover:bg-teal-800 focus:outline-none">
+                <button type="button" @click="addDay()" class="editor-add-day-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-stone-100 bg-teal-700 hover:bg-teal-800 focus:outline-none">
                     + Adicionar Dia de Treino
                 </button>
             </div>
 
-            <div class="mt-8 flex justify-end">
-                <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-stone-100 bg-teal-700 hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-600">
+            <div class="editor-actions mt-8 flex justify-end">
+                <button type="submit" class="editor-save-btn inline-flex items-center border border-transparent text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-600">
                     Salvar Alterações
                 </button>
             </div>
 
 
-        <div x-show="pickerOpen" x-transition style="display:none" class="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-3 overflow-hidden" @click.self="closeExercisePicker()">
-            <div class="w-full overflow-hidden rounded-lg border border-teal-900/40 bg-zinc-900 p-3 flex flex-col shadow-2xl mt-8"
+        <div x-show="pickerOpen" x-transition style="display:none" class="catalog-modal-backdrop fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-3 overflow-hidden" @click.self="closeExercisePicker()">
+            <div class="catalog-modal w-full overflow-hidden p-3 flex flex-col shadow-2xl mt-8"
                  style="max-width: 560px; max-height: 70vh;">
                 <div class="flex items-center justify-between mb-3">
                     <h4 class="text-stone-100 font-semibold">Selecionar exercicio do catalogo</h4>
                     <button type="button" @click="closeExercisePicker()" class="text-stone-400 hover:text-stone-200">Fechar</button>
                 </div>
-                <input type="text" x-model="pickerQuery" placeholder="Buscar exercicio..." class="w-full mb-3 rounded border border-teal-900/40 bg-zinc-950/70 text-stone-100 px-3 py-2">
+                <input type="text" x-model="pickerQuery" placeholder="Buscar exercicio..." class="catalog-search w-full mb-3 rounded border bg-zinc-950/70 text-stone-100 px-3 py-2">
                 <div class="catalog-scroll flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-2 pr-1 touch-pan-y"
                      style="max-height: 42vh;"
                      @wheel.stop>
                     <template x-for="item in filteredCatalogExercises()" :key="item.name">
-                        <button type="button" @click="applyCatalogExercise(item)" class="w-full text-left rounded border border-teal-900/30 bg-zinc-950/50 p-2 hover:bg-zinc-800/70">
+                        <button type="button" @click="applyCatalogExercise(item)" class="catalog-item-btn w-full text-left rounded border p-2">
                             <div class="text-stone-100 text-sm font-medium" x-text="item.name"></div>
                         </button>
                     </template>
                 </div>
                 <div class="mt-3 space-y-2">
-                    <p class="text-xs text-amber-300">Opcao personalizado nao tem video demonstrativo.</p>
+                    <p class="catalog-custom-note text-xs">Opcao personalizado nao tem video demonstrativo.</p>
                     <div class="flex items-center gap-2">
                         <input type="text"
                                x-model="pickerCustomName"
                                placeholder="Nome do exercicio personalizado"
-                               class="flex-1 rounded border border-amber-600/50 bg-zinc-950/80 text-stone-100 px-3 py-2 text-sm">
+                               class="catalog-custom-input flex-1 rounded border bg-zinc-950/80 text-stone-100 px-3 py-2 text-sm">
                         <button type="button"
                                 @click.prevent.stop="applyCustomExercise()"
-                                class="px-3 py-2 rounded border border-amber-300 bg-yellow-400 text-black text-sm font-bold hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                                class="catalog-custom-btn px-3 py-2 rounded border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-yellow-300"
                                 style="opacity:1; pointer-events:auto;">
                             Usar
                         </button>
