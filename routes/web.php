@@ -102,6 +102,7 @@ Route::patch('/alunos/{student}/reset-password', [PersonalController::class, 're
     // EvoluÃƒÂ§ÃƒÂ£o de Alunos
     Route::get('/evolucao', [PersonalController::class, 'evolutionIndex'])->name('evolution.index');
     Route::get('/evolucao/dados/{student}', [PersonalController::class, 'evolutionData'])->name('evolution.data');
+    Route::get('/evolucao/{student}/exportar-pdf', [PersonalController::class, 'evolutionExportPdf'])->name('evolution.export-pdf');
 
     // NOVA ROTA: AvaliaÃƒÂ§ÃƒÂµes Pendentes (Atrasadas / Sem AvaliaÃƒÂ§ÃƒÂ£o)
     Route::get('/avaliacoes/pendentes', [PersonalController::class, 'pendingAssessments'])->name('assessments.pending');

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Rules\Cpf;
 use App\Http\Controllers\SubscriptionController;
 use App\Services\AsaasService;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PersonalController extends Controller
 {
@@ -1140,5 +1141,168 @@ class PersonalController extends Controller
             'history'    => $history,
             'comparison' => $comparison,
         ]);
+    }
+
+    public function evolutionExportPdf(User $student)
+    {
+        $this->validateStudentBelongsToPersonal($student);
+
+        $measurements = BodyMeasurement::where('student_id', $student->id)
+            ->orderBy('date')
+            ->get(['date', 'weight', 'muscle_mass', 'body_fat', 'height', 'waist']);
+
+        $first = $measurements->first();
+        $last = $measurements->last();
+        $previous = $measurements->count() >= 2 ? $measurements->slice(-2, 1)->first() : null;
+
+        $weightDiff = ($previous && $last && $previous->weight !== null && $last->weight !== null)
+            ? round($last->weight - $previous->weight, 1)
+            : null;
+        $muscleDiff = ($previous && $last && $previous->muscle_mass !== null && $last->muscle_mass !== null)
+            ? round($last->muscle_mass - $previous->muscle_mass, 1)
+            : null;
+        $fatDiff = ($previous && $last && $previous->body_fat !== null && $last->body_fat !== null)
+            ? round($last->body_fat - $previous->body_fat, 2)
+            : null;
+
+        $summary = null;
+        if ($first && $last && $measurements->count() >= 2) {
+            $summary = [
+                'total'        => $measurements->count(),
+                'weight'       => ['value' => $last->weight,      'diff' => $weightDiff],
+                'muscle_mass'  => ['value' => $last->muscle_mass, 'diff' => $muscleDiff],
+                'body_fat'     => ['value' => $last->body_fat,    'diff' => $fatDiff],
+            ];
+        }
+
+        $history = $measurements->reverse()->map(function ($measurement) {
+            $imc = ($measurement->weight !== null && $measurement->height !== null && (float) $measurement->height > 0.0)
+                ? round($measurement->weight / (((float) $measurement->height / 100) ** 2), 1)
+                : null;
+
+            return [
+                'date'        => $measurement->date ? \Carbon\Carbon::parse($measurement->date)->format('d/m/Y') : null,
+                'weight'      => $measurement->weight !== null ? number_format((float) $measurement->weight, 1, ',', '.') : null,
+                'muscle_mass' => $measurement->muscle_mass !== null ? number_format((float) $measurement->muscle_mass, 1, ',', '.') : null,
+                'body_fat'    => $measurement->body_fat !== null ? number_format((float) $measurement->body_fat, 1, ',', '.') : null,
+                'imc'         => $imc !== null ? number_format($imc, 1, ',', '.') : null,
+                'waist'       => $measurement->waist !== null ? number_format((float) $measurement->waist, 1, ',', '.') : null,
+            ];
+        })->values();
+
+        $comparisonRows = $this->buildEvolutionPdfComparisonRows($student);
+
+        $slug = strtolower((string) preg_replace('/[^a-z0-9]+/i', '-', $student->name));
+        $slug = trim($slug, '-');
+        if ($slug === '') {
+            $slug = 'aluno';
+        }
+
+        $pdf = Pdf::loadView('personal.evolution.pdf', [
+            'student' => $student,
+            'summary' => $summary,
+            'history' => $history,
+            'comparisonRows' => $comparisonRows,
+            'generatedAt' => now()->timezone('America/Sao_Paulo'),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download('evolucao-' . $slug . '-' . now()->format('Ymd-His') . '.pdf');
+    }
+
+    private function buildEvolutionPdfComparisonRows(User $student): array
+    {
+        $rows = [
+            'corpo' => [],
+            'circs' => [],
+            'dobras' => [],
+            'prev_date' => null,
+            'last_date' => null,
+        ];
+
+        $lastTwo = BodyMeasurement::where('student_id', $student->id)
+            ->orderByDesc('date')
+            ->limit(2)
+            ->get();
+
+        if ($lastTwo->count() < 2) {
+            return $rows;
+        }
+
+        $last = $lastTwo->first();
+        $prev = $lastTwo->last();
+        $rows['prev_date'] = $prev->date?->format('d/m/Y');
+        $rows['last_date'] = $last->date?->format('d/m/Y');
+
+        $groups = [
+            'corpo' => [
+                ['label' => 'Peso (kg)',           'field' => 'weight',      'downIsGood' => false, 'neutral' => true],
+                ['label' => '% Gordura',           'field' => 'body_fat',    'downIsGood' => true,  'neutral' => true],
+                ['label' => 'Massa Muscular (kg)', 'field' => 'muscle_mass', 'downIsGood' => false, 'neutral' => true],
+            ],
+            'circs' => [
+                ['label' => 'Peitoral',      'field' => 'chest',       'downIsGood' => false, 'neutral' => true],
+                ['label' => 'Cintura',       'field' => 'waist',       'downIsGood' => true,  'neutral' => true],
+                ['label' => 'Abdômen',       'field' => 'abdomen',     'downIsGood' => true,  'neutral' => true],
+                ['label' => 'Quadril',       'field' => 'hips',        'downIsGood' => false, 'neutral' => true],
+                ['label' => 'Braço D',       'field' => 'right_arm',   'downIsGood' => false, 'neutral' => true],
+                ['label' => 'Braço E',       'field' => 'left_arm',    'downIsGood' => false, 'neutral' => true],
+                ['label' => 'Coxa D',        'field' => 'right_thigh', 'downIsGood' => false, 'neutral' => true],
+                ['label' => 'Coxa E',        'field' => 'left_thigh',  'downIsGood' => false, 'neutral' => true],
+                ['label' => 'Panturrilha D', 'field' => 'right_calf',  'downIsGood' => false, 'neutral' => true],
+                ['label' => 'Panturrilha E', 'field' => 'left_calf',   'downIsGood' => false, 'neutral' => true],
+            ],
+            'dobras' => [
+                ['label' => 'Subescapular', 'field' => 'subescapular',     'downIsGood' => true, 'neutral' => false],
+                ['label' => 'Tricipital',   'field' => 'tricipital',       'downIsGood' => true, 'neutral' => false],
+                ['label' => 'Bicipital',    'field' => 'bicipital',        'downIsGood' => true, 'neutral' => false],
+                ['label' => 'Torácica',     'field' => 'toracica',         'downIsGood' => true, 'neutral' => false],
+                ['label' => 'Abdominal',    'field' => 'abdominal_fold',   'downIsGood' => true, 'neutral' => false],
+                ['label' => 'Axilar Média', 'field' => 'axilar_media',     'downIsGood' => true, 'neutral' => false],
+                ['label' => 'Supra-ilíaca', 'field' => 'suprailiaca',      'downIsGood' => true, 'neutral' => false],
+                ['label' => 'Coxa',         'field' => 'coxa_fold',        'downIsGood' => true, 'neutral' => false],
+                ['label' => 'Panturrilha',  'field' => 'panturrilha_fold', 'downIsGood' => true, 'neutral' => false],
+                ['label' => 'Soma (mm)',    'field' => 'sum_skinfolds',    'downIsGood' => true, 'neutral' => false],
+            ],
+        ];
+
+        foreach ($groups as $group => $definitions) {
+            foreach ($definitions as $definition) {
+                $field = $definition['field'];
+                $previousValue = $prev->$field !== null ? (float) $prev->$field : null;
+                $lastValue = $last->$field !== null ? (float) $last->$field : null;
+
+                if ($previousValue === null && $lastValue === null) {
+                    continue;
+                }
+
+                $delta = ($previousValue !== null && $lastValue !== null)
+                    ? round($lastValue - $previousValue, 2)
+                    : null;
+
+                $deltaText = '—';
+                if ($delta !== null) {
+                    $deltaText = $delta == 0.0
+                        ? '='
+                        : ($delta > 0 ? '+' : '') . number_format($delta, 1, ',', '.');
+                }
+
+                $deltaClass = 'delta-neutral';
+                if (!$definition['neutral'] && $delta !== null && $delta != 0.0) {
+                    $deltaClass = $definition['downIsGood']
+                        ? ($delta < 0 ? 'delta-good' : 'delta-bad')
+                        : ($delta > 0 ? 'delta-good' : 'delta-bad');
+                }
+
+                $rows[$group][] = [
+                    'label' => $definition['label'],
+                    'prev' => $previousValue !== null ? number_format($previousValue, 1, ',', '.') : '—',
+                    'last' => $lastValue !== null ? number_format($lastValue, 1, ',', '.') : '—',
+                    'delta_text' => $deltaText,
+                    'delta_class' => $deltaClass,
+                ];
+            }
+        }
+
+        return $rows;
     }
 }

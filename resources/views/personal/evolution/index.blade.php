@@ -92,7 +92,18 @@
                 <div class="w-9 h-9 rounded-full bg-cyan-500/15 flex items-center justify-center text-cyan-200 font-bold text-sm border border-cyan-400/20" x-text="selectedName.charAt(0).toUpperCase()"></div>
             </template>
             <h2 class="text-lg font-semibold text-slate-100" x-text="selectedName"></h2>
-            <span class="ml-auto text-xs text-slate-500" x-text="summary ? summary.total + ' registros' : ''"></span>
+            <div class="ml-auto flex items-center gap-3">
+                <span class="text-xs text-slate-500" x-text="summary ? summary.total + ' registros' : ''"></span>
+                <a :href="exportPdfUrl()"
+                   target="_blank"
+                   rel="noopener"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-cyan-400/35 text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m4 6H5a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Exportar PDF
+                </a>
+            </div>
         </div>
 
         <!-- Cards de resumo -->
@@ -320,9 +331,9 @@
                     </template>
 
                     <p class="text-xs text-slate-500 flex items-center gap-2 flex-wrap pt-1">
-                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Melhora</span>
-                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> Piora</span>
-                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> Neutro</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Dobras: redução</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> Dobras: aumento</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> Composição e Circunferências: neutro</span>
                     </p>
                 </div>
             </div>
@@ -347,8 +358,13 @@ function evolutionPage() {
         compOpen: true,
         compositionChart: null,
         bodyFatChart: null,
+        exportPdfRouteTemplate: "{{ route('personal.evolution.export-pdf', ['student' => '__student__']) }}",
 
         init() {},
+
+        exportPdfUrl() {
+            return this.exportPdfRouteTemplate.replace('__student__', this.selectedId ?? '');
+        },
 
         selectStudent(id, name, photo) {
             if (this.selectedId === id) return;
@@ -401,13 +417,13 @@ function evolutionPage() {
             const groups = {
                 corpo: [
                     { label: 'Peso (kg)',           field: 'weight',       downIsGood: false, neutral: true  },
-                    { label: '% Gordura',           field: 'body_fat',     downIsGood: true,  neutral: false },
-                    { label: 'Massa Muscular (kg)', field: 'muscle_mass',  downIsGood: false, neutral: false },
+                    { label: '% Gordura',           field: 'body_fat',     downIsGood: true,  neutral: true  },
+                    { label: 'Massa Muscular (kg)', field: 'muscle_mass',  downIsGood: false, neutral: true  },
                 ],
                 circs: [
                     { label: 'Peitoral',       field: 'chest',        downIsGood: false, neutral: true  },
-                    { label: 'Cintura',        field: 'waist',        downIsGood: true,  neutral: false },
-                    { label: 'Abdômen',        field: 'abdomen',      downIsGood: true,  neutral: false },
+                    { label: 'Cintura',        field: 'waist',        downIsGood: true,  neutral: true  },
+                    { label: 'Abdômen',        field: 'abdomen',      downIsGood: true,  neutral: true  },
                     { label: 'Quadril',        field: 'hips',         downIsGood: false, neutral: true  },
                     { label: 'Braço D',        field: 'right_arm',    downIsGood: false, neutral: true  },
                     { label: 'Braço E',        field: 'left_arm',     downIsGood: false, neutral: true  },
