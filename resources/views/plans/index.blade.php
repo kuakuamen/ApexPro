@@ -1005,18 +1005,18 @@ src="https://www.facebook.com/tr?id=1464277952144097&ev=PageView&noscript=1"
       <!-- Title -->
       <h2 style="font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; color: #fff; margin-bottom: 16px; line-height: 1.25;">
         Entre na comunidade e garanta<br>
-        <span style="color: #25d366;">50% de desconto</span> nos 3 primeiros meses
+        <span style="color: #25d366;">50% de desconto</span> com acesso vital�cio
       </h2>
 
       <!-- Description -->
       <p style="color: rgba(255,255,255,0.5); font-size: 1.05rem; margin-bottom: 32px; max-width: 520px; margin-left: auto; margin-right: auto; line-height: 1.7;">
-        Quem entrar agora na nossa comunidade garante acesso antecipado com <strong style="color: rgba(255,255,255,0.85);">metade do preço nos 3 primeiros meses.</strong>
+        Quem entrar agora na nossa comunidade garante acesso antecipado com <strong style="color: rgba(255,255,255,0.85);">metade do preço com acesso vital�cio.</strong>
       </p>
 
       <!-- Perks -->
       <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 36px;">
         <span style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); font-size: 13px; padding: 8px 16px; border-radius: 100px;">✅ Acesso antecipado</span>
-        <span style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); font-size: 13px; padding: 8px 16px; border-radius: 100px;">✅ 50% de desconto nos 3 primeiros meses</span>
+        <span style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); font-size: 13px; padding: 8px 16px; border-radius: 100px;">✅ 50% de desconto com acesso vital�cio</span>
         <span style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); font-size: 13px; padding: 8px 16px; border-radius: 100px;">✅ Conteúdos exclusivos</span>
       </div>
 
@@ -1029,7 +1029,7 @@ src="https://www.facebook.com/tr?id=1464277952144097&ev=PageView&noscript=1"
         Entrar na comunidade grátis
       </a>
 
-      <p style="color: rgba(255,255,255,0.25); font-size: 13px; margin-top: 18px;">Grátis para entrar. Desconto garantido para quem entrar agora.</p>
+      <p style="color: rgba(255,255,255,0.25); font-size: 13px; margin-top: 18px;">Grátis para entrar. Desconto vital�cio garantido para quem entrar agora.</p>
     </div>
   </div>
 </section>
@@ -1072,3 +1072,4 @@ src="https://www.facebook.com/tr?id=1464277952144097&ev=PageView&noscript=1"
 </script>
 </body>
 </html>
+
