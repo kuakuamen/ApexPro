@@ -70,7 +70,7 @@ return [
                 : 'https://sandbox.asaas.com/checkoutSession/show?id='
         ),
         'webhook_token' => env('ASAAS_WEBHOOK_TOKEN'),
-        'trial_days' => (int) env('ASAAS_TRIAL_DAYS', 7),
+        'trial_days' => max(7, (int) env('ASAAS_TRIAL_DAYS', 7)),
         'checkout_expire_minutes' => (int) env('ASAAS_CHECKOUT_EXPIRE_MINUTES', 60),
         'processing_window_hours' => (int) env('ASAAS_PROCESSING_WINDOW_HOURS', 3),
         'block_cutoff_hour' => (int) env('ASAAS_BLOCK_CUTOFF_HOUR', 6),
