@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\ProfessionalStudent;
 use App\Models\StudentPlan;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -45,20 +46,20 @@ class CheckSubscription
             }
 
             if (!$user->is_active) {
-                return redirect()->route('subscription.renew');
+                return redirect()->to($this->renewRedirectUrl($user));
             }
 
             $subscription = $user->professionalSubscription;
 
             if (!$subscription || $subscription->status === 'suspended') {
-                return redirect()->route('subscription.renew');
+                return redirect()->to($this->renewRedirectUrl($user));
             }
 
             if ($subscription->canAccessPlatform()) {
                 return $next($request);
             }
 
-            return redirect()->route('subscription.renew');
+            return redirect()->to($this->renewRedirectUrl($user));
         }
 
         if ($user->role === 'aluno') {
@@ -102,5 +103,19 @@ class CheckSubscription
         }
 
         return $next($request);
+    }
+
+    protected function renewRedirectUrl(User $user): string
+    {
+        $planId = $user->professionalSubscription?->plan_id;
+
+        if (!empty($planId)) {
+            return route('subscription.renew.checkout', [
+                'plan' => $planId,
+                'method' => 'credit_card',
+            ]);
+        }
+
+        return route('subscription.renew');
     }
 }

@@ -842,8 +842,7 @@ class SubscriptionController extends Controller
 
         if ($checkoutState === 'cancelled') {
             return $this->redirectToCheckoutAfterResult(
-                $transaction,
-                'Checkout cancelado. Voce pode tentar novamente quando quiser.'
+                $transaction
             );
         }
 
@@ -862,14 +861,13 @@ class SubscriptionController extends Controller
         }
 
         return $this->redirectToCheckoutAfterResult(
-            $transaction,
-            'Checkout criado com sucesso. O acesso sera liberado apos confirmacao do pagamento.'
+            $transaction
         );
     }
 
     protected function redirectToCheckoutAfterResult(
         SubscriptionTransaction $transaction,
-        string $message
+        ?string $message = null
     ) {
         $method = $transaction->payment_method === 'credit_card' ? 'credit_card' : 'pix';
 
@@ -877,20 +875,30 @@ class SubscriptionController extends Controller
             && (int) Auth::id() === (int) $transaction->user_id
             && Auth::user()?->role === 'personal'
         ) {
-            return redirect()
+            $redirect = redirect()
                 ->route('subscription.renew.checkout', [
                     'plan' => $transaction->plan_id,
                     'method' => $method,
-                ])
-                ->with('warning', $message);
+                ]);
+
+            if ($message) {
+                $redirect->with('warning', $message);
+            }
+
+            return $redirect;
         }
 
-        return redirect()
+        $redirect = redirect()
             ->route('plans.checkout', [
                 'plan' => $transaction->plan_id,
                 'method' => $method,
-            ])
-            ->with('warning', $message);
+            ]);
+
+        if ($message) {
+            $redirect->with('warning', $message);
+        }
+
+        return $redirect;
     }
 
     public function checkStatus(string $ref, AsaasService $asaas)
