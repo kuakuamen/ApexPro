@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\DietPlan;
-use App\Models\User;
 use App\Models\ProfessionalStudent;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DietPlanController extends Controller
 {
+    private function canManageDiets(User $user): bool
+    {
+        return in_array($user->role, ['personal', 'nutri'], true);
+    }
+
     /**
      * Lista os planos alimentares.
      */
@@ -17,18 +22,17 @@ class DietPlanController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        
-        if ($user->role === 'nutri') {
-            // Nutri vê as dietas que criou para seus alunos
-            $diets = $user->students()
-                ->with('dietPlans')
-                ->get()
-                ->pluck('dietPlans')
-                ->flatten()
-                ->sortByDesc('created_at');
+
+        if ($this->canManageDiets($user)) {
+            // Profissional (personal/nutri legado) ve dietas criadas por ele.
+            $diets = DietPlan::with(['student', 'nutritionist'])
+                ->where('nutritionist_id', $user->id)
+                ->latest()
+                ->get();
         } else {
-            // Aluno vê suas dietas ativas
+            // Aluno ve suas dietas ativas.
             $diets = $user->dietPlans()
+                ->with('nutritionist')
                 ->where('is_active', true)
                 ->latest()
                 ->get();
@@ -38,19 +42,19 @@ class DietPlanController extends Controller
     }
 
     /**
-     * Exibe o formulário de criação de dieta (Apenas Nutri).
+     * Exibe o formulario de criacao de dieta (profissionais).
      */
     public function create()
     {
         /** @var User $user */
         $user = Auth::user();
 
-        if ($user->role !== 'nutri') {
-            abort(403, 'Apenas nutricionistas podem criar dietas.');
+        if (!$this->canManageDiets($user)) {
+            abort(403, 'Apenas profissionais podem criar dietas.');
         }
 
-        // Busca apenas os alunos vinculados a este nutri
-        $students = $user->students()->get();
+        // Busca apenas os alunos vinculados a este profissional.
+        $students = $user->students()->orderBy('name')->get();
 
         return view('diets.create', compact('students'));
     }
@@ -63,19 +67,19 @@ class DietPlanController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if ($user->role !== 'nutri') {
+        if (!$this->canManageDiets($user)) {
             abort(403);
         }
 
-        // Validar que student_id existe E pertence ao nutricionista autenticado
-        $nutritionistId = $user->id;
+        // Validar que student_id existe e pertence ao profissional autenticado.
+        $professionalId = $user->id;
         $studentId = $request->input('student_id');
-        $studentBelongsToNutritionist = ProfessionalStudent::where('professional_id', $nutritionistId)
+        $studentBelongsToProfessional = ProfessionalStudent::where('professional_id', $professionalId)
             ->where('student_id', $studentId)
             ->exists();
-        
-        if (!$studentBelongsToNutritionist) {
-            abort(403, 'Este aluno não está vinculado a você.');
+
+        if (!$studentBelongsToProfessional) {
+            abort(403, 'Este aluno nao esta vinculado a voce.');
         }
 
         $validated = $request->validate([
@@ -92,17 +96,17 @@ class DietPlanController extends Controller
             'meals.*.foods.*.observation' => 'nullable|string',
         ]);
 
-        // Criar o Plano
+        // Criar o plano.
         $plan = DietPlan::create([
             'student_id' => $validated['student_id'],
-            'nutritionist_id' => Auth::id(),
+            'nutritionist_id' => $user->id,
             'name' => $validated['name'],
             'goal' => $validated['goal'],
             'start_date' => now(),
             'is_active' => true,
         ]);
 
-        // Criar Refeições e Alimentos
+        // Criar refeicoes e alimentos.
         foreach ($validated['meals'] as $mealIndex => $mealData) {
             $meal = $plan->meals()->create([
                 'name' => $mealData['name'],
@@ -124,11 +128,11 @@ class DietPlanController extends Controller
     }
 
     /**
-     * Exibe uma dieta específica.
+     * Exibe uma dieta especifica.
      */
     public function show(DietPlan $diet)
     {
-        // Verificar permissão
+        // Verificar permissao.
         if (Auth::id() !== $diet->student_id && Auth::id() !== $diet->nutritionist_id) {
             abort(403);
         }

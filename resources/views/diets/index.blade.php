@@ -1,6 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $canManageDiets = in_array(auth()->user()->role, ['personal', 'nutri'], true);
+@endphp
+
 <div class="bg-white shadow overflow-hidden sm:rounded-lg">
     <div class="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
         <div>
@@ -8,17 +12,17 @@
                 Meus Planos Alimentares
             </h3>
             <p class="mt-1 max-w-2xl text-sm text-gray-500">
-                Lista de dietas ativas e históricas.
+                Lista de dietas ativas e historicas.
             </p>
         </div>
-        @if(auth()->user()->role === 'nutri')
+        @if($canManageDiets)
             <a href="{{ route('diets.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 Nova Dieta
             </a>
         @endif
     </div>
-    
+
     <ul role="list" class="divide-y divide-gray-200">
         @forelse($diets as $diet)
             <li>
@@ -38,15 +42,15 @@
                             <div class="sm:flex">
                                 <p class="flex items-center text-sm text-gray-500">
                                     <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                    @if(auth()->user()->role === 'nutri')
-                                        Aluno: {{ $diet->student->name }}
+                                    @if($canManageDiets)
+                                        Aluno: {{ $diet->student->name ?? 'Nao definido' }}
                                     @else
-                                        Nutricionista: {{ $diet->nutritionist->name }}
+                                        Profissional: {{ $diet->nutritionist->name ?? 'Nao definido' }}
                                     @endif
                                 </p>
                                 <p class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
                                     <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    Objetivo: {{ $diet->goal ?? 'Não definido' }}
+                                    Objetivo: {{ $diet->goal ?? 'Nao definido' }}
                                 </p>
                             </div>
                             <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
