@@ -234,10 +234,18 @@ class SubscriptionController extends Controller
             return redirect()->route('subscription.renew.checkout', ['plan' => $planId]);
         }
 
+        $defaultMethod = request()->query('method', 'pix');
+        if ($defaultMethod === 'card') {
+            $defaultMethod = 'credit_card';
+        }
+        if (!in_array($defaultMethod, ['pix', 'credit_card'], true)) {
+            $defaultMethod = 'pix';
+        }
+
         return view('plans.checkout', [
             'plan'          => $this->plans[$planId],
             'isRenewal'     => false,
-            'defaultMethod' => 'pix',
+            'defaultMethod' => $defaultMethod,
             'trialEnabled'  => (int) config('services.asaas.trial_days', 7) > 0,
             'trialDays'     => (int) config('services.asaas.trial_days', 7),
         ]);
@@ -439,10 +447,18 @@ class SubscriptionController extends Controller
             abort(404, 'Plano nao encontrado');
         }
 
+        $defaultMethod = request()->query('method', 'pix');
+        if ($defaultMethod === 'card') {
+            $defaultMethod = 'credit_card';
+        }
+        if (!in_array($defaultMethod, ['pix', 'credit_card'], true)) {
+            $defaultMethod = 'pix';
+        }
+
         return view('plans.checkout', [
             'plan'          => $this->plans[$planId],
             'isRenewal'     => true,
-            'defaultMethod' => request()->query('method', 'pix'),
+            'defaultMethod' => $defaultMethod,
             'trialEnabled'  => false,
             'trialDays'     => 0,
         ]);
@@ -807,21 +823,9 @@ class SubscriptionController extends Controller
 
         $transaction->refresh();
 
-        if ($checkoutState === 'success') {
-            if ($transaction->payment_method === 'credit_card' && $transaction->subscription) {
-                $this->syncLatestAsaasSubscription($transaction->subscription, $asaas);
-                $transaction->refresh();
-            }
-
-            if (!Auth::check()) {
-                Auth::login($transaction->subscription->user);
-            }
-
-            return redirect()->route('personal.dashboard')
-                ->with('pixel_purchase', [
-                    'value' => (float) ($transaction->amount ?? $transaction->subscription?->price ?? 0),
-                    'plan'  => $transaction->subscription?->plan_name ?? '',
-                ]);
+        if ($transaction->payment_method === 'credit_card' && $transaction->subscription) {
+            $this->syncLatestAsaasSubscription($transaction->subscription, $asaas);
+            $transaction->refresh();
         }
 
         if ($transaction->status === 'approved') {
@@ -836,7 +840,57 @@ class SubscriptionController extends Controller
                 ]);
         }
 
-        return view('subscription.payment-result', compact('transaction'));
+        if ($checkoutState === 'cancelled') {
+            return $this->redirectToCheckoutAfterResult(
+                $transaction,
+                'Checkout cancelado. Voce pode tentar novamente quando quiser.'
+            );
+        }
+
+        if ($checkoutState === 'expired') {
+            return $this->redirectToCheckoutAfterResult(
+                $transaction,
+                'Sessao de checkout expirada. Gere um novo checkout para continuar.'
+            );
+        }
+
+        if (in_array($transaction->status, ['rejected', 'cancelled', 'refunded', 'charged_back'], true)) {
+            return $this->redirectToCheckoutAfterResult(
+                $transaction,
+                'Pagamento nao confirmado. Revise os dados e tente novamente.'
+            );
+        }
+
+        return $this->redirectToCheckoutAfterResult(
+            $transaction,
+            'Checkout criado com sucesso. O acesso sera liberado apos confirmacao do pagamento.'
+        );
+    }
+
+    protected function redirectToCheckoutAfterResult(
+        SubscriptionTransaction $transaction,
+        string $message
+    ) {
+        $method = $transaction->payment_method === 'credit_card' ? 'credit_card' : 'pix';
+
+        if (Auth::check()
+            && (int) Auth::id() === (int) $transaction->user_id
+            && Auth::user()?->role === 'personal'
+        ) {
+            return redirect()
+                ->route('subscription.renew.checkout', [
+                    'plan' => $transaction->plan_id,
+                    'method' => $method,
+                ])
+                ->with('warning', $message);
+        }
+
+        return redirect()
+            ->route('plans.checkout', [
+                'plan' => $transaction->plan_id,
+                'method' => $method,
+            ])
+            ->with('warning', $message);
     }
 
     public function checkStatus(string $ref, AsaasService $asaas)
