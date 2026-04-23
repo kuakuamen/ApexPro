@@ -387,11 +387,12 @@ class WorkoutPlanController extends Controller
 
         // Busca apenas os alunos vinculados a este personal
         $students = $user->students()->get();
+        $catalogExercises = $this->exerciseCatalog->getCatalogItems();
         
         // Se vier student_id na URL, pré-seleciona
         $selectedStudentId = $request->query('student_id');
 
-        return view('workouts.create', compact('students', 'selectedStudentId'));
+        return view('workouts.create', compact('students', 'selectedStudentId', 'catalogExercises'));
     }
 
     /**
