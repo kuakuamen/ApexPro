@@ -487,7 +487,7 @@ class SubscriptionController extends Controller
             $existingSubscription = ProfessionalSubscription::where('user_id', $user->id)->first();
 
             // Trial ainda ativo â†’ nÃ£o faz nada
-            if ($existingSubscription && $existingSubscription->isInTrial()) {
+            if ($existingSubscription && $existingSubscription->isInTrial() && (bool) $user->is_active) {
                 return redirect()->route('personal.dashboard')
                     ->with('info', 'VocÃª estÃ¡ no perÃ­odo de teste gratuito atÃ© ' . $existingSubscription->trial_ends_at->format('d/m/Y') . '. A cobranÃ§a inicia automaticamente apÃ³s esse perÃ­odo.');
             }
@@ -496,7 +496,8 @@ class SubscriptionController extends Controller
             if ($existingSubscription
                 && $existingSubscription->status !== 'cancelled'
                 && $existingSubscription->plan_id === $planId
-                && $existingSubscription->canAccessPlatform()) {
+                && $existingSubscription->canAccessPlatform()
+                && (bool) $user->is_active) {
                 return redirect()->route('personal.dashboard')
                     ->with('info', 'Sua assinatura jÃ¡ estÃ¡ ativa atÃ© ' . $existingSubscription->expires_at?->format('d/m/Y') . '.');
             }
