@@ -62,6 +62,7 @@ class ExerciseCatalogService
 
         return 'REGRA OBRIGATORIA DE CATALOGO FECHADO: '
             . 'Voce deve escolher exercicios SOMENTE desta lista oficial. '
+            . 'Copie o nome exatamente como aparece na lista oficial (mesma ordem das palavras). '
             . 'Nao invente nomes e nao use sinonimos fora da lista. '
             . "Lista oficial ({$this->count()} exercicios com midia): {$list}.";
     }
@@ -83,14 +84,21 @@ class ExerciseCatalogService
             return $map[$normalized];
         }
 
-        $best = null;
-        $bestDistance = PHP_INT_MAX;
-
         foreach ($map as $candidateNorm => $candidateCanonical) {
             if (str_contains($candidateNorm, $normalized) || str_contains($normalized, $candidateNorm)) {
                 return $candidateCanonical;
             }
+        }
 
+        $tokenCanonical = $this->canonicalizeByTokenSimilarity($normalized, $map);
+        if ($tokenCanonical !== null) {
+            return $tokenCanonical;
+        }
+
+        $best = null;
+        $bestDistance = PHP_INT_MAX;
+
+        foreach ($map as $candidateNorm => $candidateCanonical) {
             $distance = levenshtein($normalized, $candidateNorm);
             if ($distance < $bestDistance) {
                 $bestDistance = $distance;
@@ -381,6 +389,102 @@ class ExerciseCatalogService
 
         $this->dbMediaRows = $result;
         return $this->dbMediaRows;
+    }
+
+    private function canonicalizeByTokenSimilarity(string $normalizedInput, array $map): ?string
+    {
+        $inputTokens = $this->tokenizeForMatch($normalizedInput);
+        if (count($inputTokens) < 2) {
+            return null;
+        }
+
+        $bestCanonical = null;
+        $bestScore = 0.0;
+        $secondScore = 0.0;
+
+        foreach ($map as $candidateNorm => $candidateCanonical) {
+            $candidateTokens = $this->tokenizeForMatch($candidateNorm);
+            if (empty($candidateTokens)) {
+                continue;
+            }
+
+            $overlap = count(array_intersect($inputTokens, $candidateTokens));
+            if ($overlap === 0) {
+                continue;
+            }
+
+            $precision = $overlap / count($candidateTokens);
+            $recall = $overlap / count($inputTokens);
+            if ($precision <= 0.0 || $recall <= 0.0) {
+                continue;
+            }
+
+            $f1 = (2 * $precision * $recall) / ($precision + $recall);
+            $containsBonus = (str_contains($candidateNorm, $normalizedInput) || str_contains($normalizedInput, $candidateNorm))
+                ? 0.12
+                : 0.0;
+            $score = $f1 + $containsBonus;
+
+            if ($score > $bestScore) {
+                $secondScore = $bestScore;
+                $bestScore = $score;
+                $bestCanonical = $candidateCanonical;
+            } elseif ($score > $secondScore) {
+                $secondScore = $score;
+            }
+        }
+
+        if ($bestCanonical !== null && $bestScore >= 0.78 && ($bestScore - $secondScore) >= 0.05) {
+            return $bestCanonical;
+        }
+
+        return null;
+    }
+
+    private function tokenizeForMatch(string $normalized): array
+    {
+        $stopWords = [
+            'a', 'ao', 'aos', 'as',
+            'com',
+            'da', 'das', 'de', 'do', 'dos',
+            'e', 'em',
+            'na', 'nas', 'no', 'nos',
+            'o', 'os',
+            'para', 'por',
+            'um', 'uma',
+        ];
+
+        $synonyms = [
+            'abdutora' => 'abducao',
+            'abdutor' => 'abducao',
+            'adutora' => 'aducao',
+            'adutor' => 'aducao',
+        ];
+
+        $tokens = preg_split('/\s+/', trim($normalized)) ?: [];
+        $normalizedTokens = [];
+
+        foreach ($tokens as $token) {
+            if ($token === '' || in_array($token, $stopWords, true)) {
+                continue;
+            }
+
+            if (isset($synonyms[$token])) {
+                $token = $synonyms[$token];
+            }
+
+            if (strlen($token) > 4 && str_ends_with($token, 's')) {
+                $token = substr($token, 0, -1);
+            }
+
+            if (strlen($token) < 2) {
+                continue;
+            }
+
+            $normalizedTokens[$token] = true;
+        }
+
+        return array_keys($normalizedTokens);
     }
 
     private function normalize(string $text): string
