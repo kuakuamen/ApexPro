@@ -49,11 +49,7 @@
                     </div>
                 </div>
                 <div>
-                    @if(auth()->check())
-                        <a href="{{ route('personal.dashboard') }}" class="text-sm text-text-tertiary hover:text-text-primary transition-colors font-medium">Voltar ao Dashboard</a>
-                    @else
-                        <a href="{{ route('login') }}" class="text-sm text-text-tertiary hover:text-text-primary transition-colors font-medium">Login</a>
-                    @endif
+                    <a href="{{ route('login.entry') }}" class="text-sm text-text-tertiary hover:text-text-primary transition-colors font-medium">Login</a>
                 </div>
             </div>
         </div>

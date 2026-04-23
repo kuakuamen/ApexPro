@@ -45,6 +45,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/assinatura/cancelar', [SubscriptionController::class, 'cancelSubscription'])->name('subscription.cancel');
 });
 
+Route::get('/acessar', [AuthController::class, 'goToLogin'])->name('login.entry');
+
 // Rotas de AutenticaÃƒÂ§ÃƒÂ£o
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');

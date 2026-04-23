@@ -11,6 +11,17 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+    public function goToLogin(Request $request)
+    {
+        if (Auth::check()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        return redirect()->route('login');
+    }
+
     public function showLoginForm()
     {
         return view('auth.login');
