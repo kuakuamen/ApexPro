@@ -10,6 +10,7 @@ class ExerciseCatalogService
     private ?array $catalogNames = null;
     private ?array $normalizedMap = null;
     private ?array $mediaMap = null;
+    private ?array $mediaNameMap = null;
     private ?array $dbMediaRows = null;
 
     public function getCatalogNames(): array
@@ -20,12 +21,10 @@ class ExerciseCatalogService
 
         $names = [];
 
-        // From JSON map (name -> media), but canonicalized by DB names when possible.
-        foreach (array_keys($this->getMediaMap()) as $normalizedName) {
+        // Prefer DB canonical names when available, fallback to JSON names.
+        foreach ($this->getMediaNameMap() as $normalizedName => $jsonName) {
             $canonical = $this->findCanonicalFromDbByNormalizedName($normalizedName);
-            if ($canonical !== null) {
-                $names[] = $canonical;
-            }
+            $names[] = $canonical !== null ? $canonical : $jsonName;
         }
 
         // Also include DB entries that already have gifdotreino media.
@@ -231,6 +230,7 @@ class ExerciseCatalogService
         }
 
         $map = [];
+        $nameMap = [];
         $jsonPath = storage_path('app/gifdotreino_catalog.json');
 
         if (is_file($jsonPath)) {
@@ -238,24 +238,51 @@ class ExerciseCatalogService
             if ($raw !== false) {
                 $decoded = json_decode($raw, true);
                 if (json_last_error() === JSON_ERROR_NONE) {
-                    $this->extractMediaMapFromArray($decoded, $map);
+                    $this->extractMediaMapFromArray($decoded, $map, $nameMap);
                 }
             }
         }
 
         $this->mediaMap = $map;
+        $this->mediaNameMap = $nameMap;
         return $this->mediaMap;
     }
 
-    private function extractMediaMapFromArray(array $data, array &$map): void
+    private function getMediaNameMap(): array
     {
-        $walker = function ($value) use (&$walker, &$map) {
+        if ($this->mediaNameMap !== null) {
+            return $this->mediaNameMap;
+        }
+
+        // Ensures both mediaMap and mediaNameMap are initialized.
+        $this->getMediaMap();
+
+        return $this->mediaNameMap ?? [];
+    }
+
+    private function extractMediaMapFromArray(array $data, array &$map, array &$nameMap): void
+    {
+        $walker = function ($value) use (&$walker, &$map, &$nameMap) {
             if (!is_array($value)) {
                 return;
             }
 
             $possibleNameKeys = ['name', 'nome', 'title', 'exercise', 'exercise_name', 'slug'];
-            $possibleUrlKeys = ['gif_url', 'gifUrl', 'gif', 'url', 'media_url', 'video_url', 'path', 'file', 'media'];
+            $possibleUrlKeys = [
+                'gif_url',
+                'gifUrl',
+                'gif',
+                'url',
+                'media_url',
+                'video_url',
+                'local_url',
+                'localUrl',
+                'local_path',
+                'localPath',
+                'path',
+                'file',
+                'media',
+            ];
 
             $candidateName = null;
             foreach ($possibleNameKeys as $key) {
@@ -278,6 +305,9 @@ class ExerciseCatalogService
                 $normalizedUrl = $this->normalizeMediaUrl($candidateUrl);
                 if ($normalizedName !== '' && $normalizedUrl !== '') {
                     $map[$normalizedName] = $normalizedUrl;
+                    if (!isset($nameMap[$normalizedName])) {
+                        $nameMap[$normalizedName] = $candidateName;
+                    }
                 }
             }
 
