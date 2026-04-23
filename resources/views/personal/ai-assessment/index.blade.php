@@ -66,6 +66,13 @@
                         <!-- Seleção de Aluno -->
                         <div>
                             <label for="student_id" class="block text-sm font-medium text-gray-300 mb-2">Selecione o Aluno</label>
+                            <input
+                                id="student_id_search"
+                                type="text"
+                                autocomplete="off"
+                                class="block w-full mb-2 bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                placeholder="Digite o nome do aluno..."
+                            >
                             <select id="student_id" name="student_id" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
                                 <option value="" class="bg-gray-700">Selecione...</option>
                                 @foreach($students as $student)
@@ -305,6 +312,13 @@
                         <!-- Seleção de Aluno -->
                         <div>
                             <label for="student_id_noimg" class="block text-sm font-medium text-gray-300 mb-2">Selecione o Aluno</label>
+                            <input
+                                id="student_id_noimg_search"
+                                type="text"
+                                autocomplete="off"
+                                class="block w-full mb-2 bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                placeholder="Digite o nome do aluno..."
+                            >
                             <select id="student_id_noimg" name="student_id" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
                                 <option value="" class="bg-gray-700">Selecione...</option>
                                 @foreach($students as $student)
@@ -455,6 +469,76 @@
     }
 
     const LAST_IMAGES_URL = "{{ route('personal.ai-assessment.last-images', ['student' => '__ID__']) }}";
+
+    function normalizeSearchText(text) {
+        return (text || '')
+            .toString()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+    }
+
+    function setupStudentSelectSearch(searchInputId, selectId) {
+        const searchInput = document.getElementById(searchInputId);
+        const select = document.getElementById(selectId);
+        if (!searchInput || !select) return;
+
+        const allOptions = Array.from(select.options).map((opt) => ({
+            value: opt.value,
+            text: opt.textContent || '',
+            className: opt.className || '',
+        }));
+
+        function rebuildOptions(query) {
+            const currentValue = select.value;
+            const normalizedQuery = normalizeSearchText(query);
+
+            const filtered = allOptions.filter((opt) => {
+                if (opt.value === '') return true;
+                return normalizeSearchText(opt.text).includes(normalizedQuery);
+            });
+
+            select.innerHTML = '';
+            filtered.forEach((optData) => {
+                const opt = document.createElement('option');
+                opt.value = optData.value;
+                opt.textContent = optData.text;
+                if (optData.className) {
+                    opt.className = optData.className;
+                }
+                select.appendChild(opt);
+            });
+
+            if (filtered.some((opt) => opt.value === currentValue)) {
+                select.value = currentValue;
+            } else {
+                select.value = '';
+            }
+        }
+
+        searchInput.addEventListener('input', () => {
+            rebuildOptions(searchInput.value);
+        });
+
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            const matchable = Array.from(select.options).filter((opt) => opt.value !== '');
+            if (matchable.length === 1) {
+                select.value = matchable[0].value;
+                searchInput.value = matchable[0].textContent || '';
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+
+        select.addEventListener('change', () => {
+            const selected = select.options[select.selectedIndex];
+            if (selected && selected.value) {
+                searchInput.value = selected.textContent || '';
+            }
+        });
+    }
 
     // ===================== ABA =====================
     function switchTab(tabName) {
@@ -827,6 +911,8 @@
 
     // ===================== INIT =====================
     document.addEventListener('DOMContentLoaded', () => {
+        setupStudentSelectSearch('student_id_search', 'student_id');
+        setupStudentSelectSearch('student_id_noimg_search', 'student_id_noimg');
         initLoadingSystem();
         setupPhotoIndicators();
         setupExtraPhotosPreview();
