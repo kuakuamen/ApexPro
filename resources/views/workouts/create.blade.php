@@ -500,7 +500,7 @@
         <form action="{{ route('workouts.store') }}" method="POST">
             @csrf
 
-            <!-- Dados BÃ¡sicos -->
+            <!-- Dados Básicos -->
             <div class="editor-basics grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div>
                     <label class="block text-sm font-medium text-stone-300">Aluno</label>
@@ -537,18 +537,18 @@
 
                         <h4 class="day-title mb-4">Dia <span x-text="dayIndex + 1"></span></h4>
 
-                        <!-- SeleÃ§Ã£o de Dia e Tipo -->
+                        <!-- Seleção de Dia e Tipo -->
                         <div class="day-meta-grid grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-sm font-medium text-stone-300">Dia da Semana</label>
                                 <select x-model="day.weekDay" class="mt-1 block w-full py-2 px-3 border border-teal-900/40 bg-zinc-900/70 text-stone-100 rounded-md shadow-sm focus:outline-none focus:ring-teal-600 focus:border-teal-600 sm:text-sm">
                                     <option value="">Selecione...</option>
                                     <option value="Segunda-feira">Segunda-feira</option>
-                                    <option value="TerÃ§a-feira">TerÃ§a-feira</option>
+                                    <option value="Terça-feira">Terça-feira</option>
                                     <option value="Quarta-feira">Quarta-feira</option>
                                     <option value="Quinta-feira">Quinta-feira</option>
                                     <option value="Sexta-feira">Sexta-feira</option>
-                                    <option value="SÃ¡bado">SÃ¡bado</option>
+                                    <option value="Sábado">Sábado</option>
                                     <option value="Domingo">Domingo</option>
                                 </select>
                             </div>
@@ -556,19 +556,19 @@
                                 <label class="block text-sm font-medium text-stone-300">Tipo de Treino</label>
                                 <select x-model="day.workoutType" class="mt-1 block w-full py-2 px-3 border border-teal-900/40 bg-zinc-900/70 text-stone-100 rounded-md shadow-sm focus:outline-none focus:ring-teal-600 focus:border-teal-600 sm:text-sm">
                                     <option value="">Selecione...</option>
-                                    <optgroup label="DivisÃµes ClÃ¡ssicas">
+                                    <optgroup label="Divisões Clássicas">
                                         <option value="Peito">Peito</option>
                                         <option value="Costas">Costas</option>
                                         <option value="Pernas (Completo)">Pernas (Completo)</option>
                                         <option value="Ombros">Ombros</option>
-                                        <option value="BraÃ§os (BÃ­ceps + TrÃ­ceps)">BraÃ§os (BÃ­ceps + TrÃ­ceps)</option>
+                                        <option value="Braços (Bíceps + Tríceps)">Braços (Bíceps + Tríceps)</option>
                                     </optgroup>
-                                    <optgroup label="CombinaÃ§Ãµes">
-                                        <option value="Peito + TrÃ­ceps">Peito + TrÃ­ceps</option>
-                                        <option value="Costas + BÃ­ceps">Costas + BÃ­ceps</option>
+                                    <optgroup label="Combinações">
+                                        <option value="Peito + Tríceps">Peito + Tríceps</option>
+                                        <option value="Costas + Bíceps">Costas + Bíceps</option>
                                         <option value="Peito + Ombros">Peito + Ombros</option>
-                                        <option value="QuadrÃ­ceps + Panturrilha">QuadrÃ­ceps + Panturrilha</option>
-                                        <option value="Posterior + GlÃºteo">Posterior + GlÃºteo</option>
+                                        <option value="Quadríceps + Panturrilha">Quadríceps + Panturrilha</option>
+                                        <option value="Posterior + Glúteo">Posterior + Glúteo</option>
                                         <option value="Superior Completo">Superior Completo</option>
                                         <option value="Inferior Completo">Inferior Completo</option>
                                         <option value="Full Body">Full Body</option>
@@ -586,7 +586,7 @@
                             <input type="text" x-model="day.customName" class="mt-1 block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-900/70 text-stone-100 rounded-md p-2">
                         </div>
 
-                        <!-- Lista de ExercÃ­cios -->
+                        <!-- Lista de Exercícios -->
                         <div class="exercise-list">
                             <template x-for="(exercise, exerciseIndex) in day.exercises" :key="exercise.id">
                                 <div class="editor-ex-card">
@@ -602,7 +602,7 @@
                                     </div>
                                     <div class="editor-metrics-grid">
                                     <div class="editor-metric-field">
-                                        <label class="block text-xs font-medium text-stone-400">SÃ©ries</label>
+                                        <label class="block text-xs font-medium text-stone-400">Séries</label>
                                         <select x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][sets]'" x-model="exercise.sets" class="editor-select block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-2">
                                             <option value="">...</option>
                                             <option value="1">1</option>
@@ -660,7 +660,7 @@
                             </template>
 
                             <button type="button" @click="addExercise(dayIndex)" class="editor-add-ex-btn mt-2 inline-flex items-center text-xs font-medium focus:outline-none">
-                                + Adicionar ExercÃ­cio
+                                + Adicionar Exercício
                             </button>
                         </div>
                     </div>
@@ -721,16 +721,16 @@
 
 <script>
     const exerciseDB = {
-        'Peito': ['Supino Reto (Barra)', 'Supino Inclinado (Halteres)', 'Crucifixo', 'Crossover', 'FlexÃ£o de BraÃ§o', 'Peck Deck', 'Supino Declinado'],
+        'Peito': ['Supino Reto (Barra)', 'Supino Inclinado (Halteres)', 'Crucifixo', 'Crossover', 'Flexão de Braço', 'Peck Deck', 'Supino Declinado'],
         'Costas': ['Puxada Alta', 'Remada Curvada', 'Remada Baixa', 'Barra Fixa', 'Levantamento Terra', 'Pulldown', 'Remada Cavalinho'],
-        'Pernas (Completo)': ['Agachamento Livre', 'Leg Press 45', 'Cadeira Extensora', 'Mesa Flexora', 'Stiff', 'Afundo', 'Panturrilha Sentado', 'Panturrilha em PÃ©'],
-        'Ombros': ['Desenvolvimento Militar', 'ElevaÃ§Ã£o Lateral', 'ElevaÃ§Ã£o Frontal', 'Crucifixo Inverso', 'Encolhimento', 'Remada Alta'],
-        'BÃ­ceps': ['Rosca Direta', 'Rosca Alternada', 'Rosca Martelo', 'Rosca Scott', 'Rosca Concentrada'],
-        'TrÃ­ceps': ['TrÃ­ceps Corda', 'TrÃ­ceps Testa', 'TrÃ­ceps Banco', 'TrÃ­ceps FrancÃªs', 'TrÃ­ceps Coice'],
-        'AbdÃ´men': ['Abdominal Supra', 'Abdominal Infra', 'Prancha', 'Abdominal Remador'],
-        'QuadrÃ­ceps': ['Agachamento', 'Leg Press', 'Extensora', 'Afundo'],
-        'Posterior': ['Mesa Flexora', 'Stiff', 'Cadeira Flexora', 'ElevaÃ§Ã£o PÃ©lvica'],
-        'GlÃºteo': ['ElevaÃ§Ã£o PÃ©lvica', 'GlÃºteo 4 Apoios', 'AbduÃ§Ã£o de Quadril']
+        'Pernas (Completo)': ['Agachamento Livre', 'Leg Press 45', 'Cadeira Extensora', 'Mesa Flexora', 'Stiff', 'Afundo', 'Panturrilha Sentado', 'Panturrilha em Pé'],
+        'Ombros': ['Desenvolvimento Militar', 'Elevação Lateral', 'Elevação Frontal', 'Crucifixo Inverso', 'Encolhimento', 'Remada Alta'],
+        'Bíceps': ['Rosca Direta', 'Rosca Alternada', 'Rosca Martelo', 'Rosca Scott', 'Rosca Concentrada'],
+        'Tríceps': ['Tríceps Corda', 'Tríceps Testa', 'Tríceps Banco', 'Tríceps Francês', 'Tríceps Coice'],
+        'Abdômen': ['Abdominal Supra', 'Abdominal Infra', 'Prancha', 'Abdominal Remador'],
+        'Quadríceps': ['Agachamento', 'Leg Press', 'Extensora', 'Afundo'],
+        'Posterior': ['Mesa Flexora', 'Stiff', 'Cadeira Flexora', 'Elevação Pélvica'],
+        'Glúteo': ['Elevação Pélvica', 'Glúteo 4 Apoios', 'Abdução de Quadril']
     };
 
     function workoutForm(workout, catalogExercises) {
@@ -769,9 +769,9 @@
                 if (parts.length >= 2) {
                     wDay = parts[0];
                     wType = parts[1];
-                    // Verifica se o tipo existe na nossa lista padrÃ£o
-                    // Se nÃ£o, assume que Ã© personalizado
-                    // SimplificaÃ§Ã£o: Vamos assumir que se nÃ£o for um dos padrÃµes, Ã© Personalizado
+                    // Verifica se o tipo existe na nossa lista padrão
+                    // Se não, assume que é personalizado
+                    // Simplificação: Vamos assumir que se não for um dos padrões, é Personalizado
                 } else {
                     wDay = day.name; // Fallback
                 }
@@ -814,11 +814,11 @@
                 if (type.includes('Costas')) suggestions.push(...exerciseDB['Costas']);
                 if (type.includes('Pernas')) suggestions.push(...exerciseDB['Pernas (Completo)']);
                 if (type.includes('Ombros')) suggestions.push(...exerciseDB['Ombros']);
-                if (type.includes('BÃ­ceps')) suggestions.push(...exerciseDB['BÃ­ceps']);
-                if (type.includes('TrÃ­ceps')) suggestions.push(...exerciseDB['TrÃ­ceps']);
-                if (type.includes('QuadrÃ­ceps')) suggestions.push(...exerciseDB['QuadrÃ­ceps']);
+                if (type.includes('Bíceps')) suggestions.push(...exerciseDB['Bíceps']);
+                if (type.includes('Tríceps')) suggestions.push(...exerciseDB['Tríceps']);
+                if (type.includes('Quadríceps')) suggestions.push(...exerciseDB['Quadríceps']);
                 if (type.includes('Posterior')) suggestions.push(...exerciseDB['Posterior']);
-                if (type.includes('GlÃºteo')) suggestions.push(...exerciseDB['GlÃºteo']);
+                if (type.includes('Glúteo')) suggestions.push(...exerciseDB['Glúteo']);
                 return [...new Set(suggestions)];
             },
 
