@@ -49,7 +49,7 @@
                     </p>
                 </div>
 
-                <form action="{{ route('personal.ai-assessment.analyze') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                <form id="ai-assessment-images-form" action="{{ route('personal.ai-assessment.analyze') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                     @csrf
                     
                     <!-- Hidden inputs para reutilização de imagens -->
@@ -65,15 +65,30 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Seleção de Aluno -->
                         <div>
-                            <label for="student_id" class="block text-sm font-medium text-gray-300 mb-2">Selecione o Aluno</label>
-                            <input
-                                id="student_id_search"
-                                type="text"
-                                autocomplete="off"
-                                class="block w-full mb-2 bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                placeholder="Digite o nome do aluno..."
-                            >
-                            <select id="student_id" name="student_id" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                            <label for="student_id_combo_input" class="block text-sm font-medium text-gray-300 mb-2">Selecione o Aluno</label>
+                            <div id="student_id_combobox" class="relative">
+                                <input
+                                    id="student_id_combo_input"
+                                    type="text"
+                                    autocomplete="off"
+                                    class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 pr-11 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                    placeholder="Selecione..."
+                                >
+                                <button
+                                    type="button"
+                                    id="student_id_combo_toggle"
+                                    class="absolute inset-y-0 right-0 px-3 text-gray-300 hover:text-white transition-colors"
+                                    aria-label="Abrir seleção de aluno"
+                                >
+                                    <svg class="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div id="student_id_combo_menu" class="hidden absolute z-40 mt-1 w-full rounded-lg border border-gray-600 bg-gray-800 shadow-xl overflow-hidden">
+                                    <div id="student_id_combo_list" class="max-h-64 overflow-y-auto p-1"></div>
+                                </div>
+                            </div>
+                            <select id="student_id" name="student_id" class="sr-only">
                                 <option value="" class="bg-gray-700">Selecione...</option>
                                 @foreach($students as $student)
                                     <option value="{{ $student->id }}" class="bg-gray-700">{{ $student->name }}</option>
@@ -305,21 +320,36 @@
                     </p>
                 </div>
 
-                <form action="{{ route('personal.ai-assessment.analyze-no-images') }}" method="POST" class="space-y-6">
+                <form id="ai-assessment-noimg-form" action="{{ route('personal.ai-assessment.analyze-no-images') }}" method="POST" class="space-y-6">
                     @csrf
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Seleção de Aluno -->
                         <div>
-                            <label for="student_id_noimg" class="block text-sm font-medium text-gray-300 mb-2">Selecione o Aluno</label>
-                            <input
-                                id="student_id_noimg_search"
-                                type="text"
-                                autocomplete="off"
-                                class="block w-full mb-2 bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                placeholder="Digite o nome do aluno..."
-                            >
-                            <select id="student_id_noimg" name="student_id" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required>
+                            <label for="student_id_noimg_combo_input" class="block text-sm font-medium text-gray-300 mb-2">Selecione o Aluno</label>
+                            <div id="student_id_noimg_combobox" class="relative">
+                                <input
+                                    id="student_id_noimg_combo_input"
+                                    type="text"
+                                    autocomplete="off"
+                                    class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 pr-11 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                    placeholder="Selecione..."
+                                >
+                                <button
+                                    type="button"
+                                    id="student_id_noimg_combo_toggle"
+                                    class="absolute inset-y-0 right-0 px-3 text-gray-300 hover:text-white transition-colors"
+                                    aria-label="Abrir seleção de aluno"
+                                >
+                                    <svg class="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div id="student_id_noimg_combo_menu" class="hidden absolute z-40 mt-1 w-full rounded-lg border border-gray-600 bg-gray-800 shadow-xl overflow-hidden">
+                                    <div id="student_id_noimg_combo_list" class="max-h-64 overflow-y-auto p-1"></div>
+                                </div>
+                            </div>
+                            <select id="student_id_noimg" name="student_id" class="sr-only">
                                 <option value="" class="bg-gray-700">Selecione...</option>
                                 @foreach($students as $student)
                                     <option value="{{ $student->id }}" class="bg-gray-700">{{ $student->name }}</option>
@@ -479,64 +509,203 @@
             .trim();
     }
 
-    function setupStudentSelectSearch(searchInputId, selectId) {
-        const searchInput = document.getElementById(searchInputId);
+    function setupStudentCombobox(config) {
+        const {
+            formId,
+            wrapperId,
+            inputId,
+            toggleId,
+            menuId,
+            listId,
+            selectId,
+        } = config;
+
+        const wrapper = document.getElementById(wrapperId);
+        const form = document.getElementById(formId);
+        const input = document.getElementById(inputId);
+        const toggle = document.getElementById(toggleId);
+        const menu = document.getElementById(menuId);
+        const list = document.getElementById(listId);
         const select = document.getElementById(selectId);
-        if (!searchInput || !select) return;
+        if (!wrapper || !form || !input || !toggle || !menu || !list || !select) return;
 
-        const allOptions = Array.from(select.options).map((opt) => ({
-            value: opt.value,
-            text: opt.textContent || '',
-            className: opt.className || '',
-        }));
+        const options = Array.from(select.options)
+            .map((opt) => ({ value: opt.value, text: (opt.textContent || '').trim() }))
+            .filter((opt) => opt.value !== '');
 
-        function rebuildOptions(query) {
-            const currentValue = select.value;
-            const normalizedQuery = normalizeSearchText(query);
+        let filtered = [...options];
+        let highlightedIndex = -1;
+        let isOpen = false;
 
-            const filtered = allOptions.filter((opt) => {
-                if (opt.value === '') return true;
-                return normalizeSearchText(opt.text).includes(normalizedQuery);
-            });
+        function closeMenu() {
+            isOpen = false;
+            menu.classList.add('hidden');
+            const icon = toggle.querySelector('svg');
+            if (icon) icon.classList.remove('rotate-180');
+            highlightedIndex = -1;
+        }
 
-            select.innerHTML = '';
-            filtered.forEach((optData) => {
-                const opt = document.createElement('option');
-                opt.value = optData.value;
-                opt.textContent = optData.text;
-                if (optData.className) {
-                    opt.className = optData.className;
-                }
-                select.appendChild(opt);
-            });
+        function openMenu() {
+            isOpen = true;
+            menu.classList.remove('hidden');
+            const icon = toggle.querySelector('svg');
+            if (icon) icon.classList.add('rotate-180');
+        }
 
-            if (filtered.some((opt) => opt.value === currentValue)) {
-                select.value = currentValue;
-            } else {
-                select.value = '';
+        function setSelectedByValue(value, dispatchChange = true) {
+            const selected = options.find((opt) => opt.value === value);
+            select.value = selected ? selected.value : '';
+            input.value = selected ? selected.text : '';
+            input.setCustomValidity('');
+            if (dispatchChange) {
+                select.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }
 
-        searchInput.addEventListener('input', () => {
-            rebuildOptions(searchInput.value);
+        function renderList() {
+            list.innerHTML = '';
+
+            if (!filtered.length) {
+                const empty = document.createElement('div');
+                empty.className = 'px-3 py-2 text-sm text-gray-400';
+                empty.textContent = 'Nenhum aluno encontrado';
+                list.appendChild(empty);
+                return;
+            }
+
+            filtered.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full text-left px-3 py-2 rounded-md text-sm transition-colors ';
+                btn.className += index === highlightedIndex
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-gray-200 hover:bg-gray-700';
+                btn.textContent = opt.text;
+                btn.addEventListener('mousedown', (event) => event.preventDefault());
+                btn.addEventListener('click', () => {
+                    setSelectedByValue(opt.value, true);
+                    closeMenu();
+                });
+                list.appendChild(btn);
+            });
+        }
+
+        function filterOptions() {
+            const query = normalizeSearchText(input.value);
+            filtered = options.filter((opt) => normalizeSearchText(opt.text).includes(query));
+            highlightedIndex = filtered.length ? 0 : -1;
+            renderList();
+        }
+
+        function ensureValidSelectionOrReset() {
+            const currentText = normalizeSearchText(input.value);
+            const exact = options.find((opt) => normalizeSearchText(opt.text) === currentText);
+            if (exact) {
+                setSelectedByValue(exact.value, true);
+                return;
+            }
+
+            if (!select.value) {
+                input.value = '';
+            }
+        }
+
+        toggle.addEventListener('click', () => {
+            if (isOpen) {
+                closeMenu();
+                return;
+            }
+            filterOptions();
+            openMenu();
+            input.focus();
         });
 
-        searchInput.addEventListener('keydown', (event) => {
-            if (event.key !== 'Enter') return;
-            event.preventDefault();
-            const matchable = Array.from(select.options).filter((opt) => opt.value !== '');
-            if (matchable.length === 1) {
-                select.value = matchable[0].value;
-                searchInput.value = matchable[0].textContent || '';
-                select.dispatchEvent(new Event('change', { bubbles: true }));
+        input.addEventListener('focus', () => {
+            filterOptions();
+            openMenu();
+        });
+
+        input.addEventListener('input', () => {
+            const currentText = normalizeSearchText(input.value);
+            const selected = options.find((opt) => opt.value === select.value);
+            if (!selected || normalizeSearchText(selected.text) !== currentText) {
+                select.value = '';
             }
+            filterOptions();
+            openMenu();
+        });
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                if (!isOpen) openMenu();
+                if (!filtered.length) return;
+                highlightedIndex = Math.min(highlightedIndex + 1, filtered.length - 1);
+                renderList();
+                return;
+            }
+
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (!isOpen) openMenu();
+                if (!filtered.length) return;
+                highlightedIndex = Math.max(highlightedIndex - 1, 0);
+                renderList();
+                return;
+            }
+
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                if (!isOpen) openMenu();
+                if (highlightedIndex >= 0 && filtered[highlightedIndex]) {
+                    setSelectedByValue(filtered[highlightedIndex].value, true);
+                } else {
+                    ensureValidSelectionOrReset();
+                }
+                closeMenu();
+                return;
+            }
+
+            if (event.key === 'Escape') {
+                closeMenu();
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (!wrapper.contains(document.activeElement)) {
+                    ensureValidSelectionOrReset();
+                    closeMenu();
+                }
+            }, 120);
         });
 
         select.addEventListener('change', () => {
-            const selected = select.options[select.selectedIndex];
-            if (selected && selected.value) {
-                searchInput.value = selected.textContent || '';
+            const selected = options.find((opt) => opt.value === select.value);
+            if (selected) {
+                input.value = selected.text;
+                input.setCustomValidity('');
+            } else if (!isOpen) {
+                input.value = '';
             }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!wrapper.contains(event.target)) {
+                closeMenu();
+            }
+        });
+
+        form.addEventListener('submit', (event) => {
+            if (!select.value) {
+                event.preventDefault();
+                input.setCustomValidity('Selecione um aluno da lista.');
+                input.reportValidity();
+                filterOptions();
+                openMenu();
+                return;
+            }
+            input.setCustomValidity('');
         });
     }
 
@@ -911,8 +1080,24 @@
 
     // ===================== INIT =====================
     document.addEventListener('DOMContentLoaded', () => {
-        setupStudentSelectSearch('student_id_search', 'student_id');
-        setupStudentSelectSearch('student_id_noimg_search', 'student_id_noimg');
+        setupStudentCombobox({
+            formId: 'ai-assessment-images-form',
+            wrapperId: 'student_id_combobox',
+            inputId: 'student_id_combo_input',
+            toggleId: 'student_id_combo_toggle',
+            menuId: 'student_id_combo_menu',
+            listId: 'student_id_combo_list',
+            selectId: 'student_id',
+        });
+        setupStudentCombobox({
+            formId: 'ai-assessment-noimg-form',
+            wrapperId: 'student_id_noimg_combobox',
+            inputId: 'student_id_noimg_combo_input',
+            toggleId: 'student_id_noimg_combo_toggle',
+            menuId: 'student_id_noimg_combo_menu',
+            listId: 'student_id_noimg_combo_list',
+            selectId: 'student_id_noimg',
+        });
         initLoadingSystem();
         setupPhotoIndicators();
         setupExtraPhotosPreview();
