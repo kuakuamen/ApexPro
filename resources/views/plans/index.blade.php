@@ -750,7 +750,7 @@ src="https://www.facebook.com/tr?id=1464277952144097&ev=PageView&noscript=1"
   <div class="logo">
     <img src="{{ asset('img/favicons/apple-touch-icon.png') }}" alt="ApexPro">
   </div>
-  <a href="#pricing" class="nav-cta">Quero começar agora</a>
+  <a href="{{ route('login') }}" class="nav-cta">LOGIN</a>
 </nav>
 
 <!-- HERO -->
