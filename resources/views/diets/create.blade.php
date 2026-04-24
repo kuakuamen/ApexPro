@@ -346,7 +346,12 @@
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
 
-                            <h4 class="text-lg font-semibold text-teal-300 mb-4">Refeicao <span x-text="mealIndex + 1"></span></h4>
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                                <h4 class="text-lg font-semibold text-teal-300">Refeicao <span x-text="mealIndex + 1"></span></h4>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-teal-500/15 text-teal-200 border border-teal-500/30">
+                                    <span x-text="formatCalories(mealCalories(meal))"></span>&nbsp;kcal
+                                </span>
+                            </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
@@ -396,6 +401,16 @@
                     <button type="button" @click="addMeal()" class="inline-flex items-center px-4 py-2 border border-cyan-500/40 rounded-lg text-sm font-medium text-cyan-200 bg-cyan-900/20 hover:bg-cyan-900/35 transition-colors">
                         + Adicionar Refeicao
                     </button>
+                </div>
+
+                <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <p class="text-sm font-semibold text-emerald-200">Total estimado da dieta</p>
+                        <p class="text-xl font-bold text-emerald-300">
+                            <span x-text="formatCalories(totalCalories())"></span> kcal/dia
+                        </p>
+                    </div>
+                    <p class="mt-2 text-xs text-emerald-200/80">Soma automática baseada no campo de Kcal de cada alimento.</p>
                 </div>
 
                 <div class="flex justify-end gap-4 pt-6 border-t border-gray-700">
@@ -586,6 +601,46 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
 
         removeFood(mealIndex, foodIndex) {
             this.meals[mealIndex].foods.splice(foodIndex, 1);
+        },
+
+        parseCaloriesValue(rawValue) {
+            if (rawValue === null || rawValue === undefined) {
+                return 0;
+            }
+
+            const cleaned = String(rawValue).trim().replace(',', '.');
+            const match = cleaned.match(/-?\d+(\.\d+)?/);
+            if (!match) {
+                return 0;
+            }
+
+            const value = Number.parseFloat(match[0]);
+            if (!Number.isFinite(value) || value <= 0) {
+                return 0;
+            }
+
+            return value;
+        },
+
+        mealCalories(meal) {
+            if (!meal || !Array.isArray(meal.foods)) {
+                return 0;
+            }
+
+            return meal.foods.reduce((sum, food) => sum + this.parseCaloriesValue(food?.calories), 0);
+        },
+
+        totalCalories() {
+            if (!Array.isArray(this.meals)) {
+                return 0;
+            }
+
+            return this.meals.reduce((sum, meal) => sum + this.mealCalories(meal), 0);
+        },
+
+        formatCalories(value) {
+            const safeValue = Number.isFinite(value) ? value : 0;
+            return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(Math.round(safeValue));
         },
     };
 }
