@@ -82,6 +82,7 @@ class DietAiService
         $weight = $studentData['weight'] ?? null;
         $height = $studentData['height'] ?? null;
         $bodyFat = $studentData['body_fat'] ?? null;
+        $anamnesis = is_array($studentData['anamnesis'] ?? null) ? $studentData['anamnesis'] : [];
 
         $prompt = "Voce e um nutricionista esportivo e deve montar um plano alimentar inicial para um aluno.\n\n" .
             "DADOS DO ALUNO:\n" .
@@ -93,7 +94,10 @@ class DietAiService
             "- Percentual de gordura: " . ($bodyFat ?: 'Nao informado') . "\n" .
             "- Objetivo: " . ($goal !== '' ? $goal : 'Plano alimentar geral') . "\n" .
             "- Kcal dia informada pelo personal: " . ($initialKcal ?: 'Nao informado') . "\n\n" .
+            "ANAMNESE NUTRICIONAL:\n" .
+            $this->formatAnamnesisForPrompt($anamnesis) . "\n\n" .
             "REGRAS:\n" .
+            "0. Considere obrigatoriamente o objetivo, restricoes, alergias, rotina de treino e comportamento alimentar.\n" .
             "1. Retorne somente JSON valido, sem markdown.\n" .
             "2. Monte de 4 a 6 refeicoes.\n" .
             "3. Em cada refeicao, inclua ao menos 2 alimentos.\n" .
@@ -292,5 +296,54 @@ class DietAiService
         }
 
         return Str::lower(Str::ascii($left)) === Str::lower(Str::ascii($right));
+    }
+
+    private function formatAnamnesisForPrompt(array $anamnesis): string
+    {
+        $line = function (string $label, mixed $value): string {
+            if (is_array($value)) {
+                $value = implode(', ', array_values(array_filter(
+                    array_map(static fn($item) => trim((string) $item), $value),
+                    static fn($item) => $item !== ''
+                )));
+            }
+
+            $value = trim((string) $value);
+            if ($value === '') {
+                $value = 'Nao informado';
+            }
+
+            return "- {$label}: {$value}";
+        };
+
+        return implode("\n", [
+            $line('Objetivo principal', $anamnesis['main_goal'] ?? ''),
+            $line('Peso atual (kg)', $anamnesis['weight_kg'] ?? ''),
+            $line('Altura (cm)', $anamnesis['height_cm'] ?? ''),
+            $line('Peso desejado (kg)', $anamnesis['target_weight_kg'] ?? ''),
+            $line('Doencas diagnosticadas', $anamnesis['diagnosed_conditions'] ?? []),
+            $line('Outras doencas', $anamnesis['diagnosed_conditions_other'] ?? ''),
+            $line('Medicacao continua', $anamnesis['continuous_medication'] ?? ''),
+            $line('Restricoes/intolerancias', $anamnesis['food_restrictions'] ?? []),
+            $line('Outras restricoes', $anamnesis['food_restrictions_other'] ?? ''),
+            $line('Alergias alimentares', $anamnesis['food_allergies'] ?? []),
+            $line('Outras alergias', $anamnesis['food_allergies_other'] ?? ''),
+            $line('Refeicoes por dia', $anamnesis['meals_per_day'] ?? ''),
+            $line('Agua por dia (litros)', $anamnesis['water_liters_per_day'] ?? ''),
+            $line('Frequencia de refeicao fora', $anamnesis['eats_out_frequency'] ?? ''),
+            $line('Consumo alcoolico', $anamnesis['alcohol_frequency'] ?? ''),
+            $line('Alimentos que nao gosta', $anamnesis['disliked_foods'] ?? ''),
+            $line('Alimentos favoritos', $anamnesis['favorite_foods'] ?? ''),
+            $line('Estilo alimentar', $anamnesis['food_style'] ?? ''),
+            $line('Outro estilo alimentar', $anamnesis['food_style_other'] ?? ''),
+            $line('Periodo de treino', $anamnesis['training_period'] ?? ''),
+            $line('Pre-treino', $anamnesis['pre_workout_meal'] ?? ''),
+            $line('Pos-treino', $anamnesis['post_workout_meal'] ?? ''),
+            $line('Come por ansiedade/estresse', $anamnesis['emotional_eating'] ?? ''),
+            $line('Historico de dieta', $anamnesis['diet_history'] ?? ''),
+            $line('Horario com mais fome', $anamnesis['most_hungry_time'] ?? ''),
+            $line('Horario com menos fome', $anamnesis['least_hungry_time'] ?? ''),
+            $line('Kcal dia alvo', $anamnesis['kcal_day'] ?? ''),
+        ]);
     }
 }

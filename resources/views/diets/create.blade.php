@@ -6,13 +6,23 @@
 @php
     $canUseDietAi = $canUseDietAi ?? false;
     $goalOptions = [
-        'Perda de gordura',
-        'Hipertrofia (ganho de massa)',
-        'Recomposicao corporal',
-        'Manutencao do peso',
-        'Performance e condicionamento',
-        'Saude e qualidade de vida',
+        'Perder gordura',
+        'Ganhar massa',
+        'Saude geral',
+        'Definicao',
+        'Performance esportiva',
     ];
+    $diseaseOptions = ['Diabetes', 'Hipertensao', 'Colesterol alto', 'Tireoide', 'Nenhuma', 'Outra'];
+    $restrictionOptions = ['Lactose', 'Gluten', 'Frutose', 'Nenhuma', 'Outra'];
+    $allergyOptions = ['Amendoim', 'Frutos do mar', 'Ovos', 'Nozes', 'Soja', 'Nenhuma', 'Outra'];
+    $eatsOutOptions = ['Todos os dias', '3-4x por semana', '1-2x por semana', 'Raramente'];
+    $alcoholOptions = ['Nao', 'Socialmente', '1-2x por semana', 'Frequentemente'];
+    $foodStyleOptions = ['Sem restricao', 'Vegetariano', 'Vegano', 'Low carb', 'Cetogenico', 'Outro'];
+    $trainingPeriodOptions = ['Manha', 'Tarde', 'Noite', 'Varia'];
+    $preWorkoutOptions = ['Sim, sempre', 'As vezes', 'Nao, treino em jejum'];
+    $postWorkoutOptions = ['Sim, sempre', 'As vezes', 'Nao costumo'];
+    $emotionalEatingOptions = ['Nunca', 'Raramente', 'As vezes', 'Frequentemente'];
+    $dietHistoryOptions = ['Nunca tentei', 'Tentei e mantive', 'Tentei mas nao consegui manter'];
 
     $rawMeals = old('meals');
     if (!is_array($rawMeals) || count($rawMeals) === 0) {
@@ -33,12 +43,13 @@
         'name' => old('name', ''),
         'goal' => old('goal', ''),
         'initial_kcal' => old('initial_kcal', ''),
+        'anamnesis' => is_array($initialAnamnesis ?? null) ? $initialAnamnesis : [],
     ];
 @endphp
 
 <div class="max-w-5xl mx-auto space-y-8 pt-4">
     <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden"
-         x-data='dietForm(@json($rawMeals), @json($initialState), @json(route('diets.generate-ai')), @json(csrf_token()), @json($canUseDietAi), @json(array_values($goalOptions)))'>
+         x-data='dietForm(@json($rawMeals), @json($initialState), @json(route('diets.generate-ai')), @json(csrf_token()), @json($canUseDietAi), @json(array_values($goalOptions)), @json($studentAnamnesisSeed ?? []))'>
         <div class="px-6 py-4 border-b border-gray-700">
             <h1 class="text-2xl font-bold text-white">Criar Novo Plano Alimentar</h1>
             <p class="mt-1 text-gray-400">Monte o plano alimentar do aluno.</p>
@@ -138,6 +149,194 @@
                     </div>
                 </div>
 
+                <div class="bg-gray-900/40 border border-gray-700 rounded-xl p-5 space-y-5">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">Anamnese Nutricional</h3>
+                        <p class="text-xs text-gray-400 mt-1">Preencha para melhorar a assertividade da dieta da IA e manter historico do aluno.</p>
+                    </div>
+
+                    <input type="hidden" name="anamnesis[main_goal]" :value="goal">
+                    <input type="hidden" name="anamnesis[kcal_day]" :value="initialKcal">
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Peso atual (kg)</label>
+                            <input type="number" step="0.1" min="20" max="400" name="anamnesis[weight_kg]" x-model="anamnesis.weight_kg" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: 72.5">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Altura (cm)</label>
+                            <input type="number" step="0.1" min="80" max="260" name="anamnesis[height_cm]" x-model="anamnesis.height_cm" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: 172">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Peso desejado (kg)</label>
+                            <input type="number" step="0.1" min="20" max="400" name="anamnesis[target_weight_kg]" x-model="anamnesis.target_weight_kg" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: 68">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-300">Doenca diagnosticada</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                @foreach($diseaseOptions as $option)
+                                    <label class="inline-flex items-center gap-2 text-sm text-gray-200">
+                                        <input type="checkbox" class="rounded bg-gray-800 border-gray-600 text-indigo-500 focus:ring-indigo-500" name="anamnesis[diagnosed_conditions][]" value="{{ $option }}" x-model="anamnesis.diagnosed_conditions">
+                                        <span>{{ $option }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            <input type="text" name="anamnesis[diagnosed_conditions_other]" x-model="anamnesis.diagnosed_conditions_other" x-show="anamnesis.diagnosed_conditions.includes('Outra')" x-cloak class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Qual outra doenca?">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Medicamento continuo</label>
+                            <textarea name="anamnesis[continuous_medication]" x-model="anamnesis.continuous_medication" rows="4" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Se sim, qual?"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-300">Restricao/intolerancia alimentar</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                @foreach($restrictionOptions as $option)
+                                    <label class="inline-flex items-center gap-2 text-sm text-gray-200">
+                                        <input type="checkbox" class="rounded bg-gray-800 border-gray-600 text-indigo-500 focus:ring-indigo-500" name="anamnesis[food_restrictions][]" value="{{ $option }}" x-model="anamnesis.food_restrictions">
+                                        <span>{{ $option }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            <input type="text" name="anamnesis[food_restrictions_other]" x-model="anamnesis.food_restrictions_other" x-show="anamnesis.food_restrictions.includes('Outra')" x-cloak class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Qual outra restricao?">
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-300">Alergia alimentar</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                @foreach($allergyOptions as $option)
+                                    <label class="inline-flex items-center gap-2 text-sm text-gray-200">
+                                        <input type="checkbox" class="rounded bg-gray-800 border-gray-600 text-indigo-500 focus:ring-indigo-500" name="anamnesis[food_allergies][]" value="{{ $option }}" x-model="anamnesis.food_allergies">
+                                        <span>{{ $option }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            <input type="text" name="anamnesis[food_allergies_other]" x-model="anamnesis.food_allergies_other" x-show="anamnesis.food_allergies.includes('Outra')" x-cloak class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Qual outra alergia?">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Refeicoes por dia</label>
+                            <input type="number" min="1" max="15" name="anamnesis[meals_per_day]" x-model="anamnesis.meals_per_day" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: 5">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Agua por dia (litros)</label>
+                            <input type="number" step="0.1" min="0" max="20" name="anamnesis[water_liters_per_day]" x-model="anamnesis.water_liters_per_day" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: 2.5">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Come fora com frequencia?</label>
+                            <select name="anamnesis[eats_out_frequency]" x-model="anamnesis.eats_out_frequency" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="" class="bg-gray-700">Selecione...</option>
+                                @foreach($eatsOutOptions as $option)
+                                    <option value="{{ $option }}" class="bg-gray-700">{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Consome bebida alcoolica?</label>
+                            <select name="anamnesis[alcohol_frequency]" x-model="anamnesis.alcohol_frequency" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="" class="bg-gray-700">Selecione...</option>
+                                @foreach($alcoholOptions as $option)
+                                    <option value="{{ $option }}" class="bg-gray-700">{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Estilo alimentar</label>
+                            <select name="anamnesis[food_style]" x-model="anamnesis.food_style" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="" class="bg-gray-700">Selecione...</option>
+                                @foreach($foodStyleOptions as $option)
+                                    <option value="{{ $option }}" class="bg-gray-700">{{ $option }}</option>
+                                @endforeach
+                            </select>
+                            <input type="text" name="anamnesis[food_style_other]" x-model="anamnesis.food_style_other" x-show="anamnesis.food_style === 'Outro'" x-cloak class="block w-full mt-3 bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Qual outro estilo?">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Alimentos que nao consegue comer</label>
+                            <textarea name="anamnesis[disliked_foods]" x-model="anamnesis.disliked_foods" rows="3" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: figado, brocolis..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Alimentos favoritos</label>
+                            <textarea name="anamnesis[favorite_foods]" x-model="anamnesis.favorite_foods" rows="3" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: ovos, arroz, frango..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Periodo de treino</label>
+                            <select name="anamnesis[training_period]" x-model="anamnesis.training_period" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="" class="bg-gray-700">Selecione...</option>
+                                @foreach($trainingPeriodOptions as $option)
+                                    <option value="{{ $option }}" class="bg-gray-700">{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Come algo antes do treino?</label>
+                            <select name="anamnesis[pre_workout_meal]" x-model="anamnesis.pre_workout_meal" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="" class="bg-gray-700">Selecione...</option>
+                                @foreach($preWorkoutOptions as $option)
+                                    <option value="{{ $option }}" class="bg-gray-700">{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Come algo apos treino?</label>
+                            <select name="anamnesis[post_workout_meal]" x-model="anamnesis.post_workout_meal" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="" class="bg-gray-700">Selecione...</option>
+                                @foreach($postWorkoutOptions as $option)
+                                    <option value="{{ $option }}" class="bg-gray-700">{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Come por ansiedade/estresse?</label>
+                            <select name="anamnesis[emotional_eating]" x-model="anamnesis.emotional_eating" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="" class="bg-gray-700">Selecione...</option>
+                                @foreach($emotionalEatingOptions as $option)
+                                    <option value="{{ $option }}" class="bg-gray-700">{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Historico com dieta</label>
+                            <select name="anamnesis[diet_history]" x-model="anamnesis.diet_history" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="" class="bg-gray-700">Selecione...</option>
+                                @foreach($dietHistoryOptions as $option)
+                                    <option value="{{ $option }}" class="bg-gray-700">{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Horario com mais fome</label>
+                            <input type="time" name="anamnesis[most_hungry_time]" x-model="anamnesis.most_hungry_time" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Horario com menos fome</label>
+                            <input type="time" name="anamnesis[least_hungry_time]" x-model="anamnesis.least_hungry_time" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                        </div>
+                    </div>
+                </div>
+
                 <hr class="border-gray-700">
 
                 <div class="space-y-6">
@@ -213,12 +412,13 @@
 </div>
 
 <script>
-function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDietAi, goalOptions) {
+function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDietAi, goalOptions, studentAnamnesisSeed) {
     const nowBase = Date.now();
 
     return {
         canUseDietAi: !!canUseDietAi,
         goalOptions: Array.isArray(goalOptions) ? goalOptions : [],
+        studentAnamnesisSeed: (studentAnamnesisSeed && typeof studentAnamnesisSeed === 'object') ? studentAnamnesisSeed : {},
         generateAiUrl,
         csrfToken,
         generatingAi: false,
@@ -231,6 +431,7 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
         goalSelect: '',
         goalCustom: '',
         initialKcal: initialState?.initial_kcal || '',
+        anamnesis: thisNormalizeAnamnesis(initialState?.anamnesis || {}),
 
         meals: Array.isArray(initialMeals) && initialMeals.length
             ? initialMeals.map((meal, mealIndex) => thisNormalizeMeal(meal, mealIndex, nowBase))
@@ -238,42 +439,81 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
 
         init() {
             this.applyGoal(this.goal);
+            this.syncAnamnesisGoalAndKcal();
+            this.$watch('studentId', (value) => this.applyStudentAnamnesisSeed(value));
         },
 
         syncGoalValue() {
             if (!this.canUseDietAi) {
+                this.syncAnamnesisGoalAndKcal();
                 return;
             }
 
             if (this.goalSelect === '__custom__') {
                 this.goal = this.goalCustom || '';
+                this.syncAnamnesisGoalAndKcal();
                 return;
             }
 
             this.goal = this.goalSelect || '';
             this.goalCustom = '';
+            this.syncAnamnesisGoalAndKcal();
         },
 
         applyGoal(value) {
             this.goal = value || '';
             if (!this.canUseDietAi) {
+                this.syncAnamnesisGoalAndKcal();
                 return;
             }
 
             if (!this.goal) {
                 this.goalSelect = '';
                 this.goalCustom = '';
+                this.syncAnamnesisGoalAndKcal();
                 return;
             }
 
             if (this.goalOptions.includes(this.goal)) {
                 this.goalSelect = this.goal;
                 this.goalCustom = '';
+                this.syncAnamnesisGoalAndKcal();
                 return;
             }
 
             this.goalSelect = '__custom__';
             this.goalCustom = this.goal;
+            this.syncAnamnesisGoalAndKcal();
+        },
+
+        syncAnamnesisGoalAndKcal() {
+            this.anamnesis.main_goal = this.goal || '';
+            this.anamnesis.kcal_day = this.initialKcal ? String(this.initialKcal) : '';
+        },
+
+        applyStudentAnamnesisSeed(studentId) {
+            const key = studentId ? String(studentId) : '';
+            const seed = key && this.studentAnamnesisSeed[key] ? this.studentAnamnesisSeed[key] : null;
+
+            if (!seed) {
+                this.anamnesis = thisNormalizeAnamnesis({
+                    main_goal: this.goal || '',
+                    kcal_day: this.initialKcal || '',
+                });
+                return;
+            }
+
+            this.anamnesis = thisNormalizeAnamnesis(seed);
+
+            if (!this.goal && this.anamnesis.main_goal) {
+                this.applyGoal(this.anamnesis.main_goal);
+            } else {
+                this.syncAnamnesisGoalAndKcal();
+            }
+
+            if (!this.initialKcal && this.anamnesis.kcal_day) {
+                this.initialKcal = this.anamnesis.kcal_day;
+            }
         },
 
         async generateWithAi() {
@@ -290,6 +530,7 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
             }
 
             this.syncGoalValue();
+            this.syncAnamnesisGoalAndKcal();
             this.generatingAi = true;
 
             try {
@@ -304,6 +545,7 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
                         student_id: this.studentId,
                         goal: this.goal,
                         initial_kcal: this.initialKcal,
+                        anamnesis: this.anamnesis,
                     }),
                 });
 
@@ -315,6 +557,7 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
                 if (data.name) this.planName = data.name;
                 if (data.goal) this.applyGoal(data.goal);
                 if (data.daily_kcal_target) this.initialKcal = String(data.daily_kcal_target);
+                this.syncAnamnesisGoalAndKcal();
 
                 if (Array.isArray(data.meals) && data.meals.length) {
                     const base = Date.now();
@@ -383,6 +626,44 @@ function thisNormalizeMeal(meal, index, seed) {
         name: meal?.name || '',
         time,
         foods,
+    };
+}
+
+function thisNormalizeAnamnesis(data) {
+    const toArray = (value) => Array.isArray(value)
+        ? value.map((item) => String(item).trim()).filter(Boolean)
+        : [];
+
+    const toStringValue = (value) => value === null || value === undefined ? '' : String(value);
+
+    return {
+        main_goal: toStringValue(data.main_goal || ''),
+        weight_kg: toStringValue(data.weight_kg || ''),
+        height_cm: toStringValue(data.height_cm || ''),
+        target_weight_kg: toStringValue(data.target_weight_kg || ''),
+        diagnosed_conditions: toArray(data.diagnosed_conditions),
+        diagnosed_conditions_other: toStringValue(data.diagnosed_conditions_other || ''),
+        continuous_medication: toStringValue(data.continuous_medication || ''),
+        food_restrictions: toArray(data.food_restrictions),
+        food_restrictions_other: toStringValue(data.food_restrictions_other || ''),
+        food_allergies: toArray(data.food_allergies),
+        food_allergies_other: toStringValue(data.food_allergies_other || ''),
+        meals_per_day: toStringValue(data.meals_per_day || ''),
+        water_liters_per_day: toStringValue(data.water_liters_per_day || ''),
+        eats_out_frequency: toStringValue(data.eats_out_frequency || ''),
+        alcohol_frequency: toStringValue(data.alcohol_frequency || ''),
+        disliked_foods: toStringValue(data.disliked_foods || ''),
+        favorite_foods: toStringValue(data.favorite_foods || ''),
+        food_style: toStringValue(data.food_style || ''),
+        food_style_other: toStringValue(data.food_style_other || ''),
+        training_period: toStringValue(data.training_period || ''),
+        pre_workout_meal: toStringValue(data.pre_workout_meal || ''),
+        post_workout_meal: toStringValue(data.post_workout_meal || ''),
+        emotional_eating: toStringValue(data.emotional_eating || ''),
+        diet_history: toStringValue(data.diet_history || ''),
+        most_hungry_time: toStringValue(data.most_hungry_time || ''),
+        least_hungry_time: toStringValue(data.least_hungry_time || ''),
+        kcal_day: toStringValue(data.kcal_day || ''),
     };
 }
 </script>

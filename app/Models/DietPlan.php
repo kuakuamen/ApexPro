@@ -14,6 +14,7 @@ class DietPlan extends Model
         'name',
         'goal',
         'description',
+        'anamnesis',
         'start_date',
         'end_date',
         'is_active',
@@ -22,6 +23,7 @@ class DietPlan extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'anamnesis' => 'array',
         'is_active' => 'boolean',
     ];
 
