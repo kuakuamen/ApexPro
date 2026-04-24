@@ -9,10 +9,38 @@ use App\Models\ProfessionalStudent;
 use App\Models\WorkoutLog;
 use App\Models\WorkoutPlan;
 use App\Models\WorkoutDay;
+use App\Models\DietPlan;
 use Carbon\Carbon;
 
 class StudentController extends Controller
 {
+    private function parseCaloriesValue(mixed $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        $normalized = str_replace(',', '.', trim((string) $value));
+        if (!preg_match('/-?\d+(\.\d+)?/', $normalized, $matches)) {
+            return 0.0;
+        }
+
+        $number = (float) $matches[0];
+        return $number > 0 ? $number : 0.0;
+    }
+
+    private function calculateDietTotalCalories(DietPlan $diet): int
+    {
+        $total = 0.0;
+        foreach ($diet->meals as $meal) {
+            foreach ($meal->foods as $food) {
+                $total += $this->parseCaloriesValue($food->calories);
+            }
+        }
+
+        return (int) round($total);
+    }
+
     public function dashboard()
     {
         /** @var \App\Models\User $user */
@@ -34,6 +62,17 @@ class StudentController extends Controller
         if ($activeWorkout) {
             $activeWorkout->load('days.exercises');
         }
+
+        // Ultimo plano alimentar ativo
+        $activeDiet = $user->dietPlans()
+            ->where('is_active', true)
+            ->with('meals.foods')
+            ->latest()
+            ->first();
+
+        $activeDietTotalCalories = $activeDiet
+            ? $this->calculateDietTotalCalories($activeDiet)
+            : null;
 
         // Histórico de peso (últimos 5 registros)
         $weightHistory = $user->measurements()
@@ -79,7 +118,7 @@ class StudentController extends Controller
             : null;
 
         return view('student.dashboard', compact(
-            'user', 'professional', 'activeWorkout', 'weightHistory',
+            'user', 'professional', 'activeWorkout', 'activeDiet', 'activeDietTotalCalories', 'weightHistory',
             'logsThisWeek', 'weekDaysWorked', 'totalWorkoutDays',
             'streak', 'lastTrainingDate', 'lastTrainingDaysAgo'
         ));

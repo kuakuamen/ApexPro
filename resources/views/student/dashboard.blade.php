@@ -48,6 +48,21 @@
         background: radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%);
         border-radius:50%;
     }
+    .diet-hero {
+        background: linear-gradient(135deg, #064e3b 0%, #065f46 38%, #0f172a 100%);
+        border: 1px solid rgba(16,185,129,0.32);
+        border-radius: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    .diet-hero::before {
+        content:'';
+        position:absolute;
+        top:-42px;right:-42px;
+        width:180px;height:180px;
+        background: radial-gradient(circle, rgba(16,185,129,0.24) 0%, transparent 72%);
+        border-radius:50%;
+    }
     /* Stat cards */
     .stat-card {
         background: rgba(255,255,255,0.05);
@@ -103,6 +118,28 @@
         active: scale(0.97);
     }
     .btn-start:hover { background: rgba(255,255,255,0.2); color:#fff; }
+    .btn-diet {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(16,185,129,0.14);
+        border: 1px solid rgba(16,185,129,0.35);
+        border-radius: 12px;
+        padding: 10px 18px;
+        font-size: 14px; font-weight: 700; color: #d1fae5;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .btn-diet:hover { background: rgba(16,185,129,0.22); color:#ecfdf5; }
+    .diet-pill {
+        display: inline-flex; align-items: center;
+        border-radius: 999px;
+        background: rgba(16,185,129,0.2);
+        border: 1px solid rgba(16,185,129,0.35);
+        color: #d1fae5;
+        font-size: 11px;
+        font-weight: 800;
+        padding: 4px 10px;
+        letter-spacing: .03em;
+    }
 </style>
 
 <div class="dash-bg pt-4 pb-2 space-y-4">
@@ -168,6 +205,42 @@
         <p class="text-purple-300 text-xs font-bold uppercase tracking-widest mb-2">Treino do Dia</p>
         <p class="text-white font-bold text-lg">Sem treino ativo</p>
         <p class="text-slate-400 text-sm mt-1">Aguarde seu personal trainer criar um treino.</p>
+    </div>
+    @endif
+
+    {{-- DIETA DO DIA --}}
+    @if($activeDiet)
+    @php
+        $dietMealsCount = $activeDiet->meals->count();
+        $dietFoodsCount = $activeDiet->meals->sum(fn($meal) => $meal->foods->count());
+    @endphp
+    <div class="diet-hero p-5">
+        <div class="flex items-start justify-between mb-3">
+            <div>
+                <p class="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1">Dieta do Dia</p>
+                <h2 class="text-white text-2xl font-extrabold leading-tight">{{ $activeDiet->name }}</h2>
+                <p class="text-emerald-100/80 text-sm mt-1">
+                    {{ $activeDiet->goal ?? 'Sem objetivo definido' }}
+                    · {{ $dietMealsCount }} {{ $dietMealsCount === 1 ? 'refeicao' : 'refeicoes' }}
+                    · {{ $dietFoodsCount }} {{ $dietFoodsCount === 1 ? 'alimento' : 'alimentos' }}
+                </p>
+            </div>
+            @if(!empty($activeDietTotalCalories))
+                <span class="diet-pill">{{ $activeDietTotalCalories }} kcal</span>
+            @endif
+        </div>
+        <a href="{{ route('diets.show', $activeDiet) }}" class="btn-diet mt-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M5 4v16a1 1 0 001 1h12a1 1 0 001-1V4M9 4v16M15 4v16"/>
+            </svg>
+            Ver Plano Alimentar
+        </a>
+    </div>
+    @else
+    <div class="diet-hero p-5 text-center">
+        <p class="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-2">Dieta do Dia</p>
+        <p class="text-white font-bold text-lg">Sem plano alimentar ativo</p>
+        <p class="text-emerald-100/80 text-sm mt-1">Aguarde seu profissional montar a dieta para voce.</p>
     </div>
     @endif
 
