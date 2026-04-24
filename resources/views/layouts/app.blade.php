@@ -188,9 +188,9 @@
                     <!-- Links Específicos do Aluno -->
                     @if(auth()->user()->role === 'aluno')
                         <p class="px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Aluno</p>
-                        <a href="{{ route('student.evolution') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('student.evolution') ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
-                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('student.evolution') ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
-                            Minha Evolução
+                        <a href="{{ route('diets.index') }}" class="group flex items-center px-3 py-2 min-h-[42px] text-sm font-medium rounded-lg transition-all duration-200 {{ request()->routeIs('diets.*') ? 'bg-cyan-500/10 text-cyan-100 border-l-2 border-cyan-400 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.22)]' : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100' }}">
+                            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:translate-x-0.5 {{ request()->routeIs('diets.*') ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                            Minha Dieta
                         </a>
                     @endif
 
@@ -265,7 +265,7 @@
                 $navItems = [
                     ['route' => 'student.dashboard',  'label' => 'Início',   'emoji' => '🏠', 'match' => 'student.dashboard'],
                     ['route' => 'workouts.index',      'label' => 'Treino',   'emoji' => '💪', 'match' => 'workouts.*'],
-                    ['route' => 'student.evolution',   'label' => 'Evolução', 'emoji' => '📈', 'match' => 'student.evolution'],
+                    ['route' => 'diets.index',   'label' => 'Dieta', 'emoji' => '🥗', 'match' => 'diets.*'],
                     ['route' => 'student.progress',    'label' => 'Progresso','emoji' => '🏆', 'match' => 'student.progress'],
                     ['route' => 'student.profile',     'label' => 'Perfil',   'emoji' => '👤', 'match' => 'student.profile'],
                 ];
