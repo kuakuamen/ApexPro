@@ -5,6 +5,14 @@
 
 @php
     $canUseDietAi = $canUseDietAi ?? false;
+    $goalOptions = [
+        'Perda de gordura',
+        'Hipertrofia (ganho de massa)',
+        'Recomposicao corporal',
+        'Manutencao do peso',
+        'Performance e condicionamento',
+        'Saude e qualidade de vida',
+    ];
 
     $rawMeals = old('meals');
     if (!is_array($rawMeals) || count($rawMeals) === 0) {
@@ -30,7 +38,7 @@
 
 <div class="max-w-5xl mx-auto space-y-8 pt-4">
     <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden"
-         x-data='dietForm(@json($rawMeals), @json($initialState), @json(route('diets.generate-ai')), @json(csrf_token()), @json($canUseDietAi))'>
+         x-data='dietForm(@json($rawMeals), @json($initialState), @json(route('diets.generate-ai')), @json(csrf_token()), @json($canUseDietAi), @json(array_values($goalOptions)))'>
         <div class="px-6 py-4 border-b border-gray-700">
             <h1 class="text-2xl font-bold text-white">Criar Novo Plano Alimentar</h1>
             <p class="mt-1 text-gray-400">Monte o plano alimentar do aluno.</p>
@@ -88,15 +96,37 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-2">Objetivo</label>
-                        <input type="text"
-                               name="goal"
-                               x-model="goal"
-                               class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                               placeholder="Ex: Perda de gordura">
+                        @if($canUseDietAi)
+                            <select x-model="goalSelect"
+                                    @change="syncGoalValue()"
+                                    class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="" class="bg-gray-700">Selecione...</option>
+                                @foreach($goalOptions as $goalOption)
+                                    <option value="{{ $goalOption }}" class="bg-gray-700">{{ $goalOption }}</option>
+                                @endforeach
+                                <option value="__custom__" class="bg-gray-700">Outro (digitar manualmente)</option>
+                            </select>
+
+                            <div class="mt-3" x-show="goalSelect === '__custom__'" x-cloak>
+                                <input type="text"
+                                       x-model="goalCustom"
+                                       @input="syncGoalValue()"
+                                       class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                       placeholder="Digite o objetivo">
+                            </div>
+
+                            <input type="hidden" name="goal" :value="goal">
+                        @else
+                            <input type="text"
+                                   name="goal"
+                                   x-model="goal"
+                                   class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                   placeholder="Ex: Perda de gordura">
+                        @endif
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Kcal Iniciais (opcional)</label>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Kcal Dia (opcional)</label>
                         <input type="number"
                                name="initial_kcal"
                                x-model="initialKcal"
@@ -183,11 +213,12 @@
 </div>
 
 <script>
-function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDietAi) {
+function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDietAi, goalOptions) {
     const nowBase = Date.now();
 
     return {
         canUseDietAi: !!canUseDietAi,
+        goalOptions: Array.isArray(goalOptions) ? goalOptions : [],
         generateAiUrl,
         csrfToken,
         generatingAi: false,
@@ -197,11 +228,53 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
         studentId: initialState?.student_id ? String(initialState.student_id) : '',
         planName: initialState?.name || '',
         goal: initialState?.goal || '',
+        goalSelect: '',
+        goalCustom: '',
         initialKcal: initialState?.initial_kcal || '',
 
         meals: Array.isArray(initialMeals) && initialMeals.length
             ? initialMeals.map((meal, mealIndex) => thisNormalizeMeal(meal, mealIndex, nowBase))
             : [thisDefaultMeal(nowBase)],
+
+        init() {
+            this.applyGoal(this.goal);
+        },
+
+        syncGoalValue() {
+            if (!this.canUseDietAi) {
+                return;
+            }
+
+            if (this.goalSelect === '__custom__') {
+                this.goal = this.goalCustom || '';
+                return;
+            }
+
+            this.goal = this.goalSelect || '';
+            this.goalCustom = '';
+        },
+
+        applyGoal(value) {
+            this.goal = value || '';
+            if (!this.canUseDietAi) {
+                return;
+            }
+
+            if (!this.goal) {
+                this.goalSelect = '';
+                this.goalCustom = '';
+                return;
+            }
+
+            if (this.goalOptions.includes(this.goal)) {
+                this.goalSelect = this.goal;
+                this.goalCustom = '';
+                return;
+            }
+
+            this.goalSelect = '__custom__';
+            this.goalCustom = this.goal;
+        },
 
         async generateWithAi() {
             if (!this.canUseDietAi) {
@@ -216,6 +289,7 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
                 return;
             }
 
+            this.syncGoalValue();
             this.generatingAi = true;
 
             try {
@@ -239,7 +313,7 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
                 }
 
                 if (data.name) this.planName = data.name;
-                if (data.goal) this.goal = data.goal;
+                if (data.goal) this.applyGoal(data.goal);
                 if (data.daily_kcal_target) this.initialKcal = String(data.daily_kcal_target);
 
                 if (Array.isArray(data.meals) && data.meals.length) {

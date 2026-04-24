@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DietAiService
 {
@@ -91,7 +92,7 @@ class DietAiService
             "- Altura (m): " . ($height ?: 'Nao informada') . "\n" .
             "- Percentual de gordura: " . ($bodyFat ?: 'Nao informado') . "\n" .
             "- Objetivo: " . ($goal !== '' ? $goal : 'Plano alimentar geral') . "\n" .
-            "- Kcal iniciais sugeridas pelo personal: " . ($initialKcal ?: 'Nao informado') . "\n\n" .
+            "- Kcal dia informada pelo personal: " . ($initialKcal ?: 'Nao informado') . "\n\n" .
             "REGRAS:\n" .
             "1. Retorne somente JSON valido, sem markdown.\n" .
             "2. Monte de 4 a 6 refeicoes.\n" .
@@ -134,7 +135,7 @@ class DietAiService
                 throw new \RuntimeException('A IA retornou uma resposta invalida para dieta.');
             }
 
-            return $this->normalizePayload($jsonResult, $goal, $initialKcal);
+            return $this->normalizePayload($jsonResult, $goal, $initialKcal, $studentName);
         } catch (\Throwable $e) {
             Log::error('Erro API Gemini Diet: ' . $e->getMessage());
 
@@ -153,16 +154,21 @@ class DietAiService
         }
     }
 
-    private function normalizePayload(array $payload, ?string $fallbackGoal, mixed $fallbackKcal): array
+    private function normalizePayload(
+        array $payload,
+        ?string $fallbackGoal,
+        mixed $fallbackKcal,
+        string $fallbackStudentName
+    ): array
     {
-        $name = trim((string) ($payload['name'] ?? 'Plano Alimentar IA'));
-        if ($name === '') {
-            $name = 'Plano Alimentar IA';
-        }
-
         $goal = trim((string) ($payload['goal'] ?? $fallbackGoal ?? 'Plano alimentar personalizado'));
         if ($goal === '') {
             $goal = 'Plano alimentar personalizado';
+        }
+
+        $name = trim((string) ($payload['name'] ?? ''));
+        if ($name === '' || $this->isSameText($name, $fallbackStudentName)) {
+            $name = $this->buildDefaultPlanName($goal, $fallbackStudentName);
         }
 
         $dailyKcal = $payload['daily_kcal_target'] ?? $payload['initial_kcal'] ?? $fallbackKcal;
@@ -257,5 +263,34 @@ class DietAiService
             'daily_kcal_target' => $dailyKcal,
             'meals' => $meals,
         ];
+    }
+
+    private function buildDefaultPlanName(string $goal, string $studentName): string
+    {
+        $goal = trim($goal);
+        $studentName = trim($studentName);
+
+        $goalNormalized = Str::lower(Str::ascii($goal));
+        if ($goal !== '' && !str_contains($goalNormalized, 'plano alimentar')) {
+            return 'Plano alimentar - ' . $goal;
+        }
+
+        if ($studentName !== '') {
+            return 'Plano alimentar - ' . $studentName;
+        }
+
+        return 'Plano alimentar personalizado';
+    }
+
+    private function isSameText(string $left, string $right): bool
+    {
+        $left = trim($left);
+        $right = trim($right);
+
+        if ($left === '' || $right === '') {
+            return false;
+        }
+
+        return Str::lower(Str::ascii($left)) === Str::lower(Str::ascii($right));
     }
 }
