@@ -5,14 +5,24 @@ namespace App\Http\Controllers;
 use App\Models\DietPlan;
 use App\Models\ProfessionalStudent;
 use App\Models\User;
+use App\Services\DietAiService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class DietPlanController extends Controller
 {
     private function canManageDiets(User $user): bool
     {
         return in_array($user->role, ['personal', 'nutri'], true);
+    }
+
+    private function studentBelongsToProfessional(int $professionalId, int $studentId): bool
+    {
+        return ProfessionalStudent::where('professional_id', $professionalId)
+            ->where('student_id', $studentId)
+            ->exists();
     }
 
     /**
@@ -55,8 +65,9 @@ class DietPlanController extends Controller
 
         // Busca apenas os alunos vinculados a este profissional.
         $students = $user->students()->orderBy('name')->get();
+        $canUseDietAi = $user->role === 'personal';
 
-        return view('diets.create', compact('students'));
+        return view('diets.create', compact('students', 'canUseDietAi'));
     }
 
     /**
@@ -74,9 +85,7 @@ class DietPlanController extends Controller
         // Validar que student_id existe e pertence ao profissional autenticado.
         $professionalId = $user->id;
         $studentId = $request->input('student_id');
-        $studentBelongsToProfessional = ProfessionalStudent::where('professional_id', $professionalId)
-            ->where('student_id', $studentId)
-            ->exists();
+        $studentBelongsToProfessional = $this->studentBelongsToProfessional($professionalId, (int) $studentId);
 
         if (!$studentBelongsToProfessional) {
             abort(403, 'Este aluno nao esta vinculado a voce.');
@@ -86,6 +95,7 @@ class DietPlanController extends Controller
             'student_id' => 'required|exists:users,id',
             'name' => 'required|string|max:255',
             'goal' => 'nullable|string|max:255',
+            'initial_kcal' => 'nullable|numeric|min:600|max:10000',
             'meals' => 'required|array|min:1',
             'meals.*.name' => 'required|string',
             'meals.*.time' => 'nullable',
@@ -140,5 +150,61 @@ class DietPlanController extends Controller
         $diet->load('meals.foods');
 
         return view('diets.show', compact('diet'));
+    }
+
+    public function generateWithAi(Request $request, DietAiService $dietAiService): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->role !== 'personal') {
+            return response()->json([
+                'message' => 'Geracao de dieta com IA disponivel apenas para personal.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'student_id' => 'required|exists:users,id',
+            'goal' => 'nullable|string|max:255',
+            'initial_kcal' => 'nullable|numeric|min:600|max:10000',
+        ]);
+
+        $studentId = (int) $validated['student_id'];
+        if (!$this->studentBelongsToProfessional($user->id, $studentId)) {
+            return response()->json([
+                'message' => 'Este aluno nao esta vinculado a voce.',
+            ], 403);
+        }
+
+        $student = User::query()->findOrFail($studentId);
+        $latestMeasurement = $student->measurements()->latest('date')->latest('id')->first();
+
+        $studentData = [
+            'student_name' => $student->name,
+            'age' => $student->birth_date?->age,
+            'gender' => $student->gender,
+            'goal' => $validated['goal'] ?? null,
+            'initial_kcal' => $validated['initial_kcal'] ?? null,
+            'weight' => $latestMeasurement?->weight,
+            'height' => $latestMeasurement?->height,
+            'body_fat' => $latestMeasurement?->body_fat,
+        ];
+
+        try {
+            $generatedDiet = $dietAiService->generateDiet($studentData);
+            return response()->json($generatedDiet);
+        } catch (\Throwable $e) {
+            Log::error('Erro ao gerar dieta com IA', [
+                'user_id' => $user->id,
+                'student_id' => $studentId,
+                'error' => $e->getMessage(),
+            ]);
+
+            $message = $e instanceof \RuntimeException
+                ? $e->getMessage()
+                : 'Nao foi possivel gerar a dieta com IA no momento.';
+
+            return response()->json(['message' => $message], 422);
+        }
     }
 }
