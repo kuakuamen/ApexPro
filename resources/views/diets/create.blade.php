@@ -59,28 +59,6 @@
             <form action="{{ route('diets.store') }}" method="POST" class="space-y-8">
                 @csrf
 
-                @if($canUseDietAi)
-                    <div class="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4">
-                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                            <div>
-                                <p class="text-sm font-semibold text-indigo-200">Geracao com IA (revisao manual obrigatoria)</p>
-                                <p class="text-xs text-indigo-300/90 mt-1">A IA sugere o plano alimentar. Revise e ajuste tudo antes de salvar.</p>
-                            </div>
-                            <button type="button"
-                                    @click="generateWithAi()"
-                                    :disabled="generatingAi"
-                                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
-                                <svg x-show="!generatingAi" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                <svg x-show="generatingAi" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                                <span x-text="generatingAi ? 'Gerando...' : 'Gerar dieta com IA'"></span>
-                            </button>
-                        </div>
-
-                        <p x-show="aiError" x-text="aiError" class="mt-3 text-sm text-red-300"></p>
-                        <p x-show="aiSuccess" x-text="aiSuccess" class="mt-3 text-sm text-emerald-300"></p>
-                    </div>
-                @endif
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-2">Aluno</label>
@@ -336,6 +314,28 @@
                         </div>
                     </div>
                 </div>
+
+                @if($canUseDietAi)
+                    <div class="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-indigo-200">Geracao com IA (revisao manual obrigatoria)</p>
+                                <p class="text-xs text-indigo-300/90 mt-1">A IA sugere o plano alimentar. Revise e ajuste tudo antes de salvar.</p>
+                            </div>
+                            <button type="button"
+                                    @click="generateWithAi()"
+                                    :disabled="generatingAi"
+                                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+                                <svg x-show="!generatingAi" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                <svg x-show="generatingAi" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                                <span x-text="generatingAi ? 'Gerando...' : 'Gerar dieta com IA'"></span>
+                            </button>
+                        </div>
+
+                        <p x-show="aiError" x-text="aiError" class="mt-3 text-sm text-red-300"></p>
+                        <p x-show="aiSuccess" x-text="aiSuccess" class="mt-3 text-sm text-emerald-300"></p>
+                    </div>
+                @endif
 
                 <hr class="border-gray-700">
 
