@@ -341,22 +341,23 @@
 
                 <div class="space-y-6">
                     <template x-for="(meal, mealIndex) in meals" :key="meal.id">
-                        <div class="bg-gray-900/40 border border-gray-700 rounded-xl p-5 relative">
-                            <button
-                                type="button"
-                                @click="removeMeal(mealIndex)"
-                                x-show="meals.length > 1"
-                                class="absolute top-4 right-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-400/35 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20 hover:border-rose-300/45 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400/40"
-                                title="Remover refeicao">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                <span class="hidden sm:inline text-xs font-semibold">Remover</span>
-                            </button>
-
-                            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <div class="bg-gray-900/40 border border-gray-700 rounded-xl p-5">
+                            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                                 <h4 class="text-lg font-semibold text-teal-300">Refeicao <span x-text="mealIndex + 1"></span></h4>
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-teal-500/15 text-teal-200 border border-teal-500/30">
-                                    <span x-text="formatCalories(mealCalories(meal))"></span>&nbsp;kcal
-                                </span>
+                                <div class="flex items-center gap-2 ml-auto">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-teal-500/15 text-teal-200 border border-teal-500/30">
+                                        <span x-text="formatCalories(mealCalories(meal))"></span>&nbsp;kcal
+                                    </span>
+                                    <button
+                                        type="button"
+                                        @click="removeMeal(mealIndex)"
+                                        x-show="meals.length > 1"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-400/35 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20 hover:border-rose-300/45 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400/40"
+                                        title="Remover refeicao">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        <span class="hidden sm:inline text-xs font-semibold">Remover</span>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
