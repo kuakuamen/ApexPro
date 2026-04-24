@@ -342,8 +342,14 @@
                 <div class="space-y-6">
                     <template x-for="(meal, mealIndex) in meals" :key="meal.id">
                         <div class="bg-gray-900/40 border border-gray-700 rounded-xl p-5 relative">
-                            <button type="button" @click="removeMeal(mealIndex)" class="absolute top-4 right-4 text-red-400 hover:text-red-300 transition-colors" x-show="meals.length > 1">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <button
+                                type="button"
+                                @click="removeMeal(mealIndex)"
+                                x-show="meals.length > 1"
+                                class="absolute top-4 right-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-400/35 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20 hover:border-rose-300/45 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400/40"
+                                title="Remover refeicao">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                <span class="hidden sm:inline text-xs font-semibold">Remover</span>
                             </button>
 
                             <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
@@ -384,7 +390,13 @@
                                             <input type="text" x-bind:name="'meals[' + mealIndex + '][foods][' + foodIndex + '][observation]'" x-model="food.observation" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Opcional">
                                         </div>
                                         <div class="md:col-span-1 flex justify-end">
-                                            <button type="button" @click="removeFood(mealIndex, foodIndex)" class="text-red-400 hover:text-red-300 text-sm font-semibold transition-colors">X</button>
+                                            <button
+                                                type="button"
+                                                @click="removeFood(mealIndex, foodIndex)"
+                                                class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-rose-400/35 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20 hover:border-rose-300/45 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400/40"
+                                                title="Remover alimento">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            </button>
                                         </div>
                                     </div>
                                 </template>
