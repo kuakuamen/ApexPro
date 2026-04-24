@@ -79,12 +79,11 @@ class AdminController extends Controller
             abort(404);
         }
 
-        // Contar alunos do personal
-        $studentCount = User::whereHas('professionalStudents', function ($query) use ($user) {
-            $query->where('professional_id', $user->id);
-        })->count();
-
-        $user->load('professionalStudents');
+        // Contar alunos vinculados (distintos) desse personal
+        $studentCount = $user->students()
+            ->where('users.role', 'aluno')
+            ->distinct('users.id')
+            ->count('users.id');
 
         return view('admin.personals.show', compact('user', 'studentCount'));
     }
@@ -250,9 +249,12 @@ class AdminController extends Controller
             abort(404);
         }
 
-        $students = User::whereHas('professionalStudents', function ($query) use ($user) {
-            $query->where('professional_id', $user->id);
-        })->paginate(15);
+        $students = $user->students()
+            ->where('users.role', 'aluno')
+            ->select('users.*')
+            ->distinct()
+            ->orderBy('users.name')
+            ->paginate(15);
 
         return view('admin.personals.students', compact('user', 'students'));
     }
@@ -308,13 +310,16 @@ class AdminController extends Controller
                     ->get();
             }
 
-            $studentCount = User::whereHas('professionalStudents', function ($query) use ($user) {
-                $query->where('professional_id', $user->id);
-            })->count();
+            $studentCount = $user->students()
+                ->where('users.role', 'aluno')
+                ->distinct('users.id')
+                ->count('users.id');
 
-            $activeStudentCount = User::whereHas('professionalStudents', function ($query) use ($user) {
-                $query->where('professional_id', $user->id);
-            })->where('is_active', true)->count();
+            $activeStudentCount = $user->students()
+                ->where('users.role', 'aluno')
+                ->where('users.is_active', true)
+                ->distinct('users.id')
+                ->count('users.id');
         }
 
         return view('admin.users.show', compact('user', 'recentTransactions', 'studentCount', 'activeStudentCount'));
