@@ -128,6 +128,7 @@
     {{-- PROGRESS BAR — total = exercícios do dia sendo trabalhado hoje --}}
     @php
         $todayLogIds = array_map('intval', $todayLogs ?? []);
+        $daysOrdered = $workout->days->values();
         $todayIso = now('America/Sao_Paulo')->dayOfWeekIso; // 1=Seg ... 7=Dom
         $weekdayKeywords = [
             1 => ['segunda'],
@@ -139,11 +140,33 @@
             7 => ['domingo'],
         ];
 
-        $dayWithTodayLogs = $workout->days->first(
-            fn($d) => $d->exercises->contains(fn($ex) => in_array((int) $ex->id, $todayLogIds, true))
-        );
+        $inProgressDay = null;
+        $lastCompletedTodayIndex = null;
 
-        $mappedCurrentDay = $workout->days->first(function ($d) use ($weekdayKeywords, $todayIso) {
+        foreach ($daysOrdered as $idx => $candidateDay) {
+            $candidateTotal = $candidateDay->exercises->count();
+            $candidateDone = $candidateDay->exercises
+                ->filter(fn($ex) => in_array((int) $ex->id, $todayLogIds, true))
+                ->count();
+
+            if ($candidateDone > 0 && $candidateDone < $candidateTotal && !$inProgressDay) {
+                $inProgressDay = $candidateDay;
+            }
+
+            if ($candidateDone > 0 && $candidateTotal > 0 && $candidateDone >= $candidateTotal) {
+                $lastCompletedTodayIndex = $idx;
+            }
+        }
+
+        $nextDayAfterCompleted = $lastCompletedTodayIndex !== null
+            ? $daysOrdered->get($lastCompletedTodayIndex + 1)
+            : null;
+
+        $completedDayToday = $lastCompletedTodayIndex !== null
+            ? $daysOrdered->get($lastCompletedTodayIndex)
+            : null;
+
+        $mappedCurrentDay = $daysOrdered->first(function ($d) use ($weekdayKeywords, $todayIso) {
             $name = \Illuminate\Support\Str::ascii(
                 mb_strtolower((string) $d->name, 'UTF-8')
             );
@@ -156,8 +179,13 @@
             return false;
         });
 
-        $currentDay = $dayWithTodayLogs ?: $mappedCurrentDay ?: $workout->days->first();
-        $initialOpenDayId = $currentDay?->id ?? $workout->days->first()?->id;
+        $currentDay = $inProgressDay
+            ?: $nextDayAfterCompleted
+            ?: $completedDayToday
+            ?: $mappedCurrentDay
+            ?: $daysOrdered->first();
+
+        $initialOpenDayId = $currentDay?->id ?? $daysOrdered->first()?->id;
         $todayTotal = $currentDay ? $currentDay->exercises->count() : 1;
         $todayDone = $currentDay
             ? $currentDay->exercises->filter(fn($ex) => in_array((int) $ex->id, $todayLogIds, true))->count()
