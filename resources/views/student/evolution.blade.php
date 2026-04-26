@@ -246,14 +246,42 @@
                     <h3 class="text-lg leading-6 font-medium text-white">Histórico de Medidas</h3>
                 </div>
                 <div class="overflow-x-auto">
+                    @php
+                        $circumferenceHistoryColumns = [
+                            ['field' => 'chest', 'label' => 'Peitoral'],
+                            ['field' => 'ombro', 'label' => 'Ombro'],
+                            ['field' => 'torax', 'label' => 'Tórax'],
+                            ['field' => 'waist', 'label' => 'Cintura'],
+                            ['field' => 'abdomen', 'label' => 'Abdômen'],
+                            ['field' => 'abdomen_inferior', 'label' => 'Abd. Inferior'],
+                            ['field' => 'hips', 'label' => 'Quadril'],
+                            ['field' => 'right_arm', 'label' => 'Braço D'],
+                            ['field' => 'left_arm', 'label' => 'Braço E'],
+                            ['field' => 'right_arm_contracted', 'label' => 'Braço Contraído D'],
+                            ['field' => 'left_arm_contracted', 'label' => 'Braço Contraído E'],
+                            ['field' => 'right_forearm', 'label' => 'Antebraço D'],
+                            ['field' => 'left_forearm', 'label' => 'Antebraço E'],
+                            ['field' => 'right_thigh', 'label' => 'Coxa D'],
+                            ['field' => 'left_thigh', 'label' => 'Coxa E'],
+                            ['field' => 'right_thigh_proximal', 'label' => 'Coxa Prox. D'],
+                            ['field' => 'right_thigh_medial', 'label' => 'Coxa Medial D'],
+                            ['field' => 'right_thigh_distal', 'label' => 'Coxa Distal D'],
+                            ['field' => 'left_thigh_proximal', 'label' => 'Coxa Prox. E'],
+                            ['field' => 'left_thigh_medial', 'label' => 'Coxa Medial E'],
+                            ['field' => 'left_thigh_distal', 'label' => 'Coxa Distal E'],
+                            ['field' => 'right_calf', 'label' => 'Panturrilha D'],
+                            ['field' => 'left_calf', 'label' => 'Panturrilha E'],
+                        ];
+                    @endphp
                     <table class="min-w-full divide-y divide-gray-700">
                         <thead class="bg-gray-700/50">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Data</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Peso</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Gordura</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Cintura</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Abdômen</th>
+                                @foreach($circumferenceHistoryColumns as $column)
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">{{ $column['label'] }}</th>
+                                @endforeach
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-700">
@@ -262,8 +290,12 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ $measurement->date->format('d/m/Y') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{{ $measurement->weight }} kg</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{{ $measurement->body_fat }}%</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{{ $measurement->waist ?? '-' }} cm</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{{ $measurement->abdomen ?? '-' }} cm</td>
+                                    @foreach($circumferenceHistoryColumns as $column)
+                                        @php $value = $measurement->{$column['field']}; @endphp
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                                            {{ $value !== null && $value !== '' ? $value . ' cm' : '-' }}
+                                        </td>
+                                    @endforeach
                                 </tr>
                             @endforeach
                         </tbody>
