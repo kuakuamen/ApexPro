@@ -240,66 +240,182 @@
                 </div>
             </div>
 
-            <!-- Tabela Detalhada -->
-            <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden">
+            <!-- Comparativo de Medidas (mobile-first) -->
+            @php
+                $firstMeasurement = $measurements->first();
+                $lastMeasurement = $measurements->last();
+                $startDate = $firstMeasurement?->date?->format('d/m/Y');
+                $endDate = $lastMeasurement?->date?->format('d/m/Y');
+
+                $comparisonSections = [
+                    [
+                        'key' => 'composition',
+                        'title' => 'Composicao Corporal',
+                        'variationMode' => 'neutral',
+                        'rows' => [
+                            ['field' => 'weight', 'label' => 'Peso (kg)', 'decimals' => 1, 'unit' => 'kg'],
+                            ['field' => 'body_fat', 'label' => '% Gordura', 'decimals' => 1, 'unit' => '%'],
+                            ['field' => 'muscle_mass', 'label' => 'Massa Muscular (kg)', 'decimals' => 1, 'unit' => 'kg'],
+                        ],
+                    ],
+                    [
+                        'key' => 'circumferences',
+                        'title' => 'Circunferencias (cm)',
+                        'variationMode' => 'neutral',
+                        'rows' => [
+                            ['field' => 'chest', 'label' => 'Peitoral', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'ombro', 'label' => 'Ombro', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'torax', 'label' => 'Torax', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'waist', 'label' => 'Cintura', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'abdomen', 'label' => 'Abdomen', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'abdomen_inferior', 'label' => 'Abd. Inferior', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'hips', 'label' => 'Quadril', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'right_arm', 'label' => 'Braco D', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'left_arm', 'label' => 'Braco E', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'right_arm_contracted', 'label' => 'Braco Contraido D', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'left_arm_contracted', 'label' => 'Braco Contraido E', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'right_forearm', 'label' => 'Antebraco D', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'left_forearm', 'label' => 'Antebraco E', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'right_thigh', 'label' => 'Coxa D', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'left_thigh', 'label' => 'Coxa E', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'right_thigh_proximal', 'label' => 'Coxa Prox. D', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'right_thigh_medial', 'label' => 'Coxa Medial D', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'right_thigh_distal', 'label' => 'Coxa Distal D', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'left_thigh_proximal', 'label' => 'Coxa Prox. E', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'left_thigh_medial', 'label' => 'Coxa Medial E', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'left_thigh_distal', 'label' => 'Coxa Distal E', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'right_calf', 'label' => 'Panturrilha D', 'decimals' => 1, 'unit' => 'cm'],
+                            ['field' => 'left_calf', 'label' => 'Panturrilha E', 'decimals' => 1, 'unit' => 'cm'],
+                        ],
+                    ],
+                    [
+                        'key' => 'skinfolds',
+                        'title' => 'Dobras Cutaneas (mm)',
+                        'variationMode' => 'skinfold',
+                        'rows' => [
+                            ['field' => 'subescapular', 'label' => 'Subescapular', 'decimals' => 1, 'unit' => 'mm'],
+                            ['field' => 'tricipital', 'label' => 'Tricipital', 'decimals' => 1, 'unit' => 'mm'],
+                            ['field' => 'bicipital', 'label' => 'Bicipital', 'decimals' => 1, 'unit' => 'mm'],
+                            ['field' => 'toracica', 'label' => 'Toracica', 'decimals' => 1, 'unit' => 'mm'],
+                            ['field' => 'abdominal_fold', 'label' => 'Abdominal', 'decimals' => 1, 'unit' => 'mm'],
+                            ['field' => 'axilar_media', 'label' => 'Axilar Media', 'decimals' => 1, 'unit' => 'mm'],
+                            ['field' => 'suprailiaca', 'label' => 'Supra-iliaca', 'decimals' => 1, 'unit' => 'mm'],
+                            ['field' => 'coxa_fold', 'label' => 'Coxa', 'decimals' => 1, 'unit' => 'mm'],
+                            ['field' => 'panturrilha_fold', 'label' => 'Panturrilha', 'decimals' => 1, 'unit' => 'mm'],
+                            ['field' => 'sum_skinfolds', 'label' => 'Soma (mm)', 'decimals' => 1, 'unit' => 'mm'],
+                        ],
+                    ],
+                ];
+
+                $formatMetric = function ($value, $decimals = 1, $unit = '') {
+                    if ($value === null || $value === '') {
+                        return '—';
+                    }
+                    $formatted = is_numeric($value)
+                        ? number_format((float) $value, $decimals, ',', '.')
+                        : $value;
+
+                    return trim($formatted . ($unit ? ' ' . $unit : ''));
+                };
+
+                $formatVariation = function ($initial, $final, $decimals = 1) {
+                    if ($initial === null || $initial === '' || $final === null || $final === '') {
+                        return '—';
+                    }
+                    $delta = (float) $final - (float) $initial;
+                    if (abs($delta) < 0.00001) {
+                        return '=';
+                    }
+
+                    return ($delta > 0 ? '+' : '-') . number_format(abs($delta), $decimals, ',', '.');
+                };
+
+                $variationClass = function ($initial, $final, $mode = 'neutral') {
+                    if ($initial === null || $initial === '' || $final === null || $final === '') {
+                        return 'text-slate-400';
+                    }
+                    $delta = (float) $final - (float) $initial;
+                    if (abs($delta) < 0.00001) {
+                        return 'text-slate-300';
+                    }
+
+                    if ($mode === 'skinfold') {
+                        return $delta < 0 ? 'text-emerald-400' : 'text-rose-400';
+                    }
+
+                    return 'text-cyan-300';
+                };
+            @endphp
+
+            <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden"
+                 x-data="{ composition: true, circumferences: true, skinfolds: true }">
                 <div class="p-5 border-b border-gray-700">
-                    <h3 class="text-lg leading-6 font-medium text-white">Histórico de Medidas</h3>
+                    <div>
+                        <h3 class="text-lg leading-6 font-semibold text-white">Comparativo de Medidas</h3>
+                        <p class="text-xs text-slate-400 mt-1">
+                            {{ $startDate ?? '—' }} — {{ $endDate ?? '—' }}
+                        </p>
+                    </div>
                 </div>
-                <div class="overflow-x-auto">
-                    @php
-                        $circumferenceHistoryColumns = [
-                            ['field' => 'chest', 'label' => 'Peitoral'],
-                            ['field' => 'ombro', 'label' => 'Ombro'],
-                            ['field' => 'torax', 'label' => 'Tórax'],
-                            ['field' => 'waist', 'label' => 'Cintura'],
-                            ['field' => 'abdomen', 'label' => 'Abdômen'],
-                            ['field' => 'abdomen_inferior', 'label' => 'Abd. Inferior'],
-                            ['field' => 'hips', 'label' => 'Quadril'],
-                            ['field' => 'right_arm', 'label' => 'Braço D'],
-                            ['field' => 'left_arm', 'label' => 'Braço E'],
-                            ['field' => 'right_arm_contracted', 'label' => 'Braço Contraído D'],
-                            ['field' => 'left_arm_contracted', 'label' => 'Braço Contraído E'],
-                            ['field' => 'right_forearm', 'label' => 'Antebraço D'],
-                            ['field' => 'left_forearm', 'label' => 'Antebraço E'],
-                            ['field' => 'right_thigh', 'label' => 'Coxa D'],
-                            ['field' => 'left_thigh', 'label' => 'Coxa E'],
-                            ['field' => 'right_thigh_proximal', 'label' => 'Coxa Prox. D'],
-                            ['field' => 'right_thigh_medial', 'label' => 'Coxa Medial D'],
-                            ['field' => 'right_thigh_distal', 'label' => 'Coxa Distal D'],
-                            ['field' => 'left_thigh_proximal', 'label' => 'Coxa Prox. E'],
-                            ['field' => 'left_thigh_medial', 'label' => 'Coxa Medial E'],
-                            ['field' => 'left_thigh_distal', 'label' => 'Coxa Distal E'],
-                            ['field' => 'right_calf', 'label' => 'Panturrilha D'],
-                            ['field' => 'left_calf', 'label' => 'Panturrilha E'],
-                        ];
-                    @endphp
-                    <table class="min-w-full divide-y divide-gray-700">
-                        <thead class="bg-gray-700/50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Data</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Peso</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Gordura</th>
-                                @foreach($circumferenceHistoryColumns as $column)
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">{{ $column['label'] }}</th>
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-700">
-                            @foreach($measurements->reverse() as $measurement)
-                                <tr class="hover:bg-gray-700/30 transition">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ $measurement->date->format('d/m/Y') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{{ $measurement->weight }} kg</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{{ $measurement->body_fat }}%</td>
-                                    @foreach($circumferenceHistoryColumns as $column)
-                                        @php $value = $measurement->{$column['field']}; @endphp
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                                            {{ $value !== null && $value !== '' ? $value . ' cm' : '-' }}
-                                        </td>
+
+                <div class="p-4 space-y-4">
+                    @foreach($comparisonSections as $section)
+                        @php
+                            $visibleRows = collect($section['rows'])->filter(function ($row) use ($firstMeasurement, $lastMeasurement) {
+                                $initial = $firstMeasurement?->{$row['field']} ?? null;
+                                $final = $lastMeasurement?->{$row['field']} ?? null;
+
+                                return ($initial !== null && $initial !== '') || ($final !== null && $final !== '');
+                            })->values();
+                        @endphp
+
+                        <section class="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
+                            <button type="button"
+                                    class="w-full flex items-center justify-between px-4 py-3 text-left"
+                                    @click="{{ $section['key'] }} = !{{ $section['key'] }}">
+                                <span class="text-sm font-bold text-cyan-300 uppercase tracking-wide">{{ $section['title'] }}</span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform"
+                                     :class="{{ $section['key'] }} ? 'rotate-180' : ''"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+
+                            <div x-show="{{ $section['key'] }}" style="display: none;" class="px-4 pb-4 space-y-2.5">
+                                @if($visibleRows->isEmpty())
+                                    <div class="rounded-lg border border-white/10 bg-white/[0.02] p-3 text-xs text-slate-400">
+                                        Sem dados suficientes para comparar nesta seção.
+                                    </div>
+                                @else
+                                    @foreach($visibleRows as $row)
+                                        @php
+                                            $initial = $firstMeasurement?->{$row['field']} ?? null;
+                                            $final = $lastMeasurement?->{$row['field']} ?? null;
+                                            $variationText = $formatVariation($initial, $final, $row['decimals']);
+                                            $variationTone = $variationClass($initial, $final, $section['variationMode']);
+                                        @endphp
+                                        <div class="rounded-lg border border-white/10 bg-white/[0.015] p-3">
+                                            <p class="text-sm font-semibold text-white">{{ $row['label'] }}</p>
+                                            <div class="mt-2 grid grid-cols-3 gap-2">
+                                                <div class="rounded-md border border-white/10 bg-white/[0.02] px-2.5 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-slate-500">{{ $startDate ?? 'Inicial' }}</p>
+                                                    <p class="text-xs font-semibold text-slate-200 mt-0.5">{{ $formatMetric($initial, $row['decimals'], $row['unit']) }}</p>
+                                                </div>
+                                                <div class="rounded-md border border-white/10 bg-white/[0.02] px-2.5 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-slate-500">{{ $endDate ?? 'Final' }}</p>
+                                                    <p class="text-xs font-semibold text-slate-200 mt-0.5">{{ $formatMetric($final, $row['decimals'], $row['unit']) }}</p>
+                                                </div>
+                                                <div class="rounded-md border border-white/10 bg-white/[0.02] px-2.5 py-2">
+                                                    <p class="text-[10px] uppercase tracking-wide text-slate-500">Variacao</p>
+                                                    <p class="text-xs font-bold mt-0.5 {{ $variationTone }}">{{ $variationText }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     @endforeach
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                                @endif
+                            </div>
+                        </section>
+                    @endforeach
                 </div>
             </div>
         </div>
