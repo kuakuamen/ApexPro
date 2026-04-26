@@ -177,19 +177,18 @@
                 <p class="text-purple-300 text-xs font-bold uppercase tracking-widest mb-1">Treino do Dia</p>
                 <h2 class="text-white text-2xl font-extrabold leading-tight">{{ $activeWorkout->name }}</h2>
                 <p class="text-slate-400 text-sm mt-1">
-                    {{ $activeWorkout->goal ?? 'Sem objetivo definido' }}
+                    {{ $currentWorkoutDay?->name ?? ($activeWorkout->goal ?? 'Sem objetivo definido') }}
                     @php $totalEx = $activeWorkout->days->sum(fn($d) => $d->exercises->count()); @endphp
                     · {{ $totalEx }} exercícios
                 </p>
             </div>
             <div class="text-right flex-shrink-0 ml-3">
-                <span class="text-white text-2xl font-extrabold">{{ $weekDaysWorked }}</span>
+                <span class="text-white text-2xl font-extrabold">{{ $currentWorkoutDayNumber ?? 0 }}</span>
                 <p class="text-slate-400 text-xs">de {{ $totalWorkoutDays }} dias</p>
             </div>
         </div>
-        @php $firstDay = $activeWorkout->days->first(); @endphp
-        @if($firstDay)
-        <a href="{{ route('student.workout.active', [$activeWorkout, $firstDay]) }}" class="btn-start mt-2">
+        @if($currentWorkoutDay)
+        <a href="{{ route('student.workout.active', ['workout' => $activeWorkout, 'day' => $currentWorkoutDay]) }}" class="btn-start mt-2">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             Iniciar Treino
         </a>

@@ -128,62 +128,11 @@
     {{-- PROGRESS BAR — total = exercícios do dia sendo trabalhado hoje --}}
     @php
         $todayLogIds = array_map('intval', $todayLogs ?? []);
-        $daysOrdered = $workout->days->values();
-        $todayIso = now('America/Sao_Paulo')->dayOfWeekIso; // 1=Seg ... 7=Dom
-        $weekdayKeywords = [
-            1 => ['segunda'],
-            2 => ['terca'],
-            3 => ['quarta'],
-            4 => ['quinta'],
-            5 => ['sexta'],
-            6 => ['sabado'],
-            7 => ['domingo'],
-        ];
-
-        $inProgressDay = null;
-        $lastCompletedTodayIndex = null;
-
-        foreach ($daysOrdered as $idx => $candidateDay) {
-            $candidateTotal = $candidateDay->exercises->count();
-            $candidateDone = $candidateDay->exercises
-                ->filter(fn($ex) => in_array((int) $ex->id, $todayLogIds, true))
-                ->count();
-
-            if ($candidateDone > 0 && $candidateDone < $candidateTotal && !$inProgressDay) {
-                $inProgressDay = $candidateDay;
-            }
-
-            if ($candidateDone > 0 && $candidateTotal > 0 && $candidateDone >= $candidateTotal) {
-                $lastCompletedTodayIndex = $idx;
-            }
-        }
-
-        $nextDayAfterCompleted = $lastCompletedTodayIndex !== null
-            ? $daysOrdered->get($lastCompletedTodayIndex + 1)
-            : null;
-
-        $completedDayToday = $lastCompletedTodayIndex !== null
-            ? $daysOrdered->get($lastCompletedTodayIndex)
-            : null;
-
-        $mappedCurrentDay = $daysOrdered->first(function ($d) use ($weekdayKeywords, $todayIso) {
-            $name = \Illuminate\Support\Str::ascii(
-                mb_strtolower((string) $d->name, 'UTF-8')
-            );
-            foreach ($weekdayKeywords[$todayIso] ?? [] as $keyword) {
-                if (str_contains($name, $keyword)) {
-                    return true;
-                }
-            }
-
-            return false;
-        });
-
-        $currentDay = $inProgressDay
-            ?: $nextDayAfterCompleted
-            ?: $completedDayToday
-            ?: $mappedCurrentDay
-            ?: $daysOrdered->first();
+        $completedEverIds = array_map('intval', $completedExerciseIdsEver ?? []);
+        $daysOrdered = $workout->days->sortBy('order')->values();
+        $currentDay = $daysOrdered->first(
+            fn($d) => (int) $d->id === (int) ($currentDayId ?? 0)
+        ) ?: $daysOrdered->first();
 
         $initialOpenDayId = $currentDay?->id ?? $daysOrdered->first()?->id;
         $todayTotal = $currentDay ? $currentDay->exercises->count() : 1;
@@ -216,7 +165,7 @@
         @php
             $isCurrentDay = auth()->user()->role === 'aluno' && $currentDay && $currentDay->id === $day->id;
             $firstPendingExerciseId = $day->exercises->first(
-                fn($ex) => !in_array((int) $ex->id, $todayLogIds ?? [], true)
+                fn($ex) => !in_array((int) $ex->id, $completedEverIds ?? [], true)
             )?->id ?? $day->exercises->first()?->id;
         @endphp
         <div x-data="{ open: {{ $initialOpenDayId === $day->id ? 'true' : 'false' }} }">
@@ -258,14 +207,14 @@
                 @foreach($day->exercises as $exercise)
                     @if(auth()->user()->role === 'aluno')
                     {{-- Card simples: nome + chips + botão Iniciar --}}
-                    <div class="exercise-card" style="{{ in_array($exercise->id, $todayLogs ?? []) ? 'opacity:0.55;' : '' }}">
+                    <div class="exercise-card" style="{{ in_array((int) $exercise->id, $completedEverIds ?? [], true) ? 'opacity:0.55;' : '' }}">
                         <div class="flex items-center gap-3 p-4 pb-3">
                             <div class="flex-1 min-w-0">
-                                <p class="text-white font-bold text-sm leading-snug {{ in_array($exercise->id, $todayLogs ?? []) ? 'line-through text-slate-400' : '' }}">
+                                <p class="text-white font-bold text-sm leading-snug {{ in_array((int) $exercise->id, $completedEverIds ?? [], true) ? 'line-through text-slate-400' : '' }}">
                                     {{ $exercise->name }}
                                 </p>
                             </div>
-                            @if(in_array($exercise->id, $todayLogs ?? []))
+                            @if(in_array((int) $exercise->id, $completedEverIds ?? [], true))
                             <div class="ex-check-done flex-shrink-0">
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>

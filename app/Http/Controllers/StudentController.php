@@ -41,6 +41,62 @@ class StudentController extends Controller
         return (int) round($total);
     }
 
+    private function resolveCurrentWorkoutDay(WorkoutPlan $workout, int $studentId): array
+    {
+        $workout->loadMissing('days.exercises');
+        $daysOrdered = $workout->days->sortBy('order')->values();
+
+        if ($daysOrdered->isEmpty()) {
+            return [null, null];
+        }
+
+        $exerciseIds = $daysOrdered
+            ->flatMap(fn($day) => $day->exercises->pluck('id'))
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $completedExerciseIds = $exerciseIds->isEmpty()
+            ? []
+            : WorkoutLog::where('student_id', $studentId)
+                ->whereIn('exercise_id', $exerciseIds)
+                ->pluck('exercise_id')
+                ->map(fn($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+        $completedLookup = array_flip($completedExerciseIds);
+        $currentDay = null;
+
+        foreach ($daysOrdered as $day) {
+            $totalExercises = $day->exercises->count();
+            if ($totalExercises === 0) {
+                continue;
+            }
+
+            $dayCompleted = $day->exercises->every(
+                fn($exercise) => isset($completedLookup[(int) $exercise->id])
+            );
+
+            if (!$dayCompleted) {
+                $currentDay = $day;
+                break;
+            }
+        }
+
+        if (!$currentDay) {
+            $currentDay = $daysOrdered->last() ?: $daysOrdered->first();
+        }
+
+        $dayNumberIndex = $daysOrdered->search(
+            fn($day) => (int) $day->id === (int) $currentDay->id
+        );
+        $currentDayNumber = $dayNumberIndex === false ? null : ((int) $dayNumberIndex + 1);
+
+        return [$currentDay, $currentDayNumber];
+    }
+
     public function dashboard()
     {
         /** @var \App\Models\User $user */
@@ -61,6 +117,12 @@ class StudentController extends Controller
             
         if ($activeWorkout) {
             $activeWorkout->load('days.exercises');
+        }
+
+        $currentWorkoutDay = null;
+        $currentWorkoutDayNumber = null;
+        if ($activeWorkout) {
+            [$currentWorkoutDay, $currentWorkoutDayNumber] = $this->resolveCurrentWorkoutDay($activeWorkout, $user->id);
         }
 
         // Ultimo plano alimentar ativo
@@ -120,7 +182,8 @@ class StudentController extends Controller
         return view('student.dashboard', compact(
             'user', 'professional', 'activeWorkout', 'activeDiet', 'activeDietTotalCalories', 'weightHistory',
             'logsThisWeek', 'weekDaysWorked', 'totalWorkoutDays',
-            'streak', 'lastTrainingDate', 'lastTrainingDaysAgo'
+            'streak', 'lastTrainingDate', 'lastTrainingDaysAgo',
+            'currentWorkoutDay', 'currentWorkoutDayNumber'
         ));
     }
 
@@ -135,8 +198,9 @@ class StudentController extends Controller
 
         $day->load('exercises');
 
+        $todayDate = now('America/Sao_Paulo')->toDateString();
         $todayLogs = WorkoutLog::where('student_id', $user->id)
-            ->whereDate('date', today())
+            ->whereDate('date', $todayDate)
             ->pluck('exercise_id')
             ->toArray();
 
@@ -147,18 +211,12 @@ class StudentController extends Controller
             $exerciseIds = $day->exercises->pluck('id')->map(fn($id) => (int) $id)->values();
 
             if ($exerciseIds->contains($requestedExerciseId)) {
-                if (!in_array($requestedExerciseId, $todayLogs, true)) {
-                    $startExerciseId = $requestedExerciseId;
-                } else {
-                    $clickedIndex = $exerciseIds->search($requestedExerciseId);
-                    $nextPending = $clickedIndex !== false
-                        ? $exerciseIds->slice($clickedIndex + 1)->first(fn($id) => !in_array($id, $todayLogs, true))
-                        : null;
-
-                    $startExerciseId = $nextPending
-                        ?: $exerciseIds->first(fn($id) => !in_array($id, $todayLogs, true));
-                }
+                $startExerciseId = $requestedExerciseId;
             }
+        }
+
+        if (!$startExerciseId) {
+            $startExerciseId = $day->exercises->first()?->id;
         }
 
         return view('student.active-workout', compact('workout', 'day', 'todayLogs', 'startExerciseId'));

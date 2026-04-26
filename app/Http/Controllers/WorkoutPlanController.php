@@ -47,7 +47,7 @@ class WorkoutPlanController extends Controller
                 return response()->json(['error' => 'Exercício não encontrado'], 404);
             }
             
-            $date = now()->format('Y-m-d');
+            $date = now('America/Sao_Paulo')->toDateString();
 
             // Verificar se já existe log para hoje
             $log = WorkoutLog::where('student_id', $user->id)
@@ -55,20 +55,35 @@ class WorkoutPlanController extends Controller
                 ->where('date', $date)
                 ->first();
 
+            // Modo idempotente para a tela active-workout (não desmarca se já existir)
+            if ((string) $request->input('mode', '') === 'complete') {
+                if (!$log) {
+                    WorkoutLog::create([
+                        'student_id' => $user->id,
+                        'exercise_id' => $exerciseId,
+                        'date' => $date,
+                        'completed_at' => now('America/Sao_Paulo'),
+                    ]);
+                }
+
+                return response()->json(['status' => 'completed', 'message' => 'Exercício marcado']);
+            }
+
             if ($log) {
                 // Se existe, apaga (desmarca)
                 $log->delete();
                 return response()->json(['status' => 'uncompleted', 'message' => 'Exercício desmarcado']);
-            } else {
-                // Se não existe, cria (marca)
-                WorkoutLog::create([
-                    'student_id' => $user->id,
-                    'exercise_id' => $exerciseId,
-                    'date' => $date,
-                    'completed_at' => now(),
-                ]);
-                return response()->json(['status' => 'completed', 'message' => 'Exercício marcado']);
             }
+
+            // Se não existe, cria (marca)
+            WorkoutLog::create([
+                'student_id' => $user->id,
+                'exercise_id' => $exerciseId,
+                'date' => $date,
+                'completed_at' => now('America/Sao_Paulo'),
+            ]);
+
+            return response()->json(['status' => 'completed', 'message' => 'Exercício marcado']);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Erro ao processing: ' . $e->getMessage()], 500);
         }
@@ -635,13 +650,71 @@ class WorkoutPlanController extends Controller
         }
 
         $workout->load('days.exercises');
+        $workout->setRelation('days', $workout->days->sortBy('order')->values());
 
-        // Carregar logs de hoje do aluno
-        $todayLogs = WorkoutLog::where('student_id', Auth::id())
-            ->where('date', now()->format('Y-m-d'))
-            ->pluck('exercise_id')
-            ->toArray();
+        $todayLogs = [];
+        $completedExerciseIdsEver = [];
+        $currentDayId = null;
 
-        return view('workouts.show', compact('workout', 'todayLogs'));
+        $isStudentViewer = Auth::id() === $workout->student_id;
+        if ($isStudentViewer) {
+            $todayDate = now('America/Sao_Paulo')->toDateString();
+
+            // Logs de hoje (somente para progresso diário)
+            $todayLogs = WorkoutLog::where('student_id', Auth::id())
+                ->whereDate('date', $todayDate)
+                ->pluck('exercise_id')
+                ->map(fn($id) => (int) $id)
+                ->values()
+                ->all();
+
+            $exerciseIds = $workout->days
+                ->flatMap(fn($day) => $day->exercises->pluck('id'))
+                ->map(fn($id) => (int) $id)
+                ->unique()
+                ->values();
+
+            if ($exerciseIds->isNotEmpty()) {
+                $completedExerciseIdsEver = WorkoutLog::where('student_id', Auth::id())
+                    ->whereIn('exercise_id', $exerciseIds)
+                    ->pluck('exercise_id')
+                    ->map(fn($id) => (int) $id)
+                    ->unique()
+                    ->values()
+                    ->all();
+            }
+
+            $completedLookup = array_flip($completedExerciseIdsEver);
+            $currentDay = null;
+
+            foreach ($workout->days as $day) {
+                $totalExercises = $day->exercises->count();
+                if ($totalExercises === 0) {
+                    continue;
+                }
+
+                $dayCompleted = $day->exercises->every(
+                    fn($exercise) => isset($completedLookup[(int) $exercise->id])
+                );
+
+                if (!$dayCompleted) {
+                    $currentDay = $day;
+                    break;
+                }
+            }
+
+            if (!$currentDay) {
+                $currentDay = $workout->days->last() ?: $workout->days->first();
+            }
+
+            $currentDayId = $currentDay?->id;
+        }
+
+        return view('workouts.show', compact(
+            'workout',
+            'todayLogs',
+            'completedExerciseIdsEver',
+            'currentDayId'
+        ));
     }
 }

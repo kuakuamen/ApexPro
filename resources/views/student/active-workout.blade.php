@@ -316,21 +316,19 @@ function activeWorkout(exercises, todayLogs, startExerciseId = null) {
         workoutDone: false,
 
         init() {
-            const completedToday = new Set((todayLogs || []).map(v => Number(v)));
-
             if (startExerciseId) {
                 const preferredIdx = this.exercises.findIndex(
-                    ex => Number(ex.id) === Number(startExerciseId) && !completedToday.has(Number(ex.id))
+                    ex => Number(ex.id) === Number(startExerciseId)
                 );
                 if (preferredIdx >= 0) {
                     this.currentIdx = preferredIdx;
                 }
             }
 
-            // Se não tiver exercício específico (ou ele já estava concluído), inicia no primeiro pendente
-            while (this.currentIdx < this.exercises.length &&
-                   completedToday.has(Number(this.exercises[this.currentIdx].id))) {
-                this.currentIdx++;
+            // Mantém acesso mesmo para exercício já concluído no dia.
+            // Quando não vem exercício específico, inicia no primeiro da lista.
+            if (this.currentIdx >= this.exercises.length) {
+                this.currentIdx = 0;
             }
             if (this.currentIdx >= this.exercises.length) {
                 this.workoutDone = true;
@@ -419,7 +417,8 @@ function activeWorkout(exercises, todayLogs, startExerciseId = null) {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                }
+                },
+                body: JSON.stringify({ mode: 'complete' })
             }).catch(() => {});
         },
 
