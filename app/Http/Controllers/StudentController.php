@@ -124,13 +124,14 @@ class StudentController extends Controller
         ));
     }
 
-    public function activeWorkout(WorkoutPlan $workout, WorkoutDay $day)
+    public function activeWorkout(Request $request, WorkoutPlan $workout, WorkoutDay $day)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // Garante que o treino pertence ao aluno
         abort_if($workout->student_id !== $user->id, 403);
+        abort_if($day->workout_plan_id !== $workout->id, 404);
 
         $day->load('exercises');
 
@@ -139,7 +140,28 @@ class StudentController extends Controller
             ->pluck('exercise_id')
             ->toArray();
 
-        return view('student.active-workout', compact('workout', 'day', 'todayLogs'));
+        $requestedExerciseId = (int) $request->query('exercise_id', 0);
+        $startExerciseId = null;
+
+        if ($requestedExerciseId > 0) {
+            $exerciseIds = $day->exercises->pluck('id')->map(fn($id) => (int) $id)->values();
+
+            if ($exerciseIds->contains($requestedExerciseId)) {
+                if (!in_array($requestedExerciseId, $todayLogs, true)) {
+                    $startExerciseId = $requestedExerciseId;
+                } else {
+                    $clickedIndex = $exerciseIds->search($requestedExerciseId);
+                    $nextPending = $clickedIndex !== false
+                        ? $exerciseIds->slice($clickedIndex + 1)->first(fn($id) => !in_array($id, $todayLogs, true))
+                        : null;
+
+                    $startExerciseId = $nextPending
+                        ?: $exerciseIds->first(fn($id) => !in_array($id, $todayLogs, true));
+                }
+            }
+        }
+
+        return view('student.active-workout', compact('workout', 'day', 'todayLogs', 'startExerciseId'));
     }
 
     public function progress()

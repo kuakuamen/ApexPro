@@ -127,13 +127,41 @@
     @if(auth()->user()->role === 'aluno')
     {{-- PROGRESS BAR — total = exercícios do dia sendo trabalhado hoje --}}
     @php
-        $todayLogIds = $todayLogs ?? [];
-        // Acha o dia que tem exercícios logados hoje; senão usa o primeiro dia
-        $workingDay = $workout->days->first(
-            fn($d) => $d->exercises->contains(fn($ex) => in_array($ex->id, $todayLogIds))
-        ) ?? $workout->days->first();
-        $todayTotal = $workingDay ? $workingDay->exercises->count() : 1;
-        $todayDone  = count($todayLogIds);
+        $todayLogIds = array_map('intval', $todayLogs ?? []);
+        $todayIso = now('America/Sao_Paulo')->dayOfWeekIso; // 1=Seg ... 7=Dom
+        $weekdayKeywords = [
+            1 => ['segunda'],
+            2 => ['terca'],
+            3 => ['quarta'],
+            4 => ['quinta'],
+            5 => ['sexta'],
+            6 => ['sabado'],
+            7 => ['domingo'],
+        ];
+
+        $dayWithTodayLogs = $workout->days->first(
+            fn($d) => $d->exercises->contains(fn($ex) => in_array((int) $ex->id, $todayLogIds, true))
+        );
+
+        $mappedCurrentDay = $workout->days->first(function ($d) use ($weekdayKeywords, $todayIso) {
+            $name = \Illuminate\Support\Str::ascii(
+                mb_strtolower((string) $d->name, 'UTF-8')
+            );
+            foreach ($weekdayKeywords[$todayIso] ?? [] as $keyword) {
+                if (str_contains($name, $keyword)) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        $currentDay = $dayWithTodayLogs ?: $mappedCurrentDay ?: $workout->days->first();
+        $initialOpenDayId = $currentDay?->id ?? $workout->days->first()?->id;
+        $todayTotal = $currentDay ? $currentDay->exercises->count() : 1;
+        $todayDone = $currentDay
+            ? $currentDay->exercises->filter(fn($ex) => in_array((int) $ex->id, $todayLogIds, true))->count()
+            : count($todayLogIds);
     @endphp
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;"
          x-data="{ current: {{ $todayDone }}, total: {{ $todayTotal }} }"
@@ -143,7 +171,7 @@
                 <p class="text-white font-bold text-sm">Progresso de Hoje</p>
                 <p class="text-slate-500 text-xs mt-0.5">
                     <span x-text="current"></span> de {{ $todayTotal }} exercícios
-                    @if($workingDay) · {{ $workingDay->name }} @endif
+                    @if($currentDay) · {{ $currentDay->name }} @endif
                 </p>
             </div>
             <p class="text-indigo-400 font-extrabold text-2xl" x-text="Math.round((current / total) * 100) + '%'"></p>
@@ -157,7 +185,13 @@
     {{-- DAY SECTIONS --}}
     <div class="space-y-3">
         @foreach($workout->days as $day)
-        <div x-data="{ open: {{ $loop->first ? 'true' : 'false' }} }">
+        @php
+            $isCurrentDay = auth()->user()->role === 'aluno' && $currentDay && $currentDay->id === $day->id;
+            $firstPendingExerciseId = $day->exercises->first(
+                fn($ex) => !in_array((int) $ex->id, $todayLogIds ?? [], true)
+            )?->id ?? $day->exercises->first()?->id;
+        @endphp
+        <div x-data="{ open: {{ $initialOpenDayId === $day->id ? 'true' : 'false' }} }">
             {{-- Day Header --}}
             <div :class="open ? 'day-header open' : 'day-header'" style="display:flex;align-items:center;gap:10px;">
                 <button type="button" @click="open = !open" style="display:flex;align-items:center;gap:12px;flex:1;text-align:left;">
@@ -167,11 +201,16 @@
                     </div>
                     <div class="text-left">
                         <p class="text-white font-bold text-sm">{{ $day->name }}</p>
+                        @if($isCurrentDay)
+                        <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
+                            Treino atual
+                        </span>
+                        @endif
                         <p class="text-slate-500 text-xs">{{ $day->exercises->count() }} exercícios</p>
                     </div>
                 </button>
                 @if(auth()->user()->role === 'aluno')
-                <a href="{{ route('student.workout.active', [$workout, $day]) }}"
+                <a href="{{ route('student.workout.active', ['workout' => $workout, 'day' => $day, 'exercise_id' => $firstPendingExerciseId]) }}"
                    style="flex-shrink:0;display:flex;align-items:center;gap:5px;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:800;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);text-decoration:none;">
                     <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     Iniciar
@@ -225,7 +264,7 @@
 
                         {{-- Botão Iniciar Exercício --}}
                         <div class="px-4 pb-4">
-                            <a href="{{ route('student.workout.active', [$workout, $day]) }}"
+                            <a href="{{ route('student.workout.active', ['workout' => $workout, 'day' => $day, 'exercise_id' => $exercise->id]) }}"
                                style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border-radius:12px;font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);text-decoration:none;">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                                 Iniciar Exercício

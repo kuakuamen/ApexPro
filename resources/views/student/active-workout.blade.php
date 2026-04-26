@@ -143,7 +143,7 @@
 @endphp
 
 <div class="aw-bg"
-     x-data="activeWorkout({{ $exercises->toJson() }}, {{ json_encode($todayLogs) }})">
+     x-data="activeWorkout({{ $exercises->toJson() }}, {{ json_encode($todayLogs) }}, {{ json_encode($startExerciseId ?? null) }})">
 
     {{-- HEADER --}}
     <div class="aw-header">
@@ -290,7 +290,7 @@
 </div>
 
 <script>
-function activeWorkout(exercises, todayLogs) {
+function activeWorkout(exercises, todayLogs, startExerciseId = null) {
     return {
         exercises,
         currentIdx: 0,
@@ -316,9 +316,20 @@ function activeWorkout(exercises, todayLogs) {
         workoutDone: false,
 
         init() {
-            // Pula exercícios já feitos hoje
+            const completedToday = new Set((todayLogs || []).map(v => Number(v)));
+
+            if (startExerciseId) {
+                const preferredIdx = this.exercises.findIndex(
+                    ex => Number(ex.id) === Number(startExerciseId) && !completedToday.has(Number(ex.id))
+                );
+                if (preferredIdx >= 0) {
+                    this.currentIdx = preferredIdx;
+                }
+            }
+
+            // Se não tiver exercício específico (ou ele já estava concluído), inicia no primeiro pendente
             while (this.currentIdx < this.exercises.length &&
-                   todayLogs.includes(this.exercises[this.currentIdx].id)) {
+                   completedToday.has(Number(this.exercises[this.currentIdx].id))) {
                 this.currentIdx++;
             }
             if (this.currentIdx >= this.exercises.length) {
