@@ -205,6 +205,7 @@ Route::middleware(['auth', 'subscription'])->group(function () {
     // Rotas de Dieta (NutriÃƒÂ§ÃƒÂ£o)
     Route::get('/dietas', [DietPlanController::class, 'index'])->name('diets.index');
     Route::get('/dietas/nova', [DietPlanController::class, 'create'])->name('diets.create');
+    Route::get('/dietas/anamnese/pdf', [DietPlanController::class, 'anamnesisQuestionnairePdf'])->name('diets.anamnesis-pdf');
     Route::post('/dietas/gerar-ia', [DietPlanController::class, 'generateWithAi'])->name('diets.generate-ai');
     Route::post('/dietas', [DietPlanController::class, 'store'])->name('diets.store');
     Route::get('/dietas/{diet}', [DietPlanController::class, 'show'])->name('diets.show');

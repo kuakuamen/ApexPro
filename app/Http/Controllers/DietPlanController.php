@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\DietPlan;
 use App\Models\ProfessionalStudent;
 use App\Models\User;
@@ -10,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DietPlanController extends Controller
 {
@@ -295,6 +297,14 @@ class DietPlanController extends Controller
 
         $students = $user->students()->orderBy('name')->get();
         $canUseDietAi = $user->role === 'personal';
+        $studentContactMap = $students
+            ->mapWithKeys(fn(User $student) => [
+                (string) $student->id => [
+                    'name' => (string) $student->name,
+                    'phone' => (string) ($student->phone ?? ''),
+                ],
+            ])
+            ->all();
 
         $studentAnamnesisSeed = [];
         foreach ($students as $student) {
@@ -315,9 +325,46 @@ class DietPlanController extends Controller
         return view('diets.create', compact(
             'students',
             'canUseDietAi',
+            'studentContactMap',
             'studentAnamnesisSeed',
             'initialAnamnesis'
         ));
+    }
+
+    /**
+     * Gera PDF de questionario de anamnese nutricional para envio ao aluno.
+     */
+    public function anamnesisQuestionnairePdf(Request $request)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$this->canManageDiets($user)) {
+            abort(403, 'Apenas profissionais podem gerar este PDF.');
+        }
+
+        $validated = $request->validate([
+            'student_id' => 'required|exists:users,id',
+        ]);
+
+        $studentId = (int) $validated['student_id'];
+
+        if (!$this->studentBelongsToProfessional($user->id, $studentId)) {
+            abort(403, 'Este aluno nao esta vinculado a voce.');
+        }
+
+        $student = User::query()->findOrFail($studentId);
+
+        $pdf = Pdf::loadView('diets.anamnesis-questionnaire-pdf', [
+            'professional' => $user,
+            'student' => $student,
+            'generatedAt' => now('America/Sao_Paulo'),
+        ])->setPaper('a4');
+
+        $studentSlug = Str::slug((string) $student->name, '-');
+        $filename = 'anamnese-nutricional-' . ($studentSlug !== '' ? $studentSlug : 'aluno') . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     /**
@@ -491,4 +538,3 @@ class DietPlanController extends Controller
         }
     }
 }
-

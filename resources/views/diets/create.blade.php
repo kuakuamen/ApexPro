@@ -49,7 +49,7 @@
 
 <div class="max-w-5xl mx-auto space-y-8 pt-4">
     <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden"
-         x-data='dietForm(@json($rawMeals), @json($initialState), @json(route('diets.generate-ai')), @json(csrf_token()), @json($canUseDietAi), @json(array_values($goalOptions)), @json($studentAnamnesisSeed ?? []))'>
+         x-data='dietForm(@json($rawMeals), @json($initialState), @json(route('diets.generate-ai')), @json(csrf_token()), @json($canUseDietAi), @json(array_values($goalOptions)), @json($studentAnamnesisSeed ?? []), @json(route('diets.anamnesis-pdf')), @json($studentContactMap ?? []))'>
         <div class="px-6 py-4 border-b border-gray-700">
             <h1 class="text-2xl font-bold text-white">Criar Novo Plano Alimentar</h1>
             <p class="mt-1 text-gray-400">Monte o plano alimentar do aluno.</p>
@@ -128,9 +128,34 @@
                 </div>
 
                 <div class="bg-gray-900/40 border border-gray-700 rounded-xl p-5 space-y-5">
-                    <div>
-                        <h3 class="text-lg font-semibold text-white">Anamnese Nutricional</h3>
-                        <p class="text-xs text-gray-400 mt-1">Preencha para melhorar a assertividade da dieta da IA e manter historico do aluno.</p>
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div>
+                            <h3 class="text-lg font-semibold text-white">Anamnese Nutricional</h3>
+                            <p class="text-xs text-gray-400 mt-1">Preencha para melhorar a assertividade da dieta da IA e manter historico do aluno.</p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a href="#"
+                               @click.prevent="downloadAnamnesisPdf()"
+                               class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors"
+                               :class="canDownloadAnamnesisPdf()
+                                    ? 'border-indigo-500/35 bg-indigo-500/10 text-indigo-200 hover:bg-indigo-500/20'
+                                    : 'border-gray-600/60 bg-gray-800/50 text-gray-500 cursor-not-allowed'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2h-3.172a2 2 0 01-1.414-.586l-.828-.828A2 2 0 0011.172 2H6a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                Baixar PDF
+                            </a>
+
+                            <button type="button"
+                                    @click="openStudentWhatsapp()"
+                                    :disabled="!canOpenStudentWhatsapp()"
+                                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors"
+                                    :class="canOpenStudentWhatsapp()
+                                        ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
+                                        : 'border-gray-600/60 bg-gray-800/50 text-gray-500 cursor-not-allowed'">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A11.84 11.84 0 0012.03 0C5.4 0 .02 5.38.02 12c0 2.11.55 4.17 1.6 5.99L0 24l6.18-1.61A11.95 11.95 0 0012.03 24c6.62 0 12-5.38 12-12 0-3.2-1.25-6.2-3.51-8.52zM12.03 21.8c-1.82 0-3.6-.49-5.16-1.42l-.37-.22-3.67.96.98-3.58-.24-.37A9.76 9.76 0 012.22 12C2.22 6.6 6.62 2.2 12.03 2.2a9.76 9.76 0 016.94 2.88 9.7 9.7 0 012.86 6.92c0 5.4-4.4 9.8-9.8 9.8zm5.37-7.35c-.29-.14-1.7-.84-1.96-.94-.26-.1-.45-.14-.64.14-.19.29-.74.94-.91 1.13-.17.19-.33.22-.62.07-.29-.14-1.2-.44-2.29-1.4-.85-.75-1.43-1.68-1.59-1.96-.17-.29-.02-.44.13-.58.13-.13.29-.33.43-.5.14-.17.19-.29.29-.48.1-.19.05-.36-.02-.5-.07-.14-.64-1.55-.88-2.13-.23-.55-.46-.47-.64-.48h-.55c-.19 0-.5.07-.76.36-.26.29-1 1-.96 2.43.05 1.43 1.03 2.81 1.18 3 .14.19 2 3.05 4.84 4.28.68.29 1.21.47 1.62.6.68.21 1.29.18 1.77.11.54-.08 1.7-.69 1.94-1.36.24-.67.24-1.24.17-1.36-.07-.12-.26-.19-.55-.33z"/></svg>
+                                WhatsApp aluno
+                            </button>
+                        </div>
                     </div>
 
                     <input type="hidden" name="anamnesis[main_goal]" :value="goal">
@@ -440,13 +465,15 @@
 </div>
 
 <script>
-function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDietAi, goalOptions, studentAnamnesisSeed) {
+function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDietAi, goalOptions, studentAnamnesisSeed, anamnesisPdfBaseUrl, studentContactMap) {
     const nowBase = Date.now();
 
     return {
         canUseDietAi: !!canUseDietAi,
         goalOptions: Array.isArray(goalOptions) ? goalOptions : [],
         studentAnamnesisSeed: (studentAnamnesisSeed && typeof studentAnamnesisSeed === 'object') ? studentAnamnesisSeed : {},
+        anamnesisPdfBaseUrl: typeof anamnesisPdfBaseUrl === 'string' ? anamnesisPdfBaseUrl : '',
+        studentContactMap: (studentContactMap && typeof studentContactMap === 'object') ? studentContactMap : {},
         generateAiUrl,
         csrfToken,
         generatingAi: false,
@@ -542,6 +569,84 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
             if (!this.initialKcal && this.anamnesis.kcal_day) {
                 this.initialKcal = this.anamnesis.kcal_day;
             }
+        },
+
+        canDownloadAnamnesisPdf() {
+            return !!this.studentId && !!this.anamnesisPdfBaseUrl;
+        },
+
+        anamnesisPdfHref() {
+            if (!this.canDownloadAnamnesisPdf()) {
+                return '';
+            }
+
+            return this.anamnesisPdfBaseUrl + '?student_id=' + encodeURIComponent(this.studentId);
+        },
+
+        downloadAnamnesisPdf() {
+            const href = this.anamnesisPdfHref();
+            if (!href) {
+                window.alert('Selecione um aluno para baixar o PDF da anamnese.');
+                return;
+            }
+            window.open(href, '_blank');
+        },
+
+        selectedStudentContact() {
+            const key = this.studentId ? String(this.studentId) : '';
+            return key && this.studentContactMap[key] ? this.studentContactMap[key] : null;
+        },
+
+        normalizeWhatsappPhone(rawPhone) {
+            const digits = String(rawPhone || '').replace(/\D/g, '');
+            if (!digits) {
+                return '';
+            }
+
+            if (digits.startsWith('55') && digits.length >= 12) {
+                return digits;
+            }
+
+            if (digits.length === 10 || digits.length === 11) {
+                return '55' + digits;
+            }
+
+            return digits.length >= 12 ? digits : '';
+        },
+
+        studentWhatsappHref() {
+            const contact = this.selectedStudentContact();
+            if (!contact) {
+                return '';
+            }
+
+            const phone = this.normalizeWhatsappPhone(contact.phone || '');
+            if (!phone) {
+                return '';
+            }
+
+            const studentName = String(contact.name || 'aluno').trim();
+            const message = 'Oi ' + studentName + ', tudo bem? Vou te enviar o PDF da anamnese nutricional para voce responder e me devolver preenchido.';
+            return 'https://wa.me/' + phone + '?text=' + encodeURIComponent(message);
+        },
+
+        canOpenStudentWhatsapp() {
+            return this.studentWhatsappHref() !== '';
+        },
+
+        openStudentWhatsapp() {
+            if (!this.studentId) {
+                window.alert('Selecione um aluno para abrir o WhatsApp.');
+                return;
+            }
+
+            const href = this.studentWhatsappHref();
+            if (!href) {
+                window.alert('Este aluno nao possui telefone valido para WhatsApp.');
+                return;
+            }
+
+            window.open(href, '_blank');
         },
 
         async generateWithAi() {
