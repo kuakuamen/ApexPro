@@ -484,6 +484,66 @@ class AdminController extends Controller
     }
 
     /**
+     * Converte patrocinado para pagante em um clique.
+     * Bloqueia acesso imediato para forcar checkout na proxima entrada.
+     */
+    public function convertSponsoredToPaid(Request $request, User $user)
+    {
+        if ($user->role !== 'personal') {
+            return redirect()->back()->with('error', 'Acao disponivel apenas para usuarios personal.');
+        }
+
+        $validated = $request->validate([
+            'plan_id' => ['nullable', 'string', 'exists:plan_configs,plan_id'],
+        ]);
+
+        $subscription = ProfessionalSubscription::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'plan_id' => 'basic',
+                'plan_name' => 'Basico',
+                'max_students' => 10,
+                'price' => 0,
+                'status' => 'pending',
+            ]
+        );
+
+        $planId = $validated['plan_id'] ?? $subscription->plan_id;
+        $plan = PlanConfig::where('plan_id', $planId)->first();
+
+        if (!$plan) {
+            $plan = PlanConfig::query()
+                ->where('is_active', true)
+                ->orderBy('price')
+                ->first()
+                ?? PlanConfig::query()->orderBy('price')->first();
+        }
+
+        if (!$plan) {
+            return redirect()->back()->with('error', 'Nenhum plano disponivel para converter este usuario.');
+        }
+
+        $subscription->update([
+            'plan_id' => $plan->plan_id,
+            'plan_name' => $plan->name,
+            'max_students' => (int) $plan->max_students,
+            'price' => (float) $plan->effectivePrice(),
+            'status' => 'suspended',
+        ]);
+
+        $user->update([
+            'plan_name' => $plan->name,
+            'max_students' => (int) $plan->max_students,
+            'is_active' => false,
+        ]);
+
+        return redirect()->back()->with(
+            'success',
+            "Usuario convertido para pagante no plano {$plan->name}. No proximo login ele sera direcionado ao checkout."
+        );
+    }
+
+    /**
      * Tela de auditoria/logs
      */
     public function logs()

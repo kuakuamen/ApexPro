@@ -495,6 +495,15 @@
                             </button>
                         </div>
                     </form>
+
+                    <form method="POST" action="{{ route('admin.users.subscription.convert-paid', $user->id) }}" class="mt-2">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="plan_id" value="{{ $user->professionalSubscription->plan_id ?? ($availablePlans->first()->plan_id ?? 'basic') }}">
+                        <button type="submit" class="btn-red"
+                                onclick="return confirm('Converter para pagante agora? O acesso sera bloqueado e no proximo login o usuario vai para checkout.')">
+                            <i class="fas fa-bolt me-1"></i> Converter para pagante
+                        </button>
+                    </form>
                 </div>
             </div>
 

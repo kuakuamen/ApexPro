@@ -184,6 +184,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/usuarios/{user}/assinatura/suspender', [AdminController::class, 'suspendSubscription'])->name('users.subscription.suspend');
     Route::patch('/usuarios/{user}/assinatura/estender', [AdminController::class, 'extendSubscription'])->name('users.subscription.extend');
     Route::patch('/usuarios/{user}/assinatura/plano', [AdminController::class, 'changeSubscriptionPlan'])->name('users.subscription.change-plan');
+    Route::patch('/usuarios/{user}/assinatura/converter-pagante', [AdminController::class, 'convertSponsoredToPaid'])->name('users.subscription.convert-paid');
 
     // Logs
     Route::get('/logs', [AdminController::class, 'logs'])->name('logs');
