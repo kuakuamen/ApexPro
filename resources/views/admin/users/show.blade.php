@@ -425,7 +425,7 @@
         <div class="row g-3">
 
             {{-- Ativar --}}
-            <div class="col-md-4">
+            <div class="col-lg-3 col-md-6">
                 <div class="action-tile action-tile-green">
                     <div>
                         <div class="action-tile-title" style="color:#10b981;"><i class="fas fa-play-circle me-1"></i> Ativar / Renovar</div>
@@ -443,7 +443,7 @@
             </div>
 
             {{-- Estender --}}
-            <div class="col-md-4">
+            <div class="col-lg-3 col-md-6">
                 <div class="action-tile action-tile-yellow">
                     <div>
                         <div class="action-tile-title" style="color:#fde047;"><i class="fas fa-calendar-plus me-1"></i> Estender Acesso</div>
@@ -464,8 +464,42 @@
                 </div>
             </div>
 
+            {{-- Trocar plano --}}
+            <div class="col-lg-3 col-md-6">
+                <div class="action-tile action-tile-blue">
+                    <div>
+                        <div class="action-tile-title" style="color:#67e8f9;"><i class="fas fa-exchange-alt me-1"></i> Trocar Plano</div>
+                        <p class="action-tile-desc mb-0 mt-1">Atualiza plano e limite sem usar checkout.</p>
+                    </div>
+                    <form method="POST" action="{{ route('admin.users.subscription.change-plan', $user->id) }}">
+                        @csrf @method('PATCH')
+                        <div class="d-flex flex-column gap-2">
+                            <select name="plan_id" class="dark-input" style="padding:0.6rem 0.75rem;" required>
+                                <option value="">Selecione o plano</option>
+                                @foreach(($availablePlans ?? collect()) as $plan)
+                                    <option value="{{ $plan->plan_id }}"
+                                        {{ old('plan_id', $user->professionalSubscription->plan_id ?? '') === $plan->plan_id ? 'selected' : '' }}>
+                                        {{ $plan->name }} ({{ $plan->max_students }} alunos)
+                                    </option>
+                                @endforeach
+                            </select>
+                            <label style="display:flex;align-items:center;gap:8px;color:#9ca3af;font-size:0.8rem;">
+                                <input type="checkbox" name="sponsored_mode" value="1"
+                                    {{ old('sponsored_mode', (($user->professionalSubscription->price ?? 0) <= 0 ? 1 : 0)) ? 'checked' : '' }}>
+                                Patrocinado (sem cobrança)
+                            </label>
+                            <button type="submit" class="btn btn-primary w-100"
+                                    style="padding:0.65rem 1rem;font-size:0.88rem;"
+                                    onclick="return confirm('Confirmar troca de plano deste personal?')">
+                                <i class="fas fa-save me-1"></i> Aplicar plano
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             {{-- Suspender --}}
-            <div class="col-md-4">
+            <div class="col-lg-3 col-md-6">
                 <div class="action-tile action-tile-red">
                     <div>
                         <div class="action-tile-title" style="color:#fca5a5;"><i class="fas fa-ban me-1"></i> Suspender</div>

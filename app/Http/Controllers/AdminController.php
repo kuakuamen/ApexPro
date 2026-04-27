@@ -301,8 +301,20 @@ class AdminController extends Controller
         $recentTransactions = collect();
         $studentCount = 0;
         $activeStudentCount = 0;
+        $availablePlans = collect();
 
         if ($user->role === 'personal') {
+            $availablePlans = PlanConfig::query()
+                ->where('is_active', true)
+                ->orderBy('price')
+                ->get();
+
+            if ($availablePlans->isEmpty()) {
+                $availablePlans = PlanConfig::query()
+                    ->orderBy('price')
+                    ->get();
+            }
+
             if ($user->professionalSubscription) {
                 $recentTransactions = SubscriptionTransaction::where('subscription_id', $user->professionalSubscription->id)
                     ->orderBy('created_at', 'desc')
@@ -322,7 +334,7 @@ class AdminController extends Controller
                 ->count('users.id');
         }
 
-        return view('admin.users.show', compact('user', 'recentTransactions', 'studentCount', 'activeStudentCount'));
+        return view('admin.users.show', compact('user', 'recentTransactions', 'studentCount', 'activeStudentCount', 'availablePlans'));
     }
 
     /**
@@ -423,6 +435,52 @@ class AdminController extends Controller
         ]);
 
         return redirect()->back()->with('success', "Acesso estendido em {$days} dia(s) com sucesso!");
+    }
+
+    /**
+     * Trocar plano da assinatura do personal (patrocínio/manual).
+     * Nao altera checkout do gateway; aplica no acesso interno.
+     */
+    public function changeSubscriptionPlan(Request $request, User $user)
+    {
+        if ($user->role !== 'personal') {
+            return redirect()->back()->with('error', 'A troca de plano esta disponivel apenas para personals.');
+        }
+
+        $validated = $request->validate([
+            'plan_id' => ['required', 'string', 'exists:plan_configs,plan_id'],
+            'sponsored_mode' => ['nullable', 'boolean'],
+        ]);
+
+        $plan = PlanConfig::where('plan_id', $validated['plan_id'])->firstOrFail();
+        $sponsoredMode = $request->boolean('sponsored_mode');
+
+        $subscription = ProfessionalSubscription::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'plan_id' => $plan->plan_id,
+                'plan_name' => $plan->name,
+                'max_students' => $plan->max_students,
+                'price' => 0,
+                'status' => 'pending',
+            ]
+        );
+
+        $subscription->update([
+            'plan_id' => $plan->plan_id,
+            'plan_name' => $plan->name,
+            'max_students' => (int) $plan->max_students,
+            'price' => $sponsoredMode ? 0 : $plan->effectivePrice(),
+        ]);
+
+        $user->update([
+            'plan_name' => $plan->name,
+            'max_students' => (int) $plan->max_students,
+        ]);
+
+        $priceLabel = $sponsoredMode ? 'R$ 0,00 (patrocinado)' : 'R$ ' . number_format((float) $plan->effectivePrice(), 2, ',', '.');
+
+        return redirect()->back()->with('success', "Plano alterado para {$plan->name} com sucesso ({$priceLabel}).");
     }
 
     /**
