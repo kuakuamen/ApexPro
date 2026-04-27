@@ -36,6 +36,12 @@ Route::get('/assinatura/status/{ref}', [SubscriptionController::class, 'checkSta
 Route::get('/assinatura/pix/{ref}', [SubscriptionController::class, 'pixWaiting'])->name('subscription.pix-waiting');
 Route::get('/assinatura/resultado/{ref}', [SubscriptionController::class, 'paymentResult'])->name('subscription.payment-result');
 
+// Link assinado para aluno responder anamnese nutricional (sem login)
+Route::middleware('signed')->group(function () {
+    Route::get('/anamnese/nutricional/{professional}/{student}', [DietPlanController::class, 'showAnamnesisLinkForm'])->name('diets.anamnesis-link.show');
+    Route::post('/anamnese/nutricional/{professional}/{student}', [DietPlanController::class, 'submitAnamnesisLinkForm'])->name('diets.anamnesis-link.submit');
+});
+
 // Rotas de RenovaÃƒÂ§ÃƒÂ£o (Autenticadas, mas acessÃƒÂ­veis mesmo expirado)
 Route::middleware('auth')->group(function () {
     Route::get('/assinatura/renovar', [SubscriptionController::class, 'showRenew'])->name('subscription.renew');
@@ -281,3 +287,4 @@ Route::get('/storage/{path}', function ($path) {
 
     return $response;
 })->where('path', '.*');
+

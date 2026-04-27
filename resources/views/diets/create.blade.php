@@ -49,7 +49,7 @@
 
 <div class="max-w-5xl mx-auto space-y-8 pt-4">
     <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-lg overflow-hidden"
-         x-data='dietForm(@json($rawMeals), @json($initialState), @json(route('diets.generate-ai')), @json(csrf_token()), @json($canUseDietAi), @json(array_values($goalOptions)), @json($studentAnamnesisSeed ?? []), @json(route('diets.anamnesis-pdf')), @json($studentContactMap ?? []))'>
+         x-data='dietForm(@json($rawMeals), @json($initialState), @json(route('diets.generate-ai')), @json(csrf_token()), @json($canUseDietAi), @json(array_values($goalOptions)), @json($studentAnamnesisSeed ?? []), @json(route('diets.anamnesis-pdf')), @json($studentContactMap ?? []), @json($anamnesisShareLinkMap ?? []))'>
         <div class="px-6 py-4 border-b border-gray-700">
             <h1 class="text-2xl font-bold text-white">Criar Novo Plano Alimentar</h1>
             <p class="mt-1 text-gray-400">Monte o plano alimentar do aluno.</p>
@@ -144,6 +144,17 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2h-3.172a2 2 0 01-1.414-.586l-.828-.828A2 2 0 0011.172 2H6a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                 Baixar PDF
                             </a>
+
+                            <button type="button"
+                                    @click="copyAnamnesisLink()"
+                                    :disabled="!canCopyAnamnesisLink()"
+                                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors"
+                                    :class="canCopyAnamnesisLink()
+                                        ? 'border-cyan-500/35 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
+                                        : 'border-gray-600/60 bg-gray-800/50 text-gray-500 cursor-not-allowed'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M10 18h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                Copiar link
+                            </button>
 
                             <button type="button"
                                     @click="openStudentWhatsapp()"
@@ -465,7 +476,7 @@
 </div>
 
 <script>
-function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDietAi, goalOptions, studentAnamnesisSeed, anamnesisPdfBaseUrl, studentContactMap) {
+function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDietAi, goalOptions, studentAnamnesisSeed, anamnesisPdfBaseUrl, studentContactMap, anamnesisShareLinkMap) {
     const nowBase = Date.now();
 
     return {
@@ -474,6 +485,7 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
         studentAnamnesisSeed: (studentAnamnesisSeed && typeof studentAnamnesisSeed === 'object') ? studentAnamnesisSeed : {},
         anamnesisPdfBaseUrl: typeof anamnesisPdfBaseUrl === 'string' ? anamnesisPdfBaseUrl : '',
         studentContactMap: (studentContactMap && typeof studentContactMap === 'object') ? studentContactMap : {},
+        anamnesisShareLinkMap: (anamnesisShareLinkMap && typeof anamnesisShareLinkMap === 'object') ? anamnesisShareLinkMap : {},
         generateAiUrl,
         csrfToken,
         generatingAi: false,
@@ -592,6 +604,36 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
             window.open(href, '_blank');
         },
 
+        studentAnamnesisShareLink() {
+            const key = this.studentId ? String(this.studentId) : '';
+            return key && this.anamnesisShareLinkMap[key]
+                ? String(this.anamnesisShareLinkMap[key])
+                : '';
+        },
+
+        canCopyAnamnesisLink() {
+            return this.studentAnamnesisShareLink() !== '';
+        },
+
+        async copyAnamnesisLink() {
+            const link = this.studentAnamnesisShareLink();
+            if (!link) {
+                window.alert('Selecione um aluno para copiar o link da anamnese.');
+                return;
+            }
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(link);
+                } else {
+                    throw new Error('Clipboard indisponivel');
+                }
+                window.alert('Link da anamnese copiado com sucesso.');
+            } catch (error) {
+                window.prompt('Copie o link da anamnese:', link);
+            }
+        },
+
         selectedStudentContact() {
             const key = this.studentId ? String(this.studentId) : '';
             return key && this.studentContactMap[key] ? this.studentContactMap[key] : null;
@@ -626,7 +668,10 @@ function dietForm(initialMeals, initialState, generateAiUrl, csrfToken, canUseDi
             }
 
             const studentName = String(contact.name || 'aluno').trim();
-            const message = 'Oi ' + studentName + ', tudo bem? Vou te enviar o PDF da anamnese nutricional para voce responder e me devolver preenchido.';
+            const shareLink = this.studentAnamnesisShareLink();
+            const message = shareLink
+                ? 'Oi ' + studentName + ', tudo bem? Por favor, preencha este link da anamnese nutricional e me envie quando concluir: ' + shareLink
+                : 'Oi ' + studentName + ', tudo bem? Vou te enviar o PDF da anamnese nutricional para voce responder e me devolver preenchido.';
             return 'https://wa.me/' + phone + '?text=' + encodeURIComponent(message);
         },
 

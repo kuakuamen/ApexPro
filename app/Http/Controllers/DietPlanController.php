@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\DietPlan;
+use App\Models\NutritionAnamnesisSubmission;
 use App\Models\ProfessionalStudent;
 use App\Models\User;
 use App\Services\DietAiService;
@@ -11,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 class DietPlanController extends Controller
@@ -57,6 +59,30 @@ class DietPlanController extends Controller
             'most_hungry_time' => '',
             'least_hungry_time' => '',
             'kcal_day' => '',
+        ];
+    }
+
+    private function anamnesisOptions(): array
+    {
+        return [
+            'goalOptions' => [
+                'Perder gordura',
+                'Ganhar massa',
+                'Saude geral',
+                'Definicao',
+                'Performance esportiva',
+            ],
+            'diseaseOptions' => ['Diabetes', 'Hipertensao', 'Colesterol alto', 'Tireoide', 'Nenhuma', 'Outra'],
+            'restrictionOptions' => ['Lactose', 'Gluten', 'Frutose', 'Nenhuma', 'Outra'],
+            'allergyOptions' => ['Amendoim', 'Frutos do mar', 'Ovos', 'Nozes', 'Soja', 'Nenhuma', 'Outra'],
+            'eatsOutOptions' => ['Todos os dias', '3-4x por semana', '1-2x por semana', 'Raramente'],
+            'alcoholOptions' => ['Nao', 'Socialmente', '1-2x por semana', 'Frequentemente'],
+            'foodStyleOptions' => ['Sem restricao', 'Vegetariano', 'Vegano', 'Low carb', 'Cetogenico', 'Outro'],
+            'trainingPeriodOptions' => ['Manha', 'Tarde', 'Noite', 'Varia'],
+            'preWorkoutOptions' => ['Sim, sempre', 'As vezes', 'Nao, treino em jejum'],
+            'postWorkoutOptions' => ['Sim, sempre', 'As vezes', 'Nao costumo'],
+            'emotionalEatingOptions' => ['Nunca', 'Raramente', 'As vezes', 'Frequentemente'],
+            'dietHistoryOptions' => ['Nunca tentei', 'Tentei e mantive', 'Tentei mas nao consegui manter'],
         ];
     }
 
@@ -215,15 +241,27 @@ class DietPlanController extends Controller
     {
         $seed = $this->defaultAnamnesis();
 
-        $lastDietPlan = DietPlan::query()
-            ->where('nutritionist_id', $professional->id)
+        $latestSubmission = NutritionAnamnesisSubmission::query()
+            ->where('professional_id', $professional->id)
             ->where('student_id', $student->id)
-            ->whereNotNull('anamnesis')
+            ->whereNotNull('payload')
+            ->orderByDesc('submitted_at')
             ->latest('id')
             ->first();
 
-        if (is_array($lastDietPlan?->anamnesis)) {
-            $seed = $this->normalizeAnamnesis($lastDietPlan->anamnesis);
+        if (is_array($latestSubmission?->payload)) {
+            $seed = $this->normalizeAnamnesis($latestSubmission->payload);
+        } else {
+            $lastDietPlan = DietPlan::query()
+                ->where('nutritionist_id', $professional->id)
+                ->where('student_id', $student->id)
+                ->whereNotNull('anamnesis')
+                ->latest('id')
+                ->first();
+
+            if (is_array($lastDietPlan?->anamnesis)) {
+                $seed = $this->normalizeAnamnesis($lastDietPlan->anamnesis);
+            }
         }
 
         $latestMeasurement = $student->measurements()->latest('date')->latest('id')->first();
@@ -305,6 +343,15 @@ class DietPlanController extends Controller
                 ],
             ])
             ->all();
+        $anamnesisShareLinkMap = $students
+            ->mapWithKeys(fn(User $student) => [
+                (string) $student->id => URL::temporarySignedRoute(
+                    'diets.anamnesis-link.show',
+                    now('America/Sao_Paulo')->addDays(15),
+                    ['professional' => $user->id, 'student' => $student->id]
+                ),
+            ])
+            ->all();
 
         $studentAnamnesisSeed = [];
         foreach ($students as $student) {
@@ -326,9 +373,76 @@ class DietPlanController extends Controller
             'students',
             'canUseDietAi',
             'studentContactMap',
+            'anamnesisShareLinkMap',
             'studentAnamnesisSeed',
             'initialAnamnesis'
         ));
+    }
+
+    /**
+     * Exibe formulario publico (link assinado) para aluno preencher anamnese.
+     */
+    public function showAnamnesisLinkForm(Request $request, User $professional, User $student)
+    {
+        if (!$this->canManageDiets($professional)) {
+            abort(403, 'Profissional invalido para este formulario.');
+        }
+
+        if (!$this->studentBelongsToProfessional($professional->id, $student->id)) {
+            abort(403, 'Aluno nao vinculado a este profissional.');
+        }
+
+        $latestSubmission = NutritionAnamnesisSubmission::query()
+            ->where('professional_id', $professional->id)
+            ->where('student_id', $student->id)
+            ->whereNotNull('payload')
+            ->orderByDesc('submitted_at')
+            ->latest('id')
+            ->first();
+
+        $anamnesis = is_array($latestSubmission?->payload)
+            ? $this->normalizeAnamnesis($latestSubmission->payload)
+            : $this->defaultAnamnesis();
+
+        $options = $this->anamnesisOptions();
+
+        return view('diets.anamnesis-link-form', compact(
+            'professional',
+            'student',
+            'anamnesis',
+            'options'
+        ));
+    }
+
+    /**
+     * Salva anamnese preenchida pelo aluno via link assinado.
+     */
+    public function submitAnamnesisLinkForm(Request $request, User $professional, User $student)
+    {
+        if (!$this->canManageDiets($professional)) {
+            abort(403, 'Profissional invalido para este formulario.');
+        }
+
+        if (!$this->studentBelongsToProfessional($professional->id, $student->id)) {
+            abort(403, 'Aluno nao vinculado a este profissional.');
+        }
+
+        $validated = $request->validate($this->anamnesisRules());
+        $anamnesis = $this->normalizeAnamnesis($validated['anamnesis'] ?? []);
+
+        NutritionAnamnesisSubmission::updateOrCreate(
+            [
+                'professional_id' => $professional->id,
+                'student_id' => $student->id,
+            ],
+            [
+                'payload' => $anamnesis,
+                'submitted_by' => 'student_link',
+                'submitted_at' => now('America/Sao_Paulo'),
+            ]
+        );
+
+        return view('diets.anamnesis-link-success', compact('professional', 'student'));
     }
 
     /**
