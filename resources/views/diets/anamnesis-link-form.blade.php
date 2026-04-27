@@ -30,31 +30,16 @@
                 </div>
             @endif
 
-            <section class="space-y-4">
+            <section class="space-y-3">
                 <h2 class="text-lg font-semibold text-cyan-300">Objetivo e corpo</h2>
-                <div>
-                    <label class="text-sm text-slate-300">Objetivo principal</label>
-                    <select name="anamnesis[main_goal]" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm">
-                        <option value="">Selecione...</option>
-                        @foreach($options['goalOptions'] as $opt)
-                            <option value="{{ $opt }}" {{ $selected('main_goal') === $opt ? 'selected' : '' }}>{{ $opt }}</option>
-                        @endforeach
-                    </select>
+                <div class="rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100">
+                    Esses dados ja sao puxados automaticamente do cadastro e historico do aluno.
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="text-sm text-slate-300">Peso atual (kg)</label>
-                        <input type="number" step="0.1" name="anamnesis[weight_kg]" value="{{ $selected('weight_kg') }}" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="text-sm text-slate-300">Altura (cm)</label>
-                        <input type="number" step="0.1" name="anamnesis[height_cm]" value="{{ $selected('height_cm') }}" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="text-sm text-slate-300">Peso desejado (kg)</label>
-                        <input type="number" step="0.1" name="anamnesis[target_weight_kg]" value="{{ $selected('target_weight_kg') }}" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm">
-                    </div>
-                </div>
+
+                <input type="hidden" name="anamnesis[main_goal]" value="{{ $selected('main_goal') }}">
+                <input type="hidden" name="anamnesis[weight_kg]" value="{{ $selected('weight_kg') }}">
+                <input type="hidden" name="anamnesis[height_cm]" value="{{ $selected('height_cm') }}">
+                <input type="hidden" name="anamnesis[target_weight_kg]" value="{{ $selected('target_weight_kg') }}">
             </section>
 
             <section class="space-y-4">

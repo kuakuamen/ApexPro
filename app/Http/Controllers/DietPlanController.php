@@ -392,17 +392,8 @@ class DietPlanController extends Controller
             abort(403, 'Aluno nao vinculado a este profissional.');
         }
 
-        $latestSubmission = NutritionAnamnesisSubmission::query()
-            ->where('professional_id', $professional->id)
-            ->where('student_id', $student->id)
-            ->whereNotNull('payload')
-            ->orderByDesc('submitted_at')
-            ->latest('id')
-            ->first();
-
-        $anamnesis = is_array($latestSubmission?->payload)
-            ? $this->normalizeAnamnesis($latestSubmission->payload)
-            : $this->defaultAnamnesis();
+        // Reaproveita o seed completo (submission mais recente > historico de dieta > medidas/cadastro).
+        $anamnesis = $this->buildStudentAnamnesisSeed($professional, $student);
 
         $options = $this->anamnesisOptions();
 
