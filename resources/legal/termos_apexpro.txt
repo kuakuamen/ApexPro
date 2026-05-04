@@ -44,6 +44,8 @@ CLÁUSULA 15 — DAS DISPOSIÇÕES GERAIS
 
 CLÁUSULA 16 — DO FORO E DA LEI APLICÁVEL
 
+CLÁUSULA 17 — DA FUNCIONALIDADE DE ELABORAÇÃO DE DIETAS E PLANOS ALIMENTARES
+
 CLÁUSULA 1 — DAS PARTES E DO OBJETO
 
 1.1. Identificação das Partes
@@ -683,6 +685,84 @@ Para dirimir quaisquer controvérsias oriundas destes Termos de Uso, as partes e
 16.3. Resolução Amigável
 
 Antes de recorrer ao Poder Judiciário, as partes comprometem-se a buscar solução amigável para eventuais conflitos, por meio dos canais de atendimento da Plataforma, podendo também recorrer às plataformas governamentais de resolução de conflitos, como o consumidor.gov.br.
+
+CLÁUSULA 17 — DA FUNCIONALIDADE DE ELABORAÇÃO DE DIETAS E PLANOS ALIMENTARES
+
+ATENCAO: Esta cláusula trata de funcionalidade sensível que envolve área de saúde regulamentada. Leia com atenção antes de utilizar o recurso de dietas no aplicativo.
+
+17.1. Natureza da Funcionalidade
+
+O ApexPro disponibiliza, como funcionalidade adicional à gestão de treinos, uma ferramenta para elaboração e compartilhamento de planos alimentares e dietas, que pode ser utilizada de forma manual pelo profissional cadastrado ou com auxílio de inteligência artificial como sugestão de base. Esta funcionalidade é oferecida como recurso de apoio à relação entre profissional e aluno, não constituindo, em nenhuma hipótese, serviço de consultoria nutricional prestado pela Plataforma.
+
+17.2. Restrição Legal à Prescrição Nutricional
+
+O Usuário declara ter pleno conhecimento de que, nos termos da Lei Federal nº 8.234/1991, que regulamenta a profissão de Nutricionista, e das Resoluções do Conselho Federal de Nutricionistas (CFN), a prescrição de dietas e planos alimentares individualizados é atividade privativa do Nutricionista, profissional devidamente habilitado e registrado no Conselho Regional de Nutricionistas (CRN). O Profissional de Educação Física NÃO está, em regra, habilitado legalmente para prescrever planos alimentares individualizados, salvo disposição expressa em contrário de norma vigente aplicável ao caso concreto.
+
+17.3. Uso Permitido da Funcionalidade
+
+O acesso à ferramenta de elaboração de dietas no ApexPro é disponibilizado exclusivamente para:
+
+Nutricionistas devidamente registrados no Conselho Regional de Nutricionistas (CRN) competente;
+
+Profissionais de Educação Física que atuem em conjunto com Nutricionista responsável, sob supervisão técnica deste;
+
+Elaboração de sugestões gerais de alimentação saudável que NÃO configurem prescrição dietética individualizada, observados os limites da competência profissional de cada categoria.
+
+17.4. Declaração Obrigatória do Profissional ao Usar a Funcionalidade
+
+Ao acessar e utilizar a ferramenta de elaboração de dietas, o Profissional cadastrado declara expressamente, sob as penas da lei, que:
+
+Possui habilitação legal para elaborar e prescrever planos alimentares, seja por ser Nutricionista registrado no CRN, ou por atuar dentro dos limites legais de sua categoria profissional;
+
+Assume integral responsabilidade técnica, ética, civil e criminal pelo conteúdo de todos os planos alimentares elaborados e compartilhados com alunos por meio da plataforma;
+
+Verificou as condições de saúde, restrições alimentares, alergias e histórico clínico do aluno antes de elaborar qualquer plano alimentar;
+
+O plano alimentar elaborado é adequado ao perfil individual do aluno destinatário, não sendo uma prescrição genérica ou gerada automaticamente sem revisão técnica do profissional;
+
+Está ciente de que o uso da ferramenta de inteligência artificial para sugestão de dietas gera apenas uma BASE de referência, que OBRIGATORIAMENTE deve ser revisada, validada e adaptada pelo profissional habilitado antes de ser compartilhada com o aluno.
+
+17.5. Responsabilidade Exclusiva do Profissional
+
+A E L DOS SANTOS RODRIGUES ACADEMIA - ME, operadora do ApexPro, ISENTA-SE INTEGRALMENTE e sem qualquer limitação de valor ou extensão, de toda e qualquer responsabilidade civil, criminal, administrativa, ética ou de qualquer outra natureza, decorrente de:
+
+Elaboração de planos alimentares por profissional sem habilitação legal para tanto;
+
+Danos físicos, reações alérgicas, piora de condições de saúde, internações, lesões ou óbito causados ao aluno em decorrência de planos alimentares inadequados, contraindicados ou incorretos;
+
+Uso indevido das sugestões geradas pela ferramenta de inteligência artificial, sem revisão técnica do profissional habilitado;
+
+Prescrição de dietas sem considerar o histórico de saúde, medicamentos em uso, alergias ou restrições alimentares do aluno;
+
+Exercício ilegal da atividade de prescrição nutricional por profissional não habilitado para tanto;
+
+Qualquer dano moral ou material sofrido pelo aluno em razão do conteúdo nutricional elaborado e compartilhado pelo Profissional;
+
+Sanções aplicadas pelo Conselho Federal ou Regional de Nutricionistas ao profissional cadastrado;
+
+Ações judiciais, administrativas ou éticas movidas por alunos, familiares ou órgãos reguladores em razão dos planos alimentares elaborados.
+
+17.6. Sobre a Ferramenta de Inteligência Artificial
+
+A ferramenta de inteligência artificial disponível para sugestão de dietas no ApexPro gera conteúdo baseado em parâmetros gerais e NÃO substitui a avaliação clínica, o julgamento técnico e a responsabilidade profissional do Nutricionista. As sugestões geradas pela IA:
+
+Não levam em conta a totalidade das condições clínicas individuais do aluno;
+
+Não substituem anamnese nutricional completa realizada por profissional habilitado;
+
+Podem conter imprecisões, erros ou informações desatualizadas;
+
+São de uso exclusivamente interno do profissional, como ponto de partida para elaboração do plano, NUNCA devendo ser repassadas ao aluno sem revisão técnica criteriosa.
+
+O Profissional que utilizar a sugestão da IA sem revisão técnica adequada e causar dano ao aluno responderá integralmente por tal conduta, sem qualquer responsabilidade solidária da Plataforma ou de seus desenvolvedores.
+
+17.7. Direito do Aluno à Informação
+
+O Profissional compromete-se a informar claramente ao aluno que o plano alimentar compartilhado pelo aplicativo foi elaborado e é de responsabilidade exclusiva do profissional, e que a Plataforma não é responsável pelo conteúdo nutricional. O aluno tem o direito de questionar a habilitação do profissional para elaboração de planos alimentares antes de segui-los, bem como de consultar um Nutricionista registrado no CRN para validação independente do plano recebido.
+
+17.8. Suspensão da Funcionalidade
+
+A Plataforma reserva-se o direito de suspender o acesso de qualquer Profissional à funcionalidade de elaboração de dietas, a qualquer tempo e sem aviso prévio, mediante denúncia fundamentada de uso indevido, risco à saúde de alunos, ou determinação de autoridade competente, incluindo o CFN, CRN ou órgãos de vigilância sanitária.
 
 TERMO DE ACEITE
 
