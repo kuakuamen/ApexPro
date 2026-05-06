@@ -50,43 +50,65 @@ class StudentController extends Controller
             return [null, null];
         }
 
-        $exerciseIds = $daysOrdered
-            ->flatMap(fn($day) => $day->exercises->pluck('id'))
-            ->map(fn($id) => (int) $id)
-            ->unique()
+        $daysWithExercises = $daysOrdered
+            ->filter(fn($day) => $day->exercises->isNotEmpty())
             ->values();
 
-        $completedExerciseIds = $exerciseIds->isEmpty()
-            ? []
-            : WorkoutLog::where('student_id', $studentId)
-                ->whereIn('exercise_id', $exerciseIds)
-                ->pluck('exercise_id')
-                ->map(fn($id) => (int) $id)
-                ->unique()
-                ->values()
-                ->all();
+        if ($daysWithExercises->isEmpty()) {
+            $currentDay = $daysOrdered->first();
+            return [$currentDay, $currentDay ? 1 : null];
+        }
 
-        $completedLookup = array_flip($completedExerciseIds);
-        $currentDay = null;
-
-        foreach ($daysOrdered as $day) {
-            $totalExercises = $day->exercises->count();
-            if ($totalExercises === 0) {
-                continue;
-            }
-
-            $dayCompleted = $day->exercises->every(
-                fn($exercise) => isset($completedLookup[(int) $exercise->id])
-            );
-
-            if (!$dayCompleted) {
-                $currentDay = $day;
-                break;
+        $exerciseDayIndex = [];
+        foreach ($daysWithExercises as $index => $day) {
+            foreach ($day->exercises as $exercise) {
+                $exerciseDayIndex[(int) $exercise->id] = $index;
             }
         }
 
-        if (!$currentDay) {
-            $currentDay = $daysOrdered->last() ?: $daysOrdered->first();
+        $exerciseIds = array_keys($exerciseDayIndex);
+        $latestLog = empty($exerciseIds)
+            ? null
+            : WorkoutLog::where('student_id', $studentId)
+                ->whereIn('exercise_id', $exerciseIds)
+                ->orderByDesc('date')
+                ->orderByDesc('completed_at')
+                ->orderByDesc('id')
+                ->first();
+
+        if (!$latestLog) {
+            $currentDay = $daysWithExercises->first();
+        } else {
+            $latestDayIndex = $exerciseDayIndex[(int) $latestLog->exercise_id] ?? 0;
+            $latestDay = $daysWithExercises[$latestDayIndex] ?? $daysWithExercises->first();
+            $latestDate = Carbon::parse((string) $latestLog->date)->toDateString();
+
+            $latestDayExerciseIds = $latestDay->exercises
+                ->pluck('id')
+                ->map(fn($id) => (int) $id)
+                ->values()
+                ->all();
+
+            $completedOnLatestDate = empty($latestDayExerciseIds)
+                ? []
+                : WorkoutLog::where('student_id', $studentId)
+                    ->whereDate('date', $latestDate)
+                    ->whereIn('exercise_id', $latestDayExerciseIds)
+                    ->pluck('exercise_id')
+                    ->map(fn($id) => (int) $id)
+                    ->unique()
+                    ->values()
+                    ->all();
+
+            $latestDayCompleted = !empty($latestDayExerciseIds)
+                && count(array_diff($latestDayExerciseIds, $completedOnLatestDate)) === 0;
+
+            if ($latestDayCompleted) {
+                $nextDayIndex = ($latestDayIndex + 1) % max(1, $daysWithExercises->count());
+                $currentDay = $daysWithExercises[$nextDayIndex] ?? $daysWithExercises->first();
+            } else {
+                $currentDay = $latestDay;
+            }
         }
 
         $dayNumberIndex = $daysOrdered->search(
