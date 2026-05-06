@@ -410,7 +410,7 @@
                             <div class="space-y-3 pl-3 border-l-2 border-teal-500/30">
                                 <template x-for="(food, foodIndex) in meal.foods" :key="food.id">
                                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-gray-800/60 border border-gray-700 rounded-lg p-3">
-                                        <div class="md:col-span-4">
+                                        <div class="md:col-span-3">
                                             <label class="block text-xs font-medium text-gray-400 mb-1">Alimento</label>
                                             <input type="text" x-bind:name="'meals[' + mealIndex + '][foods][' + foodIndex + '][name]'" x-model="food.name" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: Arroz integral" required>
                                         </div>
@@ -422,9 +422,17 @@
                                             <label class="block text-xs font-medium text-gray-400 mb-1">Kcal</label>
                                             <input type="text" x-bind:name="'meals[' + mealIndex + '][foods][' + foodIndex + '][calories]'" x-model="food.calories" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Ex: 120">
                                         </div>
-                                        <div class="md:col-span-3">
+                                        <div class="md:col-span-4">
                                             <label class="block text-xs font-medium text-gray-400 mb-1">Obs</label>
-                                            <input type="text" x-bind:name="'meals[' + mealIndex + '][foods][' + foodIndex + '][observation]'" x-model="food.observation" class="block w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Opcional">
+                                            <textarea
+                                                rows="2"
+                                                x-bind:name="'meals[' + mealIndex + '][foods][' + foodIndex + '][observation]'"
+                                                x-model="food.observation"
+                                                x-init="$nextTick(() => { $el.style.height = 'auto'; $el.style.height = ($el.scrollHeight) + 'px'; })"
+                                                @input="$el.style.height = 'auto'; $el.style.height = ($el.scrollHeight) + 'px'"
+                                                class="block w-full resize-y min-h-[44px] bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                                placeholder="Observacao obrigatoria">
+                                            </textarea>
                                         </div>
                                         <div class="md:col-span-1 flex justify-end">
                                             <button

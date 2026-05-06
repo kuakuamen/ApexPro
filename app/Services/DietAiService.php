@@ -102,8 +102,9 @@ class DietAiService
             "2. Monte de 4 a 6 refeicoes.\n" .
             "3. Em cada refeicao, inclua ao menos 2 alimentos.\n" .
             "4. Campo calories deve ser string numerica aproximada por alimento.\n" .
-            "5. O plano precisa ser pratico para rotina real.\n" .
-            "6. Linguagem e nomes em portugues.\n\n" .
+            "5. Campo observation e obrigatorio em TODOS os alimentos, com orientacao objetiva (preparo/consumo/horario). Nao pode ser vazio, null, '-' nem 'opcional'.\n" .
+            "6. O plano precisa ser pratico para rotina real.\n" .
+            "7. Linguagem e nomes em portugues.\n\n" .
             "ESTRUTURA OBRIGATORIA DO JSON:\n" .
             "{\n" .
             "  \"name\": \"string\",\n" .
@@ -118,7 +119,7 @@ class DietAiService
             "          \"name\": \"Ovos mexidos\",\n" .
             "          \"quantity\": \"2 unidades\",\n" .
             "          \"calories\": \"140\",\n" .
-            "          \"observation\": \"opcional\"\n" .
+            "          \"observation\": \"Consumir 60-90 min antes do treino para energia\"\n" .
             "        }\n" .
             "      ]\n" .
             "    }\n" .
@@ -223,6 +224,9 @@ class DietAiService
 
                 $calories = trim((string) ($food['calories'] ?? ''));
                 $observation = trim((string) ($food['observation'] ?? ''));
+                if ($observation === '') {
+                    $observation = $this->defaultObservationForFood($foodName, $mealName);
+                }
 
                 $foods[] = [
                     'name' => $foodName,
@@ -345,5 +349,21 @@ class DietAiService
             $line('Horario com menos fome', $anamnesis['least_hungry_time'] ?? ''),
             $line('Kcal dia alvo', $anamnesis['kcal_day'] ?? ''),
         ]);
+    }
+
+    private function defaultObservationForFood(string $foodName, string $mealName): string
+    {
+        $meal = Str::lower(Str::ascii($mealName));
+        $food = trim($foodName);
+
+        if (str_contains($meal, 'pre treino') || str_contains($meal, 'pre-treino')) {
+            return "Consumir {$food} 60-90 min antes do treino.";
+        }
+
+        if (str_contains($meal, 'pos treino') || str_contains($meal, 'pos-treino')) {
+            return "Consumir {$food} ate 1h apos o treino.";
+        }
+
+        return "Consumir {$food} na porcao sugerida e manter hidratacao.";
     }
 }
