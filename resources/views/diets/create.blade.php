@@ -2,6 +2,32 @@
 
 @section('content')
 <script src="//unpkg.com/alpinejs" defer></script>
+<style>
+    .diet-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(20, 184, 166, 0.85) rgba(15, 23, 42, 0.55);
+    }
+
+    .diet-scrollbar::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    .diet-scrollbar::-webkit-scrollbar-track {
+        background: rgba(15, 23, 42, 0.55);
+        border-radius: 999px;
+        border: 1px solid rgba(34, 211, 238, 0.2);
+    }
+
+    .diet-scrollbar::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, rgba(45, 212, 191, 0.95), rgba(56, 189, 248, 0.92));
+        border-radius: 999px;
+        border: 2px solid rgba(15, 23, 42, 0.55);
+    }
+
+    .diet-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, rgba(20, 184, 166, 0.98), rgba(14, 165, 233, 0.96));
+    }
+</style>
 
 @php
     $canUseDietAi = $canUseDietAi ?? false;
@@ -430,7 +456,7 @@
                                                 x-model="food.observation"
                                                 x-init="$nextTick(() => { $el.style.height = 'auto'; $el.style.height = ($el.scrollHeight) + 'px'; })"
                                                 @input="$el.style.height = 'auto'; $el.style.height = ($el.scrollHeight) + 'px'"
-                                                class="block w-full resize-y min-h-[44px] bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                                class="diet-scrollbar block w-full resize-none overflow-y-auto max-h-36 min-h-[44px] bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                                                 placeholder="Observacao obrigatoria">
                                             </textarea>
                                         </div>
