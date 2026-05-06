@@ -261,10 +261,9 @@ PROMPT;
 
                     Log::info("Resposta Gemini recebida (tentativa {$attempt}, primeiros 500 chars): " . substr($textResult, 0, 500));
 
-                    $textResult = preg_replace('/^```json\s*|\s*```$/', '', $textResult);
-                    $jsonResult = json_decode($textResult, true);
+                    $jsonResult = $this->decodeGeminiJson($textResult);
 
-                    if (json_last_error() === JSON_ERROR_NONE) {
+                    if ($jsonResult !== null) {
                         $jsonResult = $this->exerciseCatalog->enforceWorkoutCatalog($jsonResult);
                         Log::info('Análise Gemini processada com sucesso');
                         return $jsonResult;
@@ -365,10 +364,9 @@ PROMPT;
 
             Log::info('Resposta de refinamento Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
 
-            $textResult = preg_replace('/^```json\s*|\s*```$/', '', $textResult);
-            $jsonResult = json_decode($textResult, true);
+            $jsonResult = $this->decodeGeminiJson($textResult);
 
-            if (json_last_error() === JSON_ERROR_NONE) {
+            if ($jsonResult !== null) {
                 $jsonResult = $this->exerciseCatalog->enforceWorkoutCatalog($jsonResult);
                 Log::info('Análise refinada com sucesso');
                 return $jsonResult;
@@ -506,11 +504,9 @@ Retorne SOMENTE o JSON, sem markdown ou explicações adicionais.";
             
             Log::info('Resposta Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
             
-            $textResult = preg_replace('/^```json\s*|\s*```$/', '', $textResult);
-            
-            $jsonResult = json_decode($textResult, true);
+            $jsonResult = $this->decodeGeminiJson($textResult);
 
-            if (json_last_error() === JSON_ERROR_NONE) {
+            if ($jsonResult !== null) {
                 $jsonResult = $this->exerciseCatalog->enforceWorkoutCatalog($jsonResult);
                 Log::info('Treino gerado com sucesso pela IA');
                 // Normalizar campos que devem ser arrays mas podem vir como string
@@ -542,5 +538,99 @@ Retorne SOMENTE o JSON, sem markdown ou explicações adicionais.";
             throw new \RuntimeException('Erro ao processar análise com IA: ' . $e->getMessage());
         }
     }
+    /**
+     * Gemini can return JSON wrapped in markdown or with extra text.
+     * Try safe fallbacks before failing the request.
+     */
+    private function decodeGeminiJson(string $rawText): ?array
+    {
+        $candidates = [];
+
+        $trimmed = trim($rawText);
+        if ($trimmed !== '') {
+            $candidates[] = $trimmed;
+        }
+
+        // Remove fenced code blocks like ```json ... ```
+        $withoutFences = preg_replace('/```(?:json)?/i', '', $trimmed);
+        $withoutFences = trim((string) $withoutFences);
+        if ($withoutFences !== '' && $withoutFences !== $trimmed) {
+            $candidates[] = $withoutFences;
+        }
+
+        // Extract first balanced JSON object from the response text.
+        $firstObject = $this->extractFirstJsonObject($withoutFences !== '' ? $withoutFences : $trimmed);
+        if ($firstObject !== null) {
+            $candidates[] = $firstObject;
+        }
+
+        foreach ($candidates as $candidate) {
+            $decoded = json_decode($candidate, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Return first balanced {...} block found in text.
+     */
+    private function extractFirstJsonObject(string $text): ?string
+    {
+        $start = strpos($text, '{');
+        if ($start === false) {
+            return null;
+        }
+
+        $depth = 0;
+        $inString = false;
+        $escaped = false;
+        $length = strlen($text);
+
+        for ($i = $start; $i < $length; $i++) {
+            $char = $text[$i];
+
+            if ($inString) {
+                if ($escaped) {
+                    $escaped = false;
+                    continue;
+                }
+
+                if ($char === '\\') {
+                    $escaped = true;
+                    continue;
+                }
+
+                if ($char === '"') {
+                    $inString = false;
+                }
+
+                continue;
+            }
+
+            if ($char === '"') {
+                $inString = true;
+                continue;
+            }
+
+            if ($char === '{') {
+                $depth++;
+                continue;
+            }
+
+            if ($char === '}') {
+                $depth--;
+
+                if ($depth === 0) {
+                    return substr($text, $start, $i - $start + 1);
+                }
+            }
+        }
+
+        return null;
+    }
 }
+
 
