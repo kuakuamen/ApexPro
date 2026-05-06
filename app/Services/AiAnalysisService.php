@@ -134,68 +134,88 @@ class AiAnalysisService
             
             // PROMPT ENGENHADO PARA GERAR TREINO ESTRUTURADO
             $anamnese = $studentData['anamnese'] ?? [];
-            $anamneseStr = "Histórico de Lesões: " . ($anamnese['injuries'] ?? 'Nenhuma') . ". " .
-                           "Medicamentos: " . ($anamnese['medications'] ?? 'Nenhum') . ". " .
-                           "Cirurgias: " . ($anamnese['surgeries'] ?? 'Nenhuma') . ". " .
-                           "Dores Atuais: " . ($anamnese['pain_points'] ?? 'Nenhuma') . ". " .
-                           "Hábitos: " . ($anamnese['habits'] ?? 'Não informado') . ".";
+            $anamneseStr = "Historico de Lesoes: " . ($anamnese['injuries'] ?? 'Nenhuma') . '. ' .
+                           "Medicamentos: " . ($anamnese['medications'] ?? 'Nenhum') . '. ' .
+                           "Cirurgias: " . ($anamnese['surgeries'] ?? 'Nenhuma') . '. ' .
+                           "Dores Atuais: " . ($anamnese['pain_points'] ?? 'Nenhuma') . '. ' .
+                           "Habitos: " . ($anamnese['habits'] ?? 'Nao informado') . '.';
 
-            $prompt = "Você é um Personal Trainer de elite e especialista em biomecânica. " .
-                "Analise estas fotos do aluno (frontal, lateral, costas e extras, quando enviados) e seus dados: " .
-                "Objetivo: " . ($studentData['goal'] ?? 'Geral') . ". " .
-                "Experiência: " . ($studentData['experience'] ?? 'Iniciante') . ". " .
-                "PERFIL: Sexo: " . ($studentData['gender'] ?? 'Não inf.') . ". " .
-                "ANAMNESE (MUITO IMPORTANTE - ÚLTIMA AVALIAÇÃO): " . $anamneseStr . " " .
-                "OBSERVAÇÕES DO PERSONAL: " . ($studentData['notes'] ?? '') . ". " .
-                
-                "TAREFA 1: Identifique desvios posturais nas fotos (lordose, cifose, escoliose, ombros, joelhos). " .
-                "TAREFA 2: Crie um ROTINA DE TREINO SEMANAL COMPLETA (Microciclo). " .
-                "REGRAS DO TREINO: " .
-                "1. Respeite as lesões e dores informadas na anamnese (ex: se tiver lesão no joelho, adapte). " .
-                "2. Inclua exercícios corretivos específicos para os desvios encontrados nas fotos. " .
-                "3. MUITO IMPORTANTE: Use SOMENTE nomes de exercícios em português. NUNCA coloque nomes em inglês entre parênteses ou qualquer termo em inglês no nome dos exercícios. Exemplo CORRETO: 'Puxada Alta com Barra'. Exemplo ERRADO: 'Puxada Alta (Lat Pulldown) com Barra'. " .
-                "4. " . $this->exerciseCatalog->buildPromptRestriction() . " " .
-                
-                "Retorne APENAS um JSON válido com esta estrutura exata: " .
-                "{
-                    'posture_analysis': {
-                        'lordosis': 'string',
-                        'scoliosis': 'string',
-                        'shoulders': 'string',
-                        'head_position': 'string',
-                        'knees': 'string',
-                        'feet': 'string'
-                    },
-                    'suggested_focus': {
-                        'strengthen': ['musculo1', 'musculo2'],
-                        'stretch': ['musculo1', 'musculo2']
-                    },
-                    'workout_recommendation': {
-                        'type': 'string (ex: ABC, Fullbody)',
-                        'priority': 'string',
-                        'days': [
-                            {
-                                'name': 'Treino A - Peito e Tríceps',
-                                'exercises': [
-                                    { 'name': 'Supino Reto', 'sets': 4, 'reps': '8-10', 'notes': 'Focar na descida controlada' },
-                                    { 'name': 'Crucifixo Inclinado', 'sets': 3, 'reps': '12', 'notes': '' }
-                                ]
-                            },
-                            {
-                                'name': 'Treino B - Costas e Bíceps',
-                                'exercises': [
-                                    { 'name': 'Puxada Frontal', 'sets': 4, 'reps': '10-12', 'notes': 'Segurar 1s embaixo' }
-                                ]
-                            }
-                        ]
-                    },
-                    'risk_factors': {
-                        'low': ['risco1'],
-                        'medium': ['risco1'],
-                        'high': ['risco1']
-                    }
-                }";
+            $goal = (string) ($studentData['goal'] ?? 'Geral');
+            $experience = (string) ($studentData['experience'] ?? 'Iniciante');
+            $gender = (string) ($studentData['gender'] ?? 'Nao informado');
+            $notes = (string) ($studentData['notes'] ?? '');
+            $exerciseRestriction = $this->exerciseCatalog->buildPromptRestriction();
 
+            $prompt = <<<PROMPT
+Voce e um Personal Trainer senior, especialista em biomecanica e avaliacao postural.
+
+Analise as fotos do aluno (frontal, lateral, posterior e extras, quando houver) junto com os dados abaixo:
+- Objetivo: {$goal}
+- Experiencia: {$experience}
+- Sexo: {$gender}
+- Anamnese: {$anamneseStr}
+- Observacoes do personal: {$notes}
+
+OBJETIVO DA RESPOSTA
+1) Gerar uma avaliacao postural mais detalhada dos desvios.
+2) Gerar um microciclo semanal completo, com foco corretivo e objetivo principal.
+
+CRITERIOS DA ANALISE POSTURAL (SEJA ESPECIFICO)
+- Vista frontal: alinhamento de cabeca, assimetria de ombros, obliquidade pelvica, valgo/varo de joelhos, pronacao/supinacao dos pes.
+- Vista lateral: anteriorizacao de cabeca, cifose toracica, lordose lombar, anteversao/retroversao pelvica, hiperextensao de joelhos.
+- Vista posterior: alinhamento de escapulas, rotacao de tronco, assimetrias de ombros/quadril, possivel desvio lateral da coluna.
+- Se a imagem nao permitir conclusao segura, escreva "Inconclusivo pela imagem" e explique em 1 frase curta.
+
+FORMATO OBRIGATORIO PARA CADA CAMPO DE posture_analysis
+Cada campo (lordosis, scoliosis, shoulders, head_position, knees, feet) deve vir com:
+"Severidade: ausente|leve|moderada|acentuada. Evidencias visuais: ... Impacto funcional: ... Prioridade de correcao: baixa|media|alta."
+
+REGRAS DO TREINO
+1. Respeite lesoes, dores e limitacoes da anamnese.
+2. Inclua exercicios corretivos especificos para os principais desvios encontrados.
+3. Em cada exercicio, use "notes" com orientacao tecnica objetiva (controle, amplitude, respiracao, alinhamento).
+4. Use SOMENTE nomes de exercicios em portugues, sem termos em ingles entre parenteses.
+5. {$exerciseRestriction}
+
+RISK FACTORS
+- Classifique riscos em low/medium/high com frases concretas e clinicamente uteis (ex: "sobrecarga lombar em flexao repetida").
+- Nao deixe medium/high vazios quando houver desvio relevante.
+
+RETORNO
+Retorne APENAS JSON valido, sem markdown, sem comentario e sem texto fora do JSON.
+Use exatamente esta estrutura:
+{
+  "posture_analysis": {
+    "lordosis": "string detalhada no formato obrigatorio",
+    "scoliosis": "string detalhada no formato obrigatorio",
+    "shoulders": "string detalhada no formato obrigatorio",
+    "head_position": "string detalhada no formato obrigatorio",
+    "knees": "string detalhada no formato obrigatorio",
+    "feet": "string detalhada no formato obrigatorio"
+  },
+  "suggested_focus": {
+    "strengthen": ["musculo ou padrao motor 1", "musculo ou padrao motor 2"],
+    "stretch": ["estrutura 1", "estrutura 2"]
+  },
+  "workout_recommendation": {
+    "type": "string",
+    "priority": "string",
+    "days": [
+      {
+        "name": "Treino A - ...",
+        "exercises": [
+          { "name": "Exercicio em portugues", "sets": 4, "reps": "8-10", "notes": "orientacao tecnica objetiva" }
+        ]
+      }
+    ]
+  },
+  "risk_factors": {
+    "low": ["risco concreto 1"],
+    "medium": ["risco concreto 1"],
+    "high": ["risco concreto 1"]
+  }
+}
+PROMPT;
             $promptSize = strlen($prompt);
             Log::info("Gemini diagnóstico — prompt_bytes: {$promptSize}, imagens: " . count($imagePaths) . ", caminhos: " . implode(', ', $imagePaths));
 
@@ -298,41 +318,45 @@ class AiAnalysisService
 
         try {
             $parts = [];
-            
-            // PROMPT DE REFINAMENTO
-            $prompt = "Você é um Personal Trainer de elite. Anteriormente, você analisou este aluno e gerou um treino. " .
-                "Agora, o personal trainer responsável forneceu um FEEDBACK para ajustar a análise. " .
-                
-                "DADOS ORIGINAIS: Objetivo: " . ($studentData['goal'] ?? '') . ". " .
-                "ANÁLISE ANTERIOR (JSON): " . json_encode($previousAnalysis) . ". " .
-                
-                "FEEDBACK DO PERSONAL (CRÍTICO - SIGA ISSO): " . $feedback . ". " .
-                
-                "TAREFA: " .
-                "1. Reavalie a postura e o treino com base no feedback. Se o personal disse que não tem lordose, remova essa informação. " .
-                "2. Regenere o treino completo (Microciclo Semanal) aplicando as correções pedidas. " .
-                "3. Mantenha a estrutura JSON exata da resposta anterior. " .
-                "4. " . $this->exerciseCatalog->buildPromptRestriction() . " " .
-                
-                "Retorne APENAS o JSON válido atualizado.";
+
+            $goal = (string) ($studentData['goal'] ?? '');
+            $previousAnalysisJson = json_encode($previousAnalysis, JSON_UNESCAPED_UNICODE);
+            $exerciseRestriction = $this->exerciseCatalog->buildPromptRestriction();
+
+            $prompt = <<<PROMPT
+Voce e um Personal Trainer senior e especialista em biomecanica.
+Voce ja analisou este aluno e gerou um treino. Agora recebeu feedback do personal responsavel.
+
+- Objetivo original: {$goal}
+- Analise anterior (JSON): {$previousAnalysisJson}
+- Feedback do personal (seguir obrigatoriamente): {$feedback}
+
+TAREFA
+1. Reavalie os desvios posturais usando o feedback como fonte de verdade clinica.
+2. Ajuste o treino completo (microciclo semanal) para refletir as correcoes solicitadas.
+3. Mantenha as mesmas chaves JSON da resposta anterior.
+4. Nos campos de posture_analysis, mantenha descricao detalhada no formato:
+   "Severidade: ... Evidencias visuais: ... Impacto funcional: ... Prioridade de correcao: ..."
+5. {$exerciseRestriction}
+
+Retorne APENAS o JSON valido atualizado, sem markdown.
+PROMPT;
 
             $parts[] = $prompt;
 
-            // Reenvia imagens para contexto visual se necessário
             foreach ($imagePaths as $path) {
                 if ($path && Storage::disk('private')->exists($path)) {
                     $imageData = Storage::disk('private')->get($path);
                     $mimeType = Storage::disk('private')->mimeType($path);
                     $enumMimeType = MimeType::tryFrom($mimeType);
-                    
+
                     if ($enumMimeType) {
                         $parts[] = new Blob(mimeType: $enumMimeType, data: base64_encode($imageData));
                     }
                 }
             }
 
-            // Usa o mesmo modelo estável
-            Log::info('Enviando requisição de refinamento para Gemini 1.5-flash');
+            Log::info('Enviando requisição de refinamento para Gemini');
 
             $response = $this->callWithFallback(
                 fn($client, $model) => $client->generativeModel($model)->generateContent($parts)
@@ -340,23 +364,22 @@ class AiAnalysisService
             $textResult = $response->text();
 
             Log::info('Resposta de refinamento Gemini recebida (primeiros 500 chars): ' . substr($textResult, 0, 500));
-            
+
             $textResult = preg_replace('/^```json\s*|\s*```$/', '', $textResult);
-            
             $jsonResult = json_decode($textResult, true);
 
             if (json_last_error() === JSON_ERROR_NONE) {
                 $jsonResult = $this->exerciseCatalog->enforceWorkoutCatalog($jsonResult);
                 Log::info('Análise refinada com sucesso');
                 return $jsonResult;
-            } else {
-                Log::error('Erro JSON Gemini Refine: ' . substr($textResult, 0, 1000));
-                throw new \RuntimeException('A IA retornou uma resposta inválida ao refinar. Tente novamente.');
             }
+
+            Log::error('Erro JSON Gemini Refine: ' . substr($textResult, 0, 1000));
+            throw new \RuntimeException('A IA retornou uma resposta inválida ao refinar. Tente novamente.');
 
         } catch (\Exception $e) {
             Log::error('Erro API Gemini Refine: ' . $e->getMessage());
-            
+
             if (str_contains($e->getMessage(), 'Quota exceeded') || str_contains($e->getMessage(), '429')) {
                 throw new \RuntimeException('Limite da API Gemini atingido. Aguarde alguns instantes e tente novamente.');
             }
@@ -520,5 +543,4 @@ Retorne SOMENTE o JSON, sem markdown ou explicações adicionais.";
         }
     }
 }
-
 
