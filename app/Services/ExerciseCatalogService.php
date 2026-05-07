@@ -162,6 +162,38 @@ class ExerciseCatalogService
         ];
     }
 
+    /**
+     * Always returns a valid catalog exercise when catalog exists.
+     * If exact resolution fails, picks the best available fallback.
+     */
+    public function resolveCatalogExerciseGuaranteed(string $name, ?string $dayContext = null): array
+    {
+        if (!$this->hasCatalog()) {
+            throw new \RuntimeException('Catalogo de exercicios indisponivel para validacao.');
+        }
+
+        $name = trim($name);
+        if ($name !== '') {
+            $canonical = $this->canonicalize($name);
+            if ($canonical !== null) {
+                $mediaUrl = $this->getMediaUrlForName($canonical);
+                if (!empty($mediaUrl)) {
+                    return [
+                        'name' => $canonical,
+                        'media_url' => $mediaUrl,
+                    ];
+                }
+            }
+        }
+
+        $fallback = $this->pickBestCatalogFallback($name, (string) $dayContext);
+        if ($fallback !== null) {
+            return $fallback;
+        }
+
+        throw new \RuntimeException('Catalogo sem exercicios com midia valida.');
+    }
+
     public function enforceWorkoutCatalog(array $analysis): array
     {
         if (!$this->hasCatalog()) {
@@ -181,11 +213,7 @@ class ExerciseCatalogService
 
             foreach ($exercises as $exerciseIndex => $exercise) {
                 $name = trim((string) ($exercise['name'] ?? ''));
-                if ($name === '') {
-                    throw new \RuntimeException('Resposta da IA invalida: exercicio sem nome.');
-                }
-
-                $resolved = $this->resolveCatalogExerciseOrFail($name);
+                $resolved = $this->resolveCatalogExerciseGuaranteed($name, (string) ($day['name'] ?? ''));
                 $analysis['workout_recommendation']['days'][$dayIndex]['exercises'][$exerciseIndex]['name'] = $resolved['name'];
                 $analysis['workout_recommendation']['days'][$dayIndex]['exercises'][$exerciseIndex]['video_url'] = $resolved['media_url'];
             }
@@ -493,5 +521,61 @@ class ExerciseCatalogService
         $text = preg_replace('/[^a-z0-9]+/i', ' ', $text) ?? $text;
         $text = preg_replace('/\s+/', ' ', $text) ?? $text;
         return trim($text);
+    }
+
+    private function pickBestCatalogFallback(string $rawName, string $dayContext): ?array
+    {
+        $items = $this->getCatalogItems();
+        if (empty($items)) {
+            return null;
+        }
+
+        $normalizedInput = $this->normalize($rawName);
+        $normalizedDay = $this->normalize($dayContext);
+        $inputTokens = $this->tokenizeForMatch($normalizedInput);
+        $dayTokens = $this->tokenizeForMatch($normalizedDay);
+
+        $bestIndex = null;
+        $bestScore = -1.0;
+        $bestDistance = PHP_INT_MAX;
+
+        foreach ($items as $index => $item) {
+            $candidateNorm = $this->normalize((string) ($item['name'] ?? ''));
+            if ($candidateNorm === '') {
+                continue;
+            }
+
+            $candidateTokens = $this->tokenizeForMatch($candidateNorm);
+            $inputOverlap = count(array_intersect($inputTokens, $candidateTokens));
+            $dayOverlap = count(array_intersect($dayTokens, $candidateTokens));
+            $containsBonus = ($normalizedInput !== '' && (str_contains($candidateNorm, $normalizedInput) || str_contains($normalizedInput, $candidateNorm)))
+                ? 1.2
+                : 0.0;
+
+            $score = ($inputOverlap * 2.5) + ($dayOverlap * 1.6) + $containsBonus;
+            $distance = $normalizedInput !== '' ? levenshtein($normalizedInput, $candidateNorm) : 9999;
+
+            if ($score > $bestScore || ($score === $bestScore && $distance < $bestDistance)) {
+                $bestScore = $score;
+                $bestDistance = $distance;
+                $bestIndex = $index;
+            }
+        }
+
+        if ($bestIndex !== null && $bestScore > 0) {
+            return [
+                'name' => (string) $items[$bestIndex]['name'],
+                'media_url' => (string) $items[$bestIndex]['media_url'],
+            ];
+        }
+
+        $seed = $normalizedInput !== '' ? $normalizedInput : ($normalizedDay !== '' ? $normalizedDay : 'catalog');
+        $hash = abs((int) crc32($seed));
+        $fallbackIndex = $hash % count($items);
+
+        return [
+            'name' => (string) $items[$fallbackIndex]['name'],
+            'media_url' => (string) $items[$fallbackIndex]['media_url'],
+        ];
     }
 }

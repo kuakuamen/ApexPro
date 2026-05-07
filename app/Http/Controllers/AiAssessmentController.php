@@ -554,7 +554,10 @@ class AiAssessmentController extends Controller
                                     'media_url' => null,
                                 ];
                             } else {
-                                $resolvedExercise = $this->exerciseCatalog->resolveCatalogExerciseOrFail((string) $exData['name']);
+                                $resolvedExercise = $this->exerciseCatalog->resolveCatalogExerciseGuaranteed(
+                                    (string) ($exData['name'] ?? ''),
+                                    (string) ($dayData['name'] ?? '')
+                                );
                             }
 
                             $workoutDay->exercises()->create([
