@@ -124,6 +124,16 @@
     </a>
     @endif
 
+    @php
+        $todayLogIds = array_map('intval', $todayLogs ?? []);
+        $completedEverIds = array_map('intval', $completedExerciseIdsEver ?? []);
+        $daysOrdered = $workout->days->sortBy('order')->values();
+        $currentDay = $daysOrdered->first(
+            fn($d) => (int) $d->id === (int) ($currentDayId ?? 0)
+        ) ?: $daysOrdered->first();
+        $initialOpenDayId = $currentDay?->id ?? $daysOrdered->first()?->id;
+    @endphp
+
     @if(auth()->user()->role === 'aluno')
     {{-- PROGRESS BAR — total = exercícios do dia sendo trabalhado hoje --}}
     @php
@@ -135,7 +145,7 @@
         ) ?: $daysOrdered->first();
 
         $initialOpenDayId = $currentDay?->id ?? $daysOrdered->first()?->id;
-        $todayTotal = $currentDay ? $currentDay->exercises->count() : 1;
+        $todayTotal = $currentDay ? max(1, $currentDay->exercises->count()) : 1;
         $todayDone = $currentDay
             ? $currentDay->exercises->filter(fn($ex) => in_array((int) $ex->id, $todayLogIds, true))->count()
             : count($todayLogIds);
@@ -392,3 +402,4 @@
 
 </script>
 @endsection
+
