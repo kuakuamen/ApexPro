@@ -188,6 +188,12 @@ class AiAssessmentController extends Controller
      */
     public function analyze(Request $request)
     {
+        if ($request->isMethod('get')) {
+            return redirect()
+                ->route('personal.ai-assessment.index')
+                ->with('error', 'Fluxo de análise reiniciado. Envie os dados novamente.');
+        }
+
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
@@ -319,7 +325,10 @@ class AiAssessmentController extends Controller
                 $studentData
             );
         } catch (\RuntimeException $e) {
-            return back()->withErrors(['ai' => $e->getMessage()]);
+            return redirect()
+                ->route('personal.ai-assessment.index')
+                ->withErrors(['ai' => $e->getMessage()])
+                ->withInput();
         }
 
         // Retornar a view de revisão com os dados preenchidos
@@ -410,6 +419,12 @@ class AiAssessmentController extends Controller
      */
     public function refine(Request $request)
     {
+        if ($request->isMethod('get')) {
+            return redirect()
+                ->route('personal.ai-assessment.index')
+                ->with('error', 'Fluxo de refinamento reiniciado. Abra a análise novamente.');
+        }
+
         $request->validate([
             'student_id' => 'required|exists:users,id',
             'feedback' => 'required|string',
@@ -427,7 +442,7 @@ class AiAssessmentController extends Controller
         $extraPaths = session('last_extra_paths', []);
 
         if (!$previousAnalysis || !$frontPath) {
-            return back()->with('error', 'Sessão expirada. Por favor, refaça o upload das imagens.');
+            return redirect()->route('personal.ai-assessment.index')->with('error', 'Sessão expirada. Por favor, refaça o upload das imagens.');
         }
 
         // Preparar dados para IA
@@ -447,7 +462,10 @@ class AiAssessmentController extends Controller
                 $studentData
             );
         } catch (\RuntimeException $e) {
-            return back()->withErrors(['ai' => $e->getMessage()]);
+            return redirect()
+                ->route('personal.ai-assessment.index')
+                ->withErrors(['ai' => $e->getMessage()])
+                ->withInput();
         }
 
         // Atualizar sessão
@@ -662,7 +680,10 @@ class AiAssessmentController extends Controller
         try {
             $analysisResult = $this->aiService->generateWorkoutWithoutImages($studentData);
         } catch (\RuntimeException $e) {
-            return back()->withErrors(['ai' => $e->getMessage()]);
+            return redirect()
+                ->route('personal.ai-assessment.index')
+                ->withErrors(['ai' => $e->getMessage()])
+                ->withInput();
         }
 
         // Buscamos todos os exercícios para o select de edição
