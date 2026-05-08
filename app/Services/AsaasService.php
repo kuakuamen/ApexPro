@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AsaasService
 {
@@ -67,6 +68,8 @@ class AsaasService
      */
     public function createCustomer(array $data): array
     {
+        $cityId = $this->resolveCityId($data['city'] ?? null, $data['state'] ?? null);
+
         $response = $this->http()->post('/customers', [
             'name'        => $data['name'],
             'cpfCnpj'     => preg_replace('/\D/', '', $data['cpf']),
@@ -76,7 +79,7 @@ class AsaasService
             'address'     => $data['address'] ?? null,
             'addressNumber' => $data['address_number'] ?? null,
             'province'    => $data['province'] ?? null,
-            'city'        => $data['city'] ?? null,
+            'city'        => $cityId,
             'state'       => $data['state'] ?? null,
         ]);
 
@@ -91,6 +94,8 @@ class AsaasService
 
     public function updateCustomer(string $customerId, array $data): array
     {
+        $cityId = $this->resolveCityId($data['city'] ?? null, $data['state'] ?? null);
+
         $response = $this->http()->put("/customers/{$customerId}", [
             'name'        => $data['name'],
             'email'       => $data['email'],
@@ -99,7 +104,7 @@ class AsaasService
             'address'     => $data['address'] ?? null,
             'addressNumber' => $data['address_number'] ?? null,
             'province'    => $data['province'] ?? null,
-            'city'        => $data['city'] ?? null,
+            'city'        => $cityId,
             'state'       => $data['state'] ?? null,
         ]);
 
@@ -129,7 +134,7 @@ class AsaasService
         if ($existing) {
             if (!$this->customerSupportsCheckout($existing)) {
                 try {
-                    return $this->updateCustomer($existing['id'], $data);
+                    $existing = $this->updateCustomer($existing['id'], $data);
                 } catch (\Throwable $e) {
                     Log::warning('Asaas createOrFindCustomer: failed to enrich existing customer', [
                         'customer_id' => $existing['id'] ?? null,
@@ -138,10 +143,26 @@ class AsaasService
                     throw new \RuntimeException($e->getMessage(), 0, $e);
                 }
             }
+
+            if (!$this->customerSupportsCheckout($existing)) {
+                throw new \RuntimeException('Cliente no Asaas ainda esta incompleto para checkout (cidade/CEP/endereco).');
+            }
+
             return $existing;
         }
 
-        return $this->createCustomer($data);
+        $created = $this->createCustomer($data);
+        if (!$this->customerSupportsCheckout($created)) {
+            if (!empty($created['id'])) {
+                $created = $this->updateCustomer($created['id'], $data);
+            }
+        }
+
+        if (!$this->customerSupportsCheckout($created)) {
+            throw new \RuntimeException('Nao foi possivel salvar cidade/CEP no cliente do Asaas.');
+        }
+
+        return $created;
     }
 
     public function customerSupportsCheckout(array $customer): bool
@@ -173,6 +194,71 @@ class AsaasService
         }
 
         return true;
+    }
+
+    protected function resolveCityId($city, $state): ?int
+    {
+        $cityName = trim((string) $city);
+        if ($cityName === '') {
+            return null;
+        }
+
+        if (ctype_digit($cityName)) {
+            return (int) $cityName;
+        }
+
+        $stateCode = strtoupper(trim((string) $state));
+        $response = $this->http()->get('/cities', [
+            'name' => $cityName,
+            'limit' => 100,
+            'offset' => 0,
+        ]);
+
+        if (!$response->successful()) {
+            Log::warning('Asaas resolveCityId failed', [
+                'city' => $cityName,
+                'state' => $stateCode,
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+            throw new \RuntimeException('Nao foi possivel validar a cidade no Asaas.');
+        }
+
+        $items = $response->json()['data'] ?? [];
+        if (empty($items)) {
+            throw new \RuntimeException("Cidade '{$cityName}' nao encontrada no Asaas.");
+        }
+
+        $normalizedInput = $this->normalizeCityName($cityName);
+
+        $exactStateMatch = collect($items)->first(function ($item) use ($stateCode, $normalizedInput) {
+            return is_array($item)
+                && (!empty($item['id']))
+                && strtoupper((string) ($item['state'] ?? '')) === $stateCode
+                && $this->normalizeCityName((string) ($item['name'] ?? '')) === $normalizedInput;
+        });
+
+        if ($exactStateMatch && !empty($exactStateMatch['id'])) {
+            return (int) $exactStateMatch['id'];
+        }
+
+        $stateMatch = collect($items)->first(function ($item) use ($stateCode) {
+            return is_array($item)
+                && (!empty($item['id']))
+                && strtoupper((string) ($item['state'] ?? '')) === $stateCode;
+        });
+
+        if ($stateMatch && !empty($stateMatch['id'])) {
+            return (int) $stateMatch['id'];
+        }
+
+        $first = $items[0] ?? null;
+        return is_array($first) && !empty($first['id']) ? (int) $first['id'] : null;
+    }
+
+    protected function normalizeCityName(string $city): string
+    {
+        return mb_strtolower(trim(Str::ascii($city)));
     }
 
     // ── Assinaturas ────────────────────────────────────────────────────────────
