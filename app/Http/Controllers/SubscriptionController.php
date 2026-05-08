@@ -590,7 +590,9 @@ class SubscriptionController extends Controller
 
         $customer = $asaas->createOrFindCustomer($customerProfile);
         $customerId = $customer['id'] ?? null;
-        $useSavedCustomer = $customerId && $asaas->customerSupportsCheckout($customer);
+        if (!$customerId) {
+            throw new \RuntimeException('Nao foi possivel identificar o cliente no Asaas para gerar o checkout.');
+        }
 
         $subscription->update([
             'asaas_customer_id' => $customerId,
@@ -620,22 +622,7 @@ class SubscriptionController extends Controller
             ],
         ];
 
-        if ($useSavedCustomer) {
-            $payload['customer'] = $customerId;
-        } else {
-            $payload['customerData'] = [
-                'name' => $customerProfile['name'],
-                'email' => $customerProfile['email'],
-                'cpfCnpj' => $customerProfile['cpf'],
-                'phone' => $customerProfile['phone'],
-                'postalCode' => $customerProfile['postal_code'],
-                'address' => $customerProfile['address'],
-                'addressNumber' => $customerProfile['address_number'],
-                'province' => $customerProfile['province'],
-                'city' => $customerProfile['city'],
-                'state' => $customerProfile['state'],
-            ];
-        }
+        $payload['customer'] = $customerId;
 
         if ($paymentMethod === 'credit_card') {
             $payload['subscription'] = [
@@ -669,7 +656,7 @@ class SubscriptionController extends Controller
             'is_trial' => $trialDays > 0,
             'next_due_at' => $nextDueAt->toIso8601String(),
             'effective_next_due_at' => $effectiveNextDueAt?->toIso8601String(),
-            'uses_saved_customer' => $useSavedCustomer,
+            'uses_saved_customer' => true,
         ]);
 
         return redirect()->away($asaas->getCheckoutUrl($checkout['id']));

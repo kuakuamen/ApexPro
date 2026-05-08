@@ -135,6 +135,7 @@ class AsaasService
                         'customer_id' => $existing['id'] ?? null,
                         'error' => $e->getMessage(),
                     ]);
+                    throw new \RuntimeException($e->getMessage(), 0, $e);
                 }
             }
             return $existing;
