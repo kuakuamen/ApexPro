@@ -171,12 +171,12 @@ class PersonalController extends Controller
             'cpf'                  => ['nullable', 'string', 'max:14'],
             'profession'           => ['nullable', 'string', 'max:255'],
             'cref'                 => ['nullable', 'string', 'max:30'],
-            'address_cep'          => ['nullable', 'string', 'max:9'],
+            'address_cep'          => ['nullable', 'regex:/^\d{5}-\d{3}$/'],
             'address_street'       => ['nullable', 'string', 'max:255'],
             'address_number'       => ['nullable', 'string', 'max:30'],
             'address_neighborhood' => ['nullable', 'string', 'max:255'],
             'address_city'         => ['nullable', 'string', 'max:255'],
-            'address_state'        => ['nullable', 'string', 'max:2'],
+            'address_state'        => ['nullable', 'regex:/^[A-Za-z]{2}$/'],
             'password'             => ['nullable', 'string', 'min:8', 'confirmed'],
             'profile_photo'        => ['nullable', 'image', 'max:5120'],
             'remove_profile_photo' => ['nullable', 'boolean'],
@@ -185,6 +185,10 @@ class PersonalController extends Controller
         $data = collect($validated)
             ->except('password', 'password_confirmation', 'profile_photo', 'remove_profile_photo')
             ->toArray();
+
+        if (!empty($data['address_state'])) {
+            $data['address_state'] = strtoupper((string) $data['address_state']);
+        }
 
         if (!empty($validated['password'])) {
             $data['password'] = Hash::make($validated['password']);

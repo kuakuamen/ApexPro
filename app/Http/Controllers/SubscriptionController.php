@@ -586,18 +586,9 @@ class SubscriptionController extends Controller
             ? $previousExpiresAt->copy()->timezone($this->billingTimezone())
             : $this->billingNow()->addDays($trialDays);
 
-        $customer = $asaas->createOrFindCustomer([
-            'name'  => $user->name,
-            'email' => $user->email,
-            'cpf'   => $user->cpf,
-            'phone' => $user->phone ?? '',
-            'postal_code' => $user->address_cep ?? '',
-            'address' => $user->address_street ?? '',
-            'address_number' => $user->address_number ?? '',
-            'province' => $user->address_neighborhood ?? '',
-            'city' => $user->address_city ?? '',
-            'state' => $user->address_state ?? '',
-        ]);
+        $customerProfile = $this->buildAsaasCustomerProfile($user);
+
+        $customer = $asaas->createOrFindCustomer($customerProfile);
         $customerId = $customer['id'] ?? null;
         $useSavedCustomer = $customerId && $asaas->customerSupportsCheckout($customer);
 
@@ -633,16 +624,16 @@ class SubscriptionController extends Controller
             $payload['customer'] = $customerId;
         } else {
             $payload['customerData'] = [
-                'name' => $user->name,
-                'email' => $user->email,
-                'cpfCnpj' => preg_replace('/\D/', '', (string) $user->cpf),
-                'phone' => preg_replace('/\D/', '', (string) ($user->phone ?? '')),
-                'postalCode' => preg_replace('/\D/', '', (string) ($user->address_cep ?? '')),
-                'address' => $user->address_street ?? '',
-                'addressNumber' => $user->address_number ?? '',
-                'province' => $user->address_neighborhood ?? '',
-                'city' => $user->address_city ?? '',
-                'state' => $user->address_state ?? '',
+                'name' => $customerProfile['name'],
+                'email' => $customerProfile['email'],
+                'cpfCnpj' => $customerProfile['cpf'],
+                'phone' => $customerProfile['phone'],
+                'postalCode' => $customerProfile['postal_code'],
+                'address' => $customerProfile['address'],
+                'addressNumber' => $customerProfile['address_number'],
+                'province' => $customerProfile['province'],
+                'city' => $customerProfile['city'],
+                'state' => $customerProfile['state'],
             ];
         }
 
@@ -682,6 +673,41 @@ class SubscriptionController extends Controller
         ]);
 
         return redirect()->away($asaas->getCheckoutUrl($checkout['id']));
+    }
+
+    protected function buildAsaasCustomerProfile(User $user): array
+    {
+        $postalCode = preg_replace('/\D/', '', (string) ($user->address_cep ?? ''));
+        $state = strtoupper(trim((string) ($user->address_state ?? '')));
+        $address = trim((string) ($user->address_street ?? ''));
+        $addressNumber = trim((string) ($user->address_number ?? ''));
+        $province = trim((string) ($user->address_neighborhood ?? ''));
+        $city = trim((string) ($user->address_city ?? ''));
+
+        if (strlen($postalCode) !== 8) {
+            throw new \RuntimeException('Seu CEP cadastrado e invalido. Atualize seu endereco no perfil e tente novamente.');
+        }
+
+        if ($state === '' || preg_match('/^[A-Z]{2}$/', $state) !== 1) {
+            throw new \RuntimeException('Seu estado cadastrado e invalido. Atualize seu endereco no perfil e tente novamente.');
+        }
+
+        if ($address === '' || $addressNumber === '' || $province === '' || $city === '') {
+            throw new \RuntimeException('Seu endereco cadastrado esta incompleto. Atualize seu perfil e tente novamente.');
+        }
+
+        return [
+            'name' => (string) $user->name,
+            'email' => (string) $user->email,
+            'cpf' => preg_replace('/\D/', '', (string) $user->cpf),
+            'phone' => preg_replace('/\D/', '', (string) ($user->phone ?? '')),
+            'postal_code' => $postalCode,
+            'address' => $address,
+            'address_number' => $addressNumber,
+            'province' => $province,
+            'city' => $city,
+            'state' => $state,
+        ];
     }
 
     protected function activateSubscription(SubscriptionTransaction $transaction): void

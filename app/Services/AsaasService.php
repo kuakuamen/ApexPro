@@ -117,7 +117,15 @@ class AsaasService
      */
     public function createOrFindCustomer(array $data): array
     {
-        $existing = $this->findCustomerByCpf($data['cpf']);
+        $customers = $this->listCustomersByCpf($data['cpf']);
+        $existing = collect($customers)->first(function ($customer) {
+            return is_array($customer) && $this->customerSupportsCheckout($customer);
+        });
+
+        if (!$existing && !empty($customers)) {
+            $existing = $customers[0];
+        }
+
         if ($existing) {
             if (!$this->customerSupportsCheckout($existing)) {
                 try {
@@ -137,11 +145,33 @@ class AsaasService
 
     public function customerSupportsCheckout(array $customer): bool
     {
-        return !empty($customer['address'])
-            && !empty($customer['addressNumber'])
-            && !empty($customer['postalCode'])
-            && !empty($customer['province'])
-            && !empty($customer['city']);
+        $postalCode = $this->normalizePostalCode($customer['postalCode'] ?? '');
+        $state = strtoupper(trim((string) ($customer['state'] ?? '')));
+
+        return $this->hasFilledValue($customer['address'] ?? null)
+            && $this->hasFilledValue($customer['addressNumber'] ?? null)
+            && strlen($postalCode) === 8
+            && $this->hasFilledValue($customer['province'] ?? null)
+            && $this->hasFilledValue($customer['city'] ?? null)
+            && preg_match('/^[A-Z]{2}$/', $state) === 1;
+    }
+
+    protected function normalizePostalCode($postalCode): string
+    {
+        return preg_replace('/\D/', '', (string) $postalCode);
+    }
+
+    protected function hasFilledValue($value): bool
+    {
+        if (is_null($value)) {
+            return false;
+        }
+
+        if (is_string($value)) {
+            return trim($value) !== '';
+        }
+
+        return true;
     }
 
     // ── Assinaturas ────────────────────────────────────────────────────────────
