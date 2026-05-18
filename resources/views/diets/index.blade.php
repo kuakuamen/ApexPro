@@ -22,6 +22,37 @@
         @endif
     </div>
 
+    @if($canManageDiets)
+        <form method="GET" action="{{ route('diets.index') }}" class="rounded-2xl border border-cyan-900/35 bg-slate-900/45 p-3 sm:p-4">
+            <div class="flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1">
+                    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-4.35-4.35m1.1-4.4a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"/>
+                        </svg>
+                    </span>
+                    <input type="text"
+                           name="q"
+                           value="{{ $search ?? '' }}"
+                           placeholder="Pesquisar dietas pelo nome do aluno..."
+                           class="w-full rounded-xl border border-slate-700/70 bg-slate-950/70 pl-10 pr-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500/50">
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit"
+                            class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-white border border-cyan-500/40 bg-cyan-600/20 hover:bg-cyan-500/25 transition-colors">
+                        Buscar
+                    </button>
+                    @if(!empty($search))
+                        <a href="{{ route('diets.index') }}"
+                           class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 border border-slate-700 bg-slate-900/60 hover:bg-slate-800/80 transition-colors">
+                            Limpar
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </form>
+    @endif
+
     @forelse($diets as $diet)
         @php
             $colors = [

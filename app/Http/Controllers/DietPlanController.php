@@ -17,6 +17,50 @@ use Illuminate\Support\Str;
 
 class DietPlanController extends Controller
 {
+    private function canViewDiet(User $user, DietPlan $diet): bool
+    {
+        if ((int) $user->id === (int) $diet->student_id) {
+            return true;
+        }
+
+        return $this->canManageDiets($user) && (int) $user->id === (int) $diet->nutritionist_id;
+    }
+
+    private function normalizeWhatsappPhone(string $phone): string
+    {
+        $digits = preg_replace('/\D+/', '', $phone) ?? '';
+        if ($digits === '') {
+            return '';
+        }
+
+        if (str_starts_with($digits, '55') && strlen($digits) >= 12) {
+            return $digits;
+        }
+
+        if (strlen($digits) === 10 || strlen($digits) === 11) {
+            return '55' . $digits;
+        }
+
+        return strlen($digits) >= 12 ? $digits : '';
+    }
+
+    private function buildDietPdf(DietPlan $diet): \Barryvdh\DomPDF\PDF
+    {
+        return Pdf::loadView('diets.pdf', [
+            'diet' => $diet,
+            'generatedAt' => now('America/Sao_Paulo'),
+        ])->setPaper('a4');
+    }
+
+    private function dietPdfFilename(DietPlan $diet): string
+    {
+        $studentSlug = Str::slug((string) optional($diet->student)->name, '-');
+        $dietSlug = Str::slug((string) $diet->name, '-');
+        $base = trim('plano-alimentar-' . $studentSlug . '-' . $dietSlug, '-');
+
+        return ($base !== '' ? $base : 'plano-alimentar') . '.pdf';
+    }
+
     private function canManageDiets(User $user): bool
     {
         return in_array($user->role, ['personal', 'nutri'], true);
@@ -300,16 +344,25 @@ class DietPlanController extends Controller
     /**
      * Lista os planos alimentares.
      */
-    public function index()
+    public function index(Request $request)
     {
         /** @var User $user */
         $user = Auth::user();
+        $search = trim((string) $request->query('q', ''));
 
         if ($this->canManageDiets($user)) {
-            $diets = DietPlan::with(['student', 'nutritionist'])
-                ->where('nutritionist_id', $user->id)
-                ->latest()
-                ->get();
+            $dietsQuery = DietPlan::with(['student', 'nutritionist'])
+                ->where('nutritionist_id', $user->id);
+
+            if ($search !== '') {
+                $dietsQuery->where(function ($query) use ($search) {
+                    $query->whereHas('student', function ($studentQuery) use ($search) {
+                        $studentQuery->where('name', 'like', '%' . $search . '%');
+                    });
+                });
+            }
+
+            $diets = $dietsQuery->latest()->get();
         } else {
             $diets = $user->dietPlans()
                 ->with('nutritionist')
@@ -318,7 +371,7 @@ class DietPlanController extends Controller
                 ->get();
         }
 
-        return view('diets.index', compact('diets'));
+        return view('diets.index', compact('diets', 'search'));
     }
 
     /**
@@ -557,13 +610,67 @@ class DietPlanController extends Controller
      */
     public function show(DietPlan $diet)
     {
-        if (Auth::id() !== $diet->student_id && Auth::id() !== $diet->nutritionist_id) {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$this->canViewDiet($user, $diet)) {
             abort(403);
         }
 
-        $diet->load('meals.foods');
+        $diet->load(['meals.foods', 'student', 'nutritionist']);
 
-        return view('diets.show', compact('diet'));
+        $canManageDiet = $this->canManageDiets($user) && (int) $user->id === (int) $diet->nutritionist_id;
+        $dietPdfDownloadUrl = $canManageDiet ? route('diets.pdf', $diet) : null;
+        $dietPdfShareUrl = null;
+        $dietWhatsappShareUrl = null;
+
+        if ($canManageDiet && $diet->student) {
+            $dietPdfShareUrl = URL::temporarySignedRoute(
+                'diets.pdf.share',
+                now('America/Sao_Paulo')->addDays(15),
+                ['diet' => $diet->id]
+            );
+
+            $phone = $this->normalizeWhatsappPhone((string) ($diet->student->phone ?? ''));
+            if ($phone !== '') {
+                $studentName = trim((string) $diet->student->name);
+                $message = 'Oi ' . ($studentName !== '' ? $studentName : 'aluno') . ', segue seu plano alimentar em PDF: ' . $dietPdfShareUrl;
+                $dietWhatsappShareUrl = 'https://wa.me/' . $phone . '?text=' . urlencode($message);
+            }
+        }
+
+        return view('diets.show', compact(
+            'diet',
+            'canManageDiet',
+            'dietPdfDownloadUrl',
+            'dietPdfShareUrl',
+            'dietWhatsappShareUrl'
+        ));
+    }
+
+    public function exportPdf(DietPlan $diet)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$this->canViewDiet($user, $diet)) {
+            abort(403);
+        }
+
+        $diet->load(['meals.foods', 'student', 'nutritionist']);
+
+        return $this->buildDietPdf($diet)->download($this->dietPdfFilename($diet));
+    }
+
+    public function exportPdfShare(Request $request, DietPlan $diet)
+    {
+        if (!$request->hasValidSignature()) {
+            abort(403, 'Link expirado ou invalido.');
+        }
+
+        $diet->load(['meals.foods', 'student', 'nutritionist']);
+
+        return $this->buildDietPdf($diet)->stream($this->dietPdfFilename($diet));
     }
 
     public function generateWithAi(Request $request, DietAiService $dietAiService): JsonResponse

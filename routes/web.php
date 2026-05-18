@@ -40,6 +40,7 @@ Route::get('/assinatura/resultado/{ref}', [SubscriptionController::class, 'payme
 Route::middleware('signed')->group(function () {
     Route::get('/anamnese/nutricional/{professional}/{student}', [DietPlanController::class, 'showAnamnesisLinkForm'])->name('diets.anamnesis-link.show');
     Route::post('/anamnese/nutricional/{professional}/{student}', [DietPlanController::class, 'submitAnamnesisLinkForm'])->name('diets.anamnesis-link.submit');
+    Route::get('/dietas/{diet}/pdf-compartilhado', [DietPlanController::class, 'exportPdfShare'])->name('diets.pdf.share');
 });
 
 // Rotas de RenovaÃƒÂ§ÃƒÂ£o (Autenticadas, mas acessÃƒÂ­veis mesmo expirado)
@@ -214,6 +215,7 @@ Route::middleware(['auth', 'subscription'])->group(function () {
     Route::get('/dietas/anamnese/pdf', [DietPlanController::class, 'anamnesisQuestionnairePdf'])->name('diets.anamnesis-pdf');
     Route::post('/dietas/gerar-ia', [DietPlanController::class, 'generateWithAi'])->name('diets.generate-ai');
     Route::post('/dietas', [DietPlanController::class, 'store'])->name('diets.store');
+    Route::get('/dietas/{diet}/pdf', [DietPlanController::class, 'exportPdf'])->name('diets.pdf');
     Route::get('/dietas/{diet}', [DietPlanController::class, 'show'])->name('diets.show');
     
     // Rota de Toggle de ExercÃƒÂ­cio (Aluno)

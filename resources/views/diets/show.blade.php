@@ -108,6 +108,40 @@
             </span>
         </div>
 
+        @if(($canManageDiet ?? false) && !empty($dietPdfDownloadUrl))
+            <div class="mt-4 flex flex-wrap gap-2">
+                <a href="{{ $dietPdfDownloadUrl }}"
+                   class="inline-flex items-center gap-2 rounded-xl border border-cyan-500/35 bg-cyan-500/15 px-3 py-2 text-xs font-bold text-cyan-200 hover:bg-cyan-500/20 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 16v-8m0 8l-3-3m3 3l3-3M5 20h14"/>
+                    </svg>
+                    Exportar PDF
+                </a>
+
+                @if(!empty($dietWhatsappShareUrl))
+                    <a href="{{ $dietWhatsappShareUrl }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="inline-flex items-center gap-2 rounded-xl border border-emerald-500/35 bg-emerald-500/15 px-3 py-2 text-xs font-bold text-emerald-200 hover:bg-emerald-500/20 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8.5 4.5A7.5 7.5 0 0120 11c0 4.14-3.36 7.5-7.5 7.5a7.48 7.48 0 01-3.38-.8L4 19l1.3-4.65A7.47 7.47 0 014.5 11 7.5 7.5 0 018.5 4.5z"/>
+                        </svg>
+                        Enviar no WhatsApp
+                    </a>
+                @else
+                    <button type="button"
+                            disabled
+                            class="inline-flex items-center gap-2 rounded-xl border border-zinc-600/60 bg-zinc-700/35 px-3 py-2 text-xs font-bold text-slate-400 cursor-not-allowed"
+                            title="Aluno sem telefone valido para WhatsApp">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        WhatsApp indisponivel
+                    </button>
+                @endif
+            </div>
+        @endif
+
         <div class="flex flex-wrap items-center gap-2 mt-4">
             <span class="diet-chip">{{ $totalMeals }} {{ $totalMeals === 1 ? 'refeicao' : 'refeicoes' }}</span>
             @if($dailyKcal > 0)
