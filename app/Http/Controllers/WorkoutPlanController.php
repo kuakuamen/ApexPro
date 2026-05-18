@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\WorkoutPlan;
 use App\Models\User;
 use App\Models\ProfessionalStudent;
@@ -20,6 +21,27 @@ class WorkoutPlanController extends Controller
     public function __construct(ExerciseCatalogService $exerciseCatalog)
     {
         $this->exerciseCatalog = $exerciseCatalog;
+    }
+
+    private function canViewWorkout(User $user, WorkoutPlan $workout): bool
+    {
+        return (int) $user->id === (int) $workout->student_id
+            || (int) $user->id === (int) $workout->personal_id;
+    }
+
+    private function workoutPdfFilename(WorkoutPlan $workout): string
+    {
+        $sanitize = static function (string $text): string {
+            $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text) ?: $text;
+            $text = preg_replace('/[^a-z0-9]+/i', '-', $text) ?? $text;
+            return trim(strtolower($text), '-');
+        };
+
+        $student = $sanitize((string) optional($workout->student)->name);
+        $name = $sanitize((string) $workout->name);
+        $base = trim("treino-{$student}-{$name}", '-');
+
+        return ($base !== '' ? $base : 'treino') . '.pdf';
     }
 
     /**
@@ -642,10 +664,33 @@ class WorkoutPlanController extends Controller
             ->with('success', 'Treino excluído com sucesso.');
     }
 
+    public function exportPdf(WorkoutPlan $workout)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$this->canViewWorkout($user, $workout)) {
+            abort(403);
+        }
+
+        $workout->load(['student', 'personal', 'days.exercises']);
+        $workout->setRelation('days', $workout->days->sortBy('order')->values());
+
+        $pdf = Pdf::loadView('workouts.pdf', [
+            'workout' => $workout,
+            'generatedAt' => now('America/Sao_Paulo'),
+        ])->setPaper('a4');
+
+        return $pdf->download($this->workoutPdfFilename($workout));
+    }
+
     public function show(WorkoutPlan $workout)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Verificar permissão
-        if (Auth::id() !== $workout->student_id && Auth::id() !== $workout->personal_id) {
+        if (!$this->canViewWorkout($user, $workout)) {
             abort(403);
         }
 

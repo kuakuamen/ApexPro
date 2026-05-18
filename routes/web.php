@@ -207,6 +207,7 @@ Route::middleware(['auth', 'subscription'])->group(function () {
     Route::put('/treinos/{workout}', [WorkoutPlanController::class, 'update'])->name('workouts.update');
     Route::delete('/treinos/{workout}', [WorkoutPlanController::class, 'destroy'])->name('workouts.destroy');
     Route::patch('/treinos/{workout}/toggle-active', [WorkoutPlanController::class, 'toggleActive'])->name('workouts.toggle-active');
+    Route::get('/treinos/{workout}/pdf', [WorkoutPlanController::class, 'exportPdf'])->name('workouts.pdf');
     Route::get('/treinos/{workout}', [WorkoutPlanController::class, 'show'])->name('workouts.show');
 
     // Rotas de Dieta (NutriÃƒÂ§ÃƒÂ£o)
