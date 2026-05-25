@@ -159,15 +159,18 @@
     border: 1px solid rgba(45, 212, 191, 0.22);
     border-radius: 14px;
     padding: 14px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) minmax(430px, 1.6fr) minmax(170px, 0.75fr);
+    grid-template-areas:
+        "main metrics preview"
+        ". metrics tag";
+    align-items: start;
     gap: 12px;
 }
 
 .editor-ex-main {
-    flex: 1 1 280px;
-    min-width: 260px;
+    grid-area: main;
+    min-width: 0;
 }
 
 .editor-name-row {
@@ -196,14 +199,18 @@
 }
 
 .editor-metrics-grid {
-    flex: 2 1 420px;
+    grid-area: metrics;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(180px, 1.5fr) auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
 }
 
 .editor-metric-field {
     min-width: 0;
+}
+
+.editor-metric-field-observation {
+    grid-column: 1 / -1;
 }
 
 .editor-select {
@@ -213,8 +220,9 @@
 
 .editor-remove-wrap {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: flex-end;
+    grid-column: 1 / -1;
 }
 
 .editor-remove-btn {
@@ -233,8 +241,9 @@
 }
 
 .editor-preview-block {
-    flex: 0 1 170px;
-    min-width: 150px;
+    grid-area: preview;
+    min-width: 0;
+    align-self: start;
 }
 
 .editor-preview-label {
@@ -257,7 +266,10 @@
 }
 
 .editor-tag-wrap {
-    margin-left: auto;
+    grid-area: tag;
+    margin-left: 0;
+    justify-self: end;
+    align-self: end;
 }
 
 .editor-tag {
@@ -360,17 +372,21 @@
         padding-right: 18px !important;
     }
 
-    .editor-ex-main {
-        min-width: 100%;
+    .editor-ex-card {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "main"
+            "metrics"
+            "preview"
+            "tag";
     }
 
     .editor-metrics-grid {
-        flex-basis: 100%;
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .editor-preview-block {
-        flex-basis: 100%;
+    .editor-metric-field-observation {
+        grid-column: 1 / -1;
     }
 }
 
@@ -420,8 +436,8 @@
     }
 
     .editor-remove-wrap {
-        justify-content: flex-start;
-        grid-column: span 2;
+        justify-content: flex-end;
+        grid-column: 1 / -1;
     }
 
     .editor-preview {
@@ -430,7 +446,8 @@
     }
 
     .editor-tag-wrap {
-        margin-left: 0;
+        justify-self: start;
+        align-self: start;
     }
 
     .catalog-modal-backdrop {
@@ -609,7 +626,7 @@
                                             <option value="180s">180s</option>
                                         </select>
                                     </div>
-                                    <div class="editor-metric-field">
+                                    <div class="editor-metric-field editor-metric-field-observation">
                                         <label class="block text-xs font-medium text-stone-400">Observacao</label>
                                         <input type="text"
                                                x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][observation]'"
