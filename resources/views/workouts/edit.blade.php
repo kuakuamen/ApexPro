@@ -198,7 +198,7 @@
 .editor-metrics-grid {
     flex: 2 1 420px;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(180px, 1.5fr) auto;
     gap: 10px;
 }
 
@@ -609,6 +609,15 @@
                                             <option value="180s">180s</option>
                                         </select>
                                     </div>
+                                    <div class="editor-metric-field">
+                                        <label class="block text-xs font-medium text-stone-400">Observacao</label>
+                                        <input type="text"
+                                               x-bind:name="'days[' + dayIndex + '][exercises][' + exerciseIndex + '][observation]'"
+                                               x-model="exercise.observation"
+                                               maxlength="500"
+                                               placeholder="Ex: dropset, unilateral, isometria"
+                                               class="editor-select block w-full shadow-sm sm:text-sm border-teal-900/40 bg-zinc-950/60 text-stone-100 rounded-md py-2 px-2">
+                                    </div>
                                     <div class="editor-remove-wrap">
                                         <button type="button" @click="removeExercise(dayIndex, exerciseIndex)" class="editor-remove-btn">
                                             Remover
@@ -744,6 +753,7 @@
                         sets: ex.sets,
                         reps: ex.reps,
                         rest_time: ex.rest_time,
+                        observation: ex.observation ?? '',
                         video_url: ex.video_url ?? '',
                         custom_exercise: ex.video_url ? 0 : 1
                     }))
@@ -815,7 +825,7 @@
                     weekDay: '',
                     workoutType: '',
                     customName: '',
-                    exercises: [{ id: Date.now() + 1, name: '', sets: '', reps: '', rest_time: '', video_url: '', custom_exercise: 0 }]
+                    exercises: [{ id: Date.now() + 1, name: '', sets: '', reps: '', rest_time: '', observation: '', video_url: '', custom_exercise: 0 }]
                 });
             },
             removeDay(index) {
@@ -828,6 +838,7 @@
                     sets: '',
                     reps: '',
                     rest_time: '',
+                    observation: '',
                     video_url: '',
                     custom_exercise: 0
                 });

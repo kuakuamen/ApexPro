@@ -466,6 +466,7 @@ class WorkoutPlanController extends Controller
             'days.*.exercises.*.sets' => 'nullable|string',
             'days.*.exercises.*.reps' => 'nullable|string',
             'days.*.exercises.*.rest_time' => 'nullable|string',
+            'days.*.exercises.*.observation' => 'nullable|string|max:500',
             'days.*.exercises.*.video_url' => 'nullable|url|max:500',
         ]);
 
@@ -512,6 +513,7 @@ class WorkoutPlanController extends Controller
                         'sets' => $exerciseData['sets'] ?? null,
                         'reps' => $exerciseData['reps'] ?? null,
                         'rest_time' => $exerciseData['rest_time'] ?? null,
+                        'observation' => $exerciseData['observation'] ?? null,
                         'video_url' => $resolvedExercise['media_url'],
                         'order' => $exerciseIndex,
                     ]);
@@ -565,6 +567,7 @@ class WorkoutPlanController extends Controller
             'days.*.exercises.*.sets' => 'nullable|string',
             'days.*.exercises.*.reps' => 'nullable|string',
             'days.*.exercises.*.rest_time' => 'nullable|string',
+            'days.*.exercises.*.observation' => 'nullable|string|max:500',
             'days.*.exercises.*.video_url' => 'nullable|url|max:500',
         ]);
 
@@ -604,6 +607,7 @@ class WorkoutPlanController extends Controller
                         'sets' => $exerciseData['sets'] ?? null,
                         'reps' => $exerciseData['reps'] ?? null,
                         'rest_time' => $exerciseData['rest_time'] ?? null,
+                        'observation' => $exerciseData['observation'] ?? null,
                         'video_url' => $resolvedExercise['media_url'],
                         'order' => $exerciseIndex,
                     ]);
