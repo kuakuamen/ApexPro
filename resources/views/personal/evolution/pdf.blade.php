@@ -48,38 +48,6 @@
         .brand-row {
             margin-bottom: 8px;
         }
-        .brand-icon {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            border-radius: 7px;
-            background: #0f3f3b;
-            border: 1px solid #0f766e;
-            margin-right: 9px;
-            vertical-align: middle;
-            padding: 4px 5px 3px;
-        }
-        .brand-bars {
-            display: block;
-            height: 100%;
-            white-space: nowrap;
-        }
-        .brand-bar {
-            display: inline-block;
-            width: 3px;
-            margin-right: 2px;
-            border-radius: 1px;
-            background: #5eead4;
-            vertical-align: bottom;
-        }
-        .brand-bar:last-child {
-            margin-right: 0;
-        }
-        .brand-bar.b1 { height: 6px; }
-        .brand-bar.b2 { height: 10px; }
-        .brand-bar.b3 { height: 14px; }
-        .brand-bar.b4 { height: 9px; }
-        .brand-bar.b5 { height: 12px; }
         .brand-title {
             display: inline-block;
             vertical-align: middle;
@@ -89,10 +57,6 @@
         }
         .brand-title .apx {
             color: #67e8f9;
-        }
-        .brand-title .ai {
-            color: #a5b4fc;
-            font-weight: 400;
         }
         .subtitle {
             font-size: 12px;
@@ -262,16 +226,7 @@
             <tr>
                 <td class="header-left">
                     <div class="brand-row">
-                        <span class="brand-icon">
-                            <span class="brand-bars">
-                                <span class="brand-bar b1"></span>
-                                <span class="brand-bar b2"></span>
-                                <span class="brand-bar b3"></span>
-                                <span class="brand-bar b4"></span>
-                                <span class="brand-bar b5"></span>
-                            </span>
-                        </span>
-                        <span class="brand-title"><span class="apx">ApexPro</span> <span class="ai">AI</span></span>
+                        <span class="brand-title"><span class="apx">ApexPro</span></span>
                     </div>
                     <div class="subtitle">Relatorio de Evolucao Fisica - Monitoramento de Performance</div>
                     <div class="meta-line">Aluno: <span class="meta-strong">{{ $student->name }}</span></div>
