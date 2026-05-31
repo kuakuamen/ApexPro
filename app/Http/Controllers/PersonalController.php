@@ -1150,6 +1150,8 @@ class PersonalController extends Controller
     public function evolutionExportPdf(User $student)
     {
         $this->validateStudentBelongsToPersonal($student);
+        /** @var User $professional */
+        $professional = Auth::user();
 
         $measurements = BodyMeasurement::where('student_id', $student->id)
             ->orderBy('date')
@@ -1204,6 +1206,7 @@ class PersonalController extends Controller
 
         $pdf = Pdf::loadView('personal.evolution.pdf', [
             'student' => $student,
+            'professional' => $professional,
             'summary' => $summary,
             'history' => $history,
             'comparisonRows' => $comparisonRows,
