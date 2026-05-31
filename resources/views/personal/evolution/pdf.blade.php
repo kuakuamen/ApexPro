@@ -48,14 +48,22 @@
         .brand-row {
             margin-bottom: 8px;
         }
-        .brand-badge {
+        .brand-icon {
             display: inline-block;
-            width: 18px;
-            height: 18px;
-            border-radius: 5px;
-            background: #06b6d4;
-            margin-right: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+            background: #0f3f3b;
+            border: 1px solid #0f766e;
+            margin-right: 9px;
             vertical-align: middle;
+            text-align: center;
+            line-height: 22px;
+        }
+        .brand-icon-glyph {
+            font-size: 13px;
+            color: #5eead4;
+            font-weight: 700;
         }
         .brand-title {
             display: inline-block;
@@ -239,7 +247,7 @@
             <tr>
                 <td class="header-left">
                     <div class="brand-row">
-                        <span class="brand-badge"></span>
+                        <span class="brand-icon"><span class="brand-icon-glyph">&#8599;</span></span>
                         <span class="brand-title"><span class="apx">ApexPro</span> <span class="ai">AI</span></span>
                     </div>
                     <div class="subtitle">Relatorio de Evolucao Fisica - Monitoramento de Performance</div>
