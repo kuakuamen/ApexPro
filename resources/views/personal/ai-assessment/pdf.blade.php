@@ -5,33 +5,49 @@
     <title>Laudo Postural - {{ $student->name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #111827;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            color: #ffffff;
+        }
+        .report-page {
+            min-height: 100vh;
+            padding: 2rem;
+            background-color: #111827;
+        }
         @media print {
-            body { 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
-                background-color: #111827 !important; /* bg-gray-900 */
+            html, body, .report-page {
+                background-color: #111827 !important;
                 color: #ffffff !important;
             }
             .no-print { display: none; }
             .page-break { page-break-before: always; }
         }
-        body {
-            font-family: 'Inter', sans-serif;
-        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-900 text-gray-100 p-8 max-w-4xl mx-auto min-h-screen">
+<body class="bg-gray-900 text-gray-100">
+    <div class="report-page max-w-4xl mx-auto min-h-screen">
     
     <!-- Cabeçalho -->
     <div class="border-b border-gray-700 pb-6 mb-10 flex justify-between items-end">
         <div>
             <div class="flex items-center gap-3 mb-2">
                 <!-- Logo Simulado -->
-                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                <div class="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 </div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">ApexPro <span class="text-indigo-400 font-light">AI</span></h1>
+                <h1 class="text-2xl font-bold tracking-tight"><span class="text-cyan-300">ApexPro</span> <span class="text-indigo-300 font-light">AI</span></h1>
             </div>
             <p class="text-sm text-gray-400">Laudo de Avaliação Física & Prescrição Inteligente</p>
         </div>
@@ -193,6 +209,7 @@
         <p class="text-xs text-gray-600">© {{ date('Y') }} ApexPro - Todos os direitos reservados.</p>
     </div>
 
+    </div>
     <script>
         window.onload = function() {
             // Pequeno delay para garantir carregamento das imagens e estilos
