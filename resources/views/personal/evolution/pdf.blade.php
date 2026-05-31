@@ -61,9 +61,10 @@
             line-height: 22px;
         }
         .brand-icon-glyph {
-            font-size: 13px;
+            font-size: 12px;
             color: #5eead4;
             font-weight: 700;
+            letter-spacing: 1px;
         }
         .brand-title {
             display: inline-block;
@@ -247,7 +248,7 @@
             <tr>
                 <td class="header-left">
                     <div class="brand-row">
-                        <span class="brand-icon"><span class="brand-icon-glyph">&#8599;</span></span>
+                        <span class="brand-icon"><span class="brand-icon-glyph">&#9604;&#9606;&#9608;</span></span>
                         <span class="brand-title"><span class="apx">ApexPro</span> <span class="ai">AI</span></span>
                     </div>
                     <div class="subtitle">Relatorio de Evolucao Fisica - Monitoramento de Performance</div>
