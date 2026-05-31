@@ -25,10 +25,10 @@
         .report-page {
             min-height: 100vh;
             background: #111827;
-            padding: 26px;
+            padding: 24px 38px 24px 24px;
         }
         .header {
-            width: 100%;
+            width: auto;
             border: 1.5px solid #334155;
             border-radius: 14px;
             background: #0f172a;
@@ -95,6 +95,7 @@
         }
 
         .section {
+            width: auto;
             margin-top: 14px;
             border: 1px solid #1f2937;
             border-radius: 14px;
