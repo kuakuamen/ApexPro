@@ -29,21 +29,30 @@
         }
         .header {
             width: 100%;
-            border: 1px solid #1f2937;
+            border: 1.5px solid #334155;
             border-radius: 14px;
             background: #0f172a;
             padding: 18px 20px;
             margin-bottom: 18px;
+            overflow: hidden;
         }
         .header-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
         .header-left, .header-right {
             vertical-align: top;
         }
+        .header-left {
+            width: 58%;
+            padding-right: 12px;
+        }
         .header-right {
+            width: 42%;
             text-align: right;
+            padding-left: 12px;
+            word-break: break-word;
         }
         .brand-row {
             margin-bottom: 8px;
