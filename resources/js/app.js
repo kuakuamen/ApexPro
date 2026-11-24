@@ -41,7 +41,7 @@ function showInstallInstructions(isIOS) {
     if (!installDialog) return;
 
     const instructions = isIOS
-        ? '<p>No Safari, toque em <strong>Compartilhar</strong> (ícone do quadrado com seta para cima) e depois em <strong>Adicionar à Tela de Início</strong>.</p><p>Por fim, toque em <strong>Adicionar</strong>.</p>'
+        ? '<p>No Safari, toque no botão Compartilhar: <span class="apexpro-ios-share" aria-label="Ícone Compartilhar"><svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M12 15V3m0 0L8 7m4-4 4 4M5 10v10h14V10" /></svg></span></p><p>Depois toque em <strong>Adicionar à Tela de Início</strong> e confirme em <strong>Adicionar</strong>.</p>'
         : '<p>Abra o menu do navegador <strong>⋮</strong> e toque em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</p>';
 
     installDialog.innerHTML = `
@@ -116,6 +116,9 @@ function showInstallBanner() {
         .apexpro-install-dialog-card { position:relative; padding:24px; border:1px solid rgba(34,211,238,.3); border-radius:18px; background:#0f1a2e; box-shadow:0 18px 50px rgba(0,0,0,.45); font:inherit; }
         .apexpro-install-dialog-card h2 { margin:0 32px 16px 0; font-size:20px; }
         .apexpro-install-dialog-card p { color:#cbd5e1; font-size:15px; line-height:1.55; }
+        .apexpro-ios-share { display:inline-flex; vertical-align:middle; align-items:center; justify-content:center; width:34px; height:34px; margin:0 3px; border-radius:9px; background:#1e293b; color:#22d3ee; }
+        .apexpro-ios-share svg { width:22px; height:22px; }
+        .apexpro-ios-share path { fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
         .apexpro-install-close { position:absolute; top:16px; right:16px; }
         .apexpro-install-done { width:100%; margin-top:8px; }
     `;
