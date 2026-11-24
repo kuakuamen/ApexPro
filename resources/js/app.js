@@ -16,6 +16,8 @@ if ('serviceWorker' in navigator) {
 let deferredInstallPrompt = null;
 let installBanner = null;
 let installDialog = null;
+let installStyles = null;
+let installReminderTimer = null;
 
 window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
@@ -29,7 +31,9 @@ function isAppInstalled() {
 function hideInstallPrompt() {
     installBanner?.remove();
     installDialog?.remove();
+    installStyles?.remove();
     installBanner = null;
+    installStyles = null;
     installDialog = null;
 }
 
@@ -70,7 +74,7 @@ async function promptToInstall(isIOS) {
 }
 
 function showInstallBanner() {
-    if (isAppInstalled() || localStorage.getItem('apexpro-install-prompt-dismissed') === '1') return;
+    if (isAppInstalled()) return;
 
     const userAgent = navigator.userAgent;
     const isIOS = /iPhone|iPad|iPod/i.test(userAgent)
@@ -99,8 +103,8 @@ function showInstallBanner() {
         if (event.target === installDialog) installDialog.close();
     });
 
-    const styles = document.createElement('style');
-    styles.textContent = `
+    installStyles = document.createElement('style');
+    installStyles.textContent = `
         .apexpro-install-banner { position:fixed; z-index:9999; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); display:flex; align-items:center; gap:12px; padding:14px; border:1px solid rgba(34,211,238,.35); border-radius:16px; background:#0f1a2e; color:#f8fafc; box-shadow:0 12px 36px rgba(0,0,0,.38); font:inherit; }
         .apexpro-install-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:3px; }
         .apexpro-install-copy strong { font-size:14px; }
@@ -116,17 +120,28 @@ function showInstallBanner() {
         .apexpro-install-done { width:100%; margin-top:8px; }
     `;
 
-    document.head.append(styles);
+    document.head.append(installStyles);
     document.body.append(installBanner, installDialog);
 
     installBanner.querySelector('.apexpro-install-action').addEventListener('click', () => promptToInstall(isIOS));
     installBanner.querySelector('.apexpro-install-dismiss').addEventListener('click', () => {
-        localStorage.setItem('apexpro-install-prompt-dismissed', '1');
         hideInstallPrompt();
+        installReminderTimer = window.setTimeout(() => {
+            installReminderTimer = null;
+            try {
+                showInstallBanner();
+            } catch (error) {
+                console.error('Falha ao exibir novamente a opção de instalação do ApexPro:', error);
+            }
+        }, 60_000);
     });
 }
 
-window.addEventListener('appinstalled', hideInstallPrompt);
+window.addEventListener('appinstalled', () => {
+    window.clearTimeout(installReminderTimer);
+    installReminderTimer = null;
+    hideInstallPrompt();
+});
 
 window.addEventListener('load', () => {
     try {
