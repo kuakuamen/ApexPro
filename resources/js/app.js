@@ -16,6 +16,7 @@ if ('serviceWorker' in navigator) {
 let deferredInstallPrompt = null;
 let installBanner = null;
 let installDialog = null;
+let installReminderTimer = null;
 
 window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
@@ -70,7 +71,7 @@ async function promptToInstall(isIOS) {
 }
 
 function showInstallBanner() {
-    if (isAppInstalled() || localStorage.getItem('apexpro-install-prompt-dismissed') === '1') return;
+    if (isAppInstalled()) return;
 
     const userAgent = navigator.userAgent;
     const isIOS = /iPhone|iPad|iPod/i.test(userAgent)
@@ -121,12 +122,23 @@ function showInstallBanner() {
 
     installBanner.querySelector('.apexpro-install-action').addEventListener('click', () => promptToInstall(isIOS));
     installBanner.querySelector('.apexpro-install-dismiss').addEventListener('click', () => {
-        localStorage.setItem('apexpro-install-prompt-dismissed', '1');
         hideInstallPrompt();
+        installReminderTimer = window.setTimeout(() => {
+            installReminderTimer = null;
+            try {
+                showInstallBanner();
+            } catch (error) {
+                console.error('Falha ao exibir novamente a opção de instalação do ApexPro:', error);
+            }
+        }, 60_000);
     });
 }
 
-window.addEventListener('appinstalled', hideInstallPrompt);
+window.addEventListener('appinstalled', () => {
+    window.clearTimeout(installReminderTimer);
+    installReminderTimer = null;
+    hideInstallPrompt();
+});
 
 window.addEventListener('load', () => {
     try {
