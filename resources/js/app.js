@@ -37,7 +37,7 @@ function showInstallInstructions(isIOS) {
     if (!installDialog) return;
 
     const instructions = isIOS
-        ? '<p>No Safari, toque em <strong>Compartilhar</strong> <span aria-label="ícone de compartilhar">↑</span> e depois em <strong>Adicionar à Tela de Início</strong>.</p><p>Por fim, toque em <strong>Adicionar</strong>.</p>'
+        ? '<p>No Safari, toque em <strong>Compartilhar</strong> (ícone do quadrado com seta para cima) e depois em <strong>Adicionar à Tela de Início</strong>.</p><p>Por fim, toque em <strong>Adicionar</strong>.</p>'
         : '<p>Abra o menu do navegador <strong>⋮</strong> e toque em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</p>';
 
     installDialog.innerHTML = `
@@ -75,6 +75,11 @@ function showInstallBanner() {
     const userAgent = navigator.userAgent;
     const isIOS = /iPhone|iPad|iPod/i.test(userAgent)
         || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isMobile = navigator.userAgentData?.mobile
+        || /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (!isMobile) return;
 
     installBanner = document.createElement('aside');
     installBanner.className = 'apexpro-install-banner';
@@ -109,7 +114,6 @@ function showInstallBanner() {
         .apexpro-install-dialog-card p { color:#cbd5e1; font-size:15px; line-height:1.55; }
         .apexpro-install-close { position:absolute; top:16px; right:16px; }
         .apexpro-install-done { width:100%; margin-top:8px; }
-        @media (min-width: 768px) { .apexpro-install-banner { left:auto; right:20px; bottom:20px; width:min(420px, calc(100% - 40px)); } }
     `;
 
     document.head.append(styles);
